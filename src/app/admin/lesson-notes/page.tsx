@@ -156,7 +156,12 @@ export default function LessonNotesManagement() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ publicId }),
+        body: JSON.stringify({
+          publicId,
+          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+          apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+          apiSecret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
+        }),
       });
 
       const responseData = await cloudinaryResponse.json();

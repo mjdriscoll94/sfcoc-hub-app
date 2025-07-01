@@ -3,7 +3,7 @@ import { v2 as cloudinary } from 'cloudinary';
 
 export async function POST(request: Request) {
   try {
-    const { publicId } = await request.json();
+    const { publicId, cloudName, apiKey, apiSecret } = await request.json();
     console.log('Attempting to delete file with public ID:', publicId);
 
     if (!publicId) {
@@ -13,11 +13,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Configure Cloudinary with the environment variables
+    // Configure Cloudinary with the provided credentials
     const config = {
-      cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-      api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-      api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret
     };
 
     // Log configuration status
