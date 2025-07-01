@@ -36,31 +36,43 @@ export const uploadFamilyPhoto = async (file: File, userId: string): Promise<str
 
 export const uploadLessonNotes = async (file: File): Promise<string> => {
   try {
-    console.log('Starting lesson notes upload process...', { fileName: file.name, fileSize: file.size });
+    console.log('Starting lesson notes upload process...', { 
+      fileName: file.name, 
+      fileSize: file.size,
+      fileType: file.type,
+      uploadPreset: process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET,
+      cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+    });
     
     // Create form data
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
     formData.append('folder', 'lesson-notes');
-    formData.append('resource_type', 'raw'); // This allows non-image files like PDFs
-    formData.append('access_mode', 'public'); // Make the file publicly accessible
+    formData.append('resource_type', 'raw'); // Use 'raw' for PDF files
     
     // Upload to Cloudinary using the upload preset
-    const response = await fetch(
-      `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
-      {
-        method: 'POST',
-        body: formData,
-      }
-    );
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`;
+    console.log('Uploading to:', uploadUrl);
+    
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+    });
 
     if (!response.ok) {
-      throw new Error(`Upload failed: ${response.statusText}`);
+      const errorData = await response.json().catch(() => null);
+      console.error('Upload failed response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData,
+        responseHeaders: Object.fromEntries(response.headers.entries())
+      });
+      throw new Error(`Upload failed: ${response.statusText}${errorData ? ` - ${JSON.stringify(errorData)}` : ''}`);
     }
 
     const data = await response.json();
-    console.log('Upload successful:', data.secure_url);
+    console.log('Upload successful:', data);
     
     return data.secure_url;
   } catch (error) {
