@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 import { Fragment } from 'react';
@@ -28,6 +28,7 @@ const Navigation = () => {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
 
   const pathname = usePathname();
   const { user, userProfile, signOut } = useAuth();
@@ -309,6 +310,7 @@ const Navigation = () => {
                               await signOut();
                               console.log('Sign out function called');
                               setIsUserMenuOpen(false);
+                              router.push('/auth/signin');
                             } catch (error) {
                               console.error('Error in sign out:', error);
                             }
