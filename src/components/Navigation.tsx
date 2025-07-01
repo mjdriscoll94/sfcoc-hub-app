@@ -45,18 +45,23 @@ const Navigation = () => {
 
   // Debug navigation attempts
   const handleNavigation = async (href: string, itemName: string) => {
+    console.log('=== Navigation Debug ===');
+    console.log('1. handleNavigation called');
+    console.log('- Item:', itemName);
+    console.log('- Current pathname:', pathname);
+    console.log('- Target href:', href);
+    console.log('- Menu open:', isOpen);
+    console.log('- Current dropdown:', openDropdown);
+    
     try {
-      console.log('Navigation handler called for:', itemName);
-      console.log('Current pathname:', pathname);
-      console.log('Target href:', href);
-      
       // Close menus first
+      console.log('2. Closing menus');
       setIsOpen(false);
       setOpenDropdown(null);
       
-      console.log('Attempting navigation...');
+      console.log('3. Starting navigation');
       await router.push(href);
-      console.log('Navigation completed');
+      console.log('4. Navigation completed');
     } catch (error) {
       console.error('Navigation error:', error);
     }
@@ -77,6 +82,8 @@ const Navigation = () => {
   }, []);
 
   const handleDropdownClick = (dropdownName: string) => {
+    console.log('handleDropdownClick called for:', dropdownName);
+    console.log('Current openDropdown:', openDropdown);
     setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
   };
 
@@ -366,15 +373,30 @@ const Navigation = () => {
       </div>
 
       {/* Mobile menu */}
-      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#171717]`}>
+      <div 
+        className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#171717]`}
+        onClick={(e) => {
+          console.log('Mobile menu container clicked');
+          e.stopPropagation();
+        }}
+      >
         <div className="pt-2 pb-3 space-y-1">
           {activeNavItems.map((item) => (
             item.dropdown ? (
-              <div key={item.name}>
+              <div 
+                key={item.name}
+                onClick={(e) => {
+                  console.log('Dropdown container clicked:', item.name);
+                  e.stopPropagation();
+                }}
+              >
                 {/* Dropdown header */}
                 <button
+                  type="button"
                   onClick={(e) => {
-                    e.stopPropagation(); // Prevent event bubbling
+                    console.log('Dropdown header clicked:', item.name);
+                    e.stopPropagation();
+                    e.preventDefault();
                     handleDropdownClick(item.name);
                   }}
                   className={`${
@@ -396,12 +418,21 @@ const Navigation = () => {
                 </button>
                 {/* Dropdown items */}
                 {openDropdown === item.name && (
-                  <div className="bg-[#1f1f1f]">
+                  <div 
+                    className="bg-[#1f1f1f]"
+                    onClick={(e) => {
+                      console.log('Dropdown items container clicked');
+                      e.stopPropagation();
+                    }}
+                  >
                     {item.items?.map((subItem) => (
                       <button
                         key={subItem.name}
+                        type="button"
                         onClick={(e) => {
-                          e.stopPropagation(); // Prevent event bubbling
+                          console.log('Dropdown item clicked:', subItem.name);
+                          e.stopPropagation();
+                          e.preventDefault();
                           handleNavigation(subItem.href, subItem.name);
                         }}
                         className={`${
@@ -420,8 +451,11 @@ const Navigation = () => {
             ) : (
               <button
                 key={item.name}
+                type="button"
                 onClick={(e) => {
-                  e.stopPropagation(); // Prevent event bubbling
+                  console.log('Navigation item clicked:', item.name);
+                  e.stopPropagation();
+                  e.preventDefault();
                   handleNavigation(item.href || '#', item.name);
                 }}
                 className={`${
