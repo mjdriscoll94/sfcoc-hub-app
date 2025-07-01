@@ -300,7 +300,15 @@ const Navigation = () => {
                           Settings
                         </Link>
                         <button
-                          onClick={() => signOut()}
+                          onClick={async () => {
+                            console.log('Sign out clicked');
+                            try {
+                              await signOut();
+                              setIsUserMenuOpen(false);
+                            } catch (error) {
+                              console.error('Error signing out:', error);
+                            }
+                          }}
                           className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
                         >
                           Sign out
