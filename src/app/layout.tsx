@@ -4,16 +4,12 @@ import './globals.css';
 import Navigation from '@/components/Navigation';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import RouteGuard from '@/components/RouteGuard';
-import FaviconUpdater from '@/components/FaviconUpdater';
 
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'SFCOC',
-  description: 'Sioux Falls Church of Christ',
-  icons: {
-    icon: '/favicon.ico?v=2'
-  }
+  description: 'Sioux Falls Church of Christ'
 };
 
 // Force favicon refresh in development
@@ -34,7 +30,6 @@ export default function RootLayout({
       <body className={`${inter.className} bg-white dark:bg-[#171717] text-base min-h-screen`}>
         <AuthProvider>
           <RouteGuard>
-            <FaviconUpdater />
             <div className="relative">
               <div className="fixed top-0 left-0 right-0 z-50">
                 <Navigation />
