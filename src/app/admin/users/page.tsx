@@ -59,16 +59,26 @@ export default function UserManagement() {
         // Process each user and ensure they have an approvalStatus
         const batch: Promise<void>[] = [];
         querySnapshot.forEach((doc) => {
-          const data = doc.data() as UserData;
-          data.uid = doc.id;
+          const data = doc.data();
+          const createdAtDate = data.createdAt?.toDate?.() || new Date();
+          
+          const processedData: UserData = {
+            uid: doc.id,
+            email: data.email || null,
+            displayName: data.displayName || null,
+            isAdmin: data.isAdmin || false,
+            createdAt: createdAtDate.toISOString(),
+            approvalStatus: data.approvalStatus || 'approved',
+            disabled: data.disabled || false,
+            customClaims: data.customClaims
+          };
           
           // Set default approvalStatus if it's undefined
           if (!data.approvalStatus) {
-            data.approvalStatus = 'approved';
             batch.push(updateDoc(doc.ref, { approvalStatus: 'approved' }));
           }
           
-          userData.push(data);
+          userData.push(processedData);
         });
         
         // Update any users that needed default approvalStatus
