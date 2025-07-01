@@ -6,6 +6,10 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 
+interface FirebaseError extends Error {
+  code?: string;
+}
+
 export default function SignInPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -32,8 +36,9 @@ export default function SignInPage() {
       await signIn(email, password);
       const redirect = searchParams.get('redirect') || '/';
       router.push(redirect);
-    } catch (error: any) {
-      setError(error.message);
+    } catch (error) {
+      const firebaseError = error as FirebaseError;
+      setError(firebaseError.message || 'An error occurred during sign in');
     } finally {
       setIsLoading(false);
     }
@@ -119,7 +124,7 @@ export default function SignInPage() {
               href="/auth/signup"
               className="font-medium text-[#D6805F] hover:text-[#D6805F]/90"
             >
-              Don't have an account? Sign up
+              Don&apos;t have an account? Sign up
             </Link>
           </div>
         </form>

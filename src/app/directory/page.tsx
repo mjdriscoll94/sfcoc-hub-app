@@ -7,6 +7,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 import { Phone, Mail, MapPin, Search, Plus, Users, User } from 'lucide-react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 interface DirectoryMember {
   id: string;
@@ -68,7 +69,8 @@ export default function DirectoryPage() {
     fetchMembers();
   }, [canAccessDirectory]);
 
-  const filteredMembers = members.filter(member => {
+  // Filter members based on search term
+  const displayMembers = members.filter(member => {
     const searchLower = searchTerm.toLowerCase();
     return (
       member.firstName.toLowerCase().includes(searchLower) ||
@@ -131,13 +133,13 @@ export default function DirectoryPage() {
           <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-6">
             <p className="text-center text-red-700 dark:text-red-300">{error}</p>
           </div>
-        ) : members.length === 0 ? (
+        ) : displayMembers.length === 0 ? (
           <div className="bg-white dark:bg-white/5 rounded-lg p-6 text-center">
             <p className="text-gray-500 dark:text-white/60">No directory entries found.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {members.map((member) => (
+            {displayMembers.map((member) => (
               <div
                 key={member.id}
                 className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden"
@@ -145,11 +147,15 @@ export default function DirectoryPage() {
                 <div className="p-6">
                   <div className="flex items-start space-x-4">
                     {member.photoURL ? (
-                      <img
-                        src={member.photoURL}
-                        alt={`${member.firstName} ${member.lastName}'s family`}
-                        className="h-24 w-24 rounded-lg object-cover"
-                      />
+                      <div className="relative h-24 w-24">
+                        <Image
+                          src={member.photoURL}
+                          alt={`${member.firstName} ${member.lastName}'s family`}
+                          fill
+                          className="rounded-lg object-cover"
+                          sizes="96px"
+                        />
+                      </div>
                     ) : (
                       <div className="h-24 w-24 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center">
                         <Users className="h-12 w-12 text-gray-400 dark:text-white/40" />

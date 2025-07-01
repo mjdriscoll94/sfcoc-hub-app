@@ -47,11 +47,11 @@ async function sendEmail(type: string, subject: string, content: string, recipie
 
     console.log('Email sent successfully:', responseData);
     return responseData;
-  } catch (error: any) {
+  } catch (error) {
     console.error(`Failed to send ${type} email:`, {
-      name: error.name,
-      message: error.message,
-      stack: error.stack,
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
       details: error
     });
     throw error;

@@ -28,7 +28,7 @@ export const generatePasswordResetLink = async (email: string): Promise<string> 
 };
 
 // Function to ensure user profile has all required fields
-async function ensureUserProfileFields(uid: string, data: any): Promise<UserProfile> {
+async function ensureUserProfileFields(uid: string, data: Partial<UserProfile>): Promise<UserProfile> {
   const updates: Partial<UserProfile> = {};
   let needsUpdate = false;
 
@@ -129,5 +129,5 @@ export const createUserProfile = async (user: User, additionalData?: Partial<Use
   const data = snapshot.data();
   if (!data) return null;
 
-  return ensureUserProfileFields(user.uid, data);
+  return ensureUserProfileFields(user.uid, data as Partial<UserProfile>);
 }; 
