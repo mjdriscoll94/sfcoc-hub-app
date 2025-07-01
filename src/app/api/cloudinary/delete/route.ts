@@ -39,36 +39,36 @@ export async function POST(request: Request) {
     // Configure Cloudinary
     cloudinary.config(config);
 
-    // Try to delete with different resource types
-    const resourceTypes = ['raw', 'image', 'video'];
-    let deleted = false;
-    let lastError: Error | null = null;
-
-    for (const resourceType of resourceTypes) {
-      try {
-        console.log(`Attempting to delete with resource_type: ${resourceType}`);
-        const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
-        console.log(`Result for ${resourceType}:`, result);
-        
-        if (result.result === 'ok') {
-          deleted = true;
-          return NextResponse.json({ message: 'File deleted successfully' });
-        }
-      } catch (error) {
-        console.log(`Error with ${resourceType}:`, error);
-        lastError = error instanceof Error ? error : new Error('Unknown error');
+    // Try to delete the file - we know it's a raw file in the 'files' folder
+    try {
+      console.log('Attempting to delete raw file...');
+      const result = await cloudinary.uploader.destroy(publicId, { 
+        resource_type: 'raw',
+        type: 'upload',
+        invalidate: true
+      });
+      console.log('Delete result:', result);
+      
+      if (result.result === 'ok') {
+        return NextResponse.json({ message: 'File deleted successfully' });
       }
-    }
-
-    if (!deleted) {
-      console.error('Failed to delete with all resource types. Last error:', lastError);
+      
+      throw new Error('Delete operation did not return ok');
+    } catch (error) {
+      console.error('Detailed error:', {
+        message: error instanceof Error ? error.message : 'Unknown error',
+        name: error instanceof Error ? error.name : 'Unknown',
+        publicId,
+        resourceType: 'raw'
+      });
+      
       return NextResponse.json(
-        { error: `Failed to delete file from Cloudinary: ${lastError?.message || 'not found'}` },
+        { error: `Failed to delete file from Cloudinary: ${error instanceof Error ? error.message : 'unknown error'}` },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Error deleting file from Cloudinary:', error);
+    console.error('Error in delete route:', error);
     return NextResponse.json(
       { error: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }

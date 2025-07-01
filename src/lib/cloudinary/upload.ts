@@ -48,8 +48,11 @@ export const uploadLessonNotes = async (file: File): Promise<string> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
-    formData.append('folder', 'lesson-notes');
+    formData.append('folder', 'files'); // Match the asset folder from preset
     formData.append('resource_type', 'raw'); // Use 'raw' for PDF files
+    formData.append('use_filename', 'true');
+    formData.append('unique_filename', 'true');
+    formData.append('use_filename_as_display_name', 'true');
     
     // Upload to Cloudinary using the upload preset
     const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`;
@@ -74,10 +77,7 @@ export const uploadLessonNotes = async (file: File): Promise<string> => {
     const data = await response.json();
     console.log('Upload successful:', data);
     
-    // Modify the URL to ensure public access
-    // Replace /upload/ with /upload/fl_attachment/ to force download and ensure public access
-    const secureUrl = data.secure_url.replace('/upload/', '/upload/fl_attachment/');
-    return secureUrl;
+    return data.secure_url; // Don't modify the URL since we're using preset settings
   } catch (error) {
     console.error('Error in uploadLessonNotes:', error);
     if (error instanceof Error) {
