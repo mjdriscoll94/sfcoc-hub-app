@@ -34,6 +34,34 @@ const Navigation = () => {
   const pathname = usePathname();
   const { user, userProfile, signOut } = useAuth();
 
+  // Validate router on mount
+  useEffect(() => {
+    if (!router) {
+      console.error('Router instance is not available');
+    } else {
+      console.log('Router instance is available');
+    }
+  }, [router]);
+
+  // Debug navigation attempts
+  const handleNavigation = async (href: string, itemName: string) => {
+    try {
+      console.log('Navigation handler called for:', itemName);
+      console.log('Current pathname:', pathname);
+      console.log('Target href:', href);
+      
+      // Close menus first
+      setIsOpen(false);
+      setOpenDropdown(null);
+      
+      console.log('Attempting navigation...');
+      await router.push(href);
+      console.log('Navigation completed');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
@@ -345,7 +373,10 @@ const Navigation = () => {
               <div key={item.name}>
                 {/* Dropdown header */}
                 <button
-                  onClick={() => handleDropdownClick(item.name)}
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent event bubbling
+                    handleDropdownClick(item.name);
+                  }}
                   className={`${
                     item.items?.some(subItem => pathname === subItem.href)
                       ? 'text-[#D6805F] bg-white/5'
@@ -369,10 +400,9 @@ const Navigation = () => {
                     {item.items?.map((subItem) => (
                       <button
                         key={subItem.name}
-                        onClick={() => {
-                          setIsOpen(false);
-                          setOpenDropdown(null);
-                          router.push(subItem.href);
+                        onClick={(e) => {
+                          e.stopPropagation(); // Prevent event bubbling
+                          handleNavigation(subItem.href, subItem.name);
                         }}
                         className={`${
                           pathname === subItem.href
@@ -390,10 +420,9 @@ const Navigation = () => {
             ) : (
               <button
                 key={item.name}
-                onClick={() => {
-                  setIsOpen(false);
-                  setOpenDropdown(null);
-                  router.push(item.href || '#');
+                onClick={(e) => {
+                  e.stopPropagation(); // Prevent event bubbling
+                  handleNavigation(item.href || '#', item.name);
                 }}
                 className={`${
                   pathname === item.href
