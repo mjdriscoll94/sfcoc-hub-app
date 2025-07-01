@@ -375,8 +375,9 @@ const Navigation = () => {
                             ? 'text-[#D6805F] bg-white/5'
                             : 'text-white hover:bg-white/5'
                         } flex items-center pl-12 pr-4 py-2 text-sm`}
-                        onClick={() => {
-                          router.push(subItem.href);
+                        onClick={async (e) => {
+                          e.preventDefault();
+                          await router.push(subItem.href);
                           setIsOpen(false);
                           setOpenDropdown(null);
                         }}
@@ -397,8 +398,9 @@ const Navigation = () => {
                     ? 'text-[#D6805F] bg-white/5'
                     : 'text-white hover:bg-white/5'
                 } flex items-center px-4 py-2 text-sm font-medium`}
-                onClick={() => {
-                  router.push(item.href || '#');
+                onClick={async (e) => {
+                  e.preventDefault();
+                  await router.push(item.href || '#');
                   setIsOpen(false);
                   setOpenDropdown(null);
                 }}
