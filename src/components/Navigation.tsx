@@ -369,10 +369,9 @@ const Navigation = () => {
                     {item.items?.map((subItem) => (
                       <button
                         key={subItem.name}
-                        onClick={async () => {
+                        onClick={() => {
                           setIsOpen(false);
                           setOpenDropdown(null);
-                          await Promise.resolve(); // Ensure state updates complete
                           router.push(subItem.href);
                         }}
                         className={`${
@@ -391,10 +390,9 @@ const Navigation = () => {
             ) : (
               <button
                 key={item.name}
-                onClick={async () => {
+                onClick={() => {
                   setIsOpen(false);
                   setOpenDropdown(null);
-                  await Promise.resolve(); // Ensure state updates complete
                   router.push(item.href || '#');
                 }}
                 className={`${
