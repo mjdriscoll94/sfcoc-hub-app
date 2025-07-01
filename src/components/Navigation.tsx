@@ -43,6 +43,14 @@ const Navigation = () => {
     }
   }, [router]);
 
+  // Debug state changes
+  useEffect(() => {
+    console.log('=== State Debug ===');
+    console.log('isOpen:', isOpen);
+    console.log('openDropdown:', openDropdown);
+    console.log('pathname:', pathname);
+  }, [isOpen, openDropdown, pathname]);
+
   // Debug navigation attempts
   const handleNavigation = async (href: string, itemName: string) => {
     console.log('=== Navigation Debug ===');
@@ -82,8 +90,10 @@ const Navigation = () => {
   }, []);
 
   const handleDropdownClick = (dropdownName: string) => {
-    console.log('handleDropdownClick called for:', dropdownName);
+    console.log('=== Dropdown Click ===');
+    console.log('Clicked dropdown:', dropdownName);
     console.log('Current openDropdown:', openDropdown);
+    console.log('Will set to:', openDropdown === dropdownName ? 'null' : dropdownName);
     setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
   };
 
@@ -419,32 +429,39 @@ const Navigation = () => {
                 {/* Dropdown items */}
                 {openDropdown === item.name && (
                   <div 
-                    className="bg-[#1f1f1f]"
+                    className="bg-[#1f1f1f] relative z-50"
                     onClick={(e) => {
                       console.log('Dropdown items container clicked');
                       e.stopPropagation();
                     }}
                   >
-                    {item.items?.map((subItem) => (
-                      <button
-                        key={subItem.name}
-                        type="button"
-                        onClick={(e) => {
-                          console.log('Dropdown item clicked:', subItem.name);
-                          e.stopPropagation();
-                          e.preventDefault();
-                          handleNavigation(subItem.href, subItem.name);
-                        }}
-                        className={`${
-                          pathname === subItem.href
-                            ? 'text-[#D6805F] bg-white/5'
-                            : 'text-white hover:bg-white/5'
-                        } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left`}
-                      >
-                        {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                        {subItem.name}
-                      </button>
-                    ))}
+                    {item.items?.map((subItem) => {
+                      console.log('Rendering dropdown item:', subItem.name);
+                      return (
+                        <div 
+                          key={subItem.name}
+                          className="w-full"
+                          onClick={(e) => {
+                            console.log('Dropdown item wrapper clicked:', subItem.name);
+                            e.stopPropagation();
+                            e.preventDefault();
+                            handleNavigation(subItem.href, subItem.name);
+                          }}
+                        >
+                          <button
+                            type="button"
+                            className={`${
+                              pathname === subItem.href
+                                ? 'text-[#D6805F] bg-white/5'
+                                : 'text-white hover:bg-white/5'
+                            } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left`}
+                          >
+                            {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                            {subItem.name}
+                          </button>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
