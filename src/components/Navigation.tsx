@@ -367,43 +367,43 @@ const Navigation = () => {
                 {openDropdown === item.name && (
                   <div className="bg-[#1f1f1f]">
                     {item.items?.map((subItem) => (
-                      <Link
+                      <button
                         key={subItem.name}
-                        href={subItem.href}
+                        onClick={() => {
+                          router.replace(subItem.href);
+                          setIsOpen(false);
+                          setOpenDropdown(null);
+                        }}
                         className={`${
                           pathname === subItem.href
                             ? 'text-[#D6805F] bg-white/5'
                             : 'text-white hover:bg-white/5'
-                        } flex items-center pl-12 pr-4 py-2 text-sm`}
-                        onClick={() => {
-                          setIsOpen(false);
-                          setOpenDropdown(null);
-                        }}
+                        } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left`}
                       >
                         {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
                         {subItem.name}
-                      </Link>
+                      </button>
                     ))}
                   </div>
                 )}
               </div>
             ) : (
-              <Link
+              <button
                 key={item.name}
-                href={item.href || '#'}
+                onClick={() => {
+                  router.replace(item.href || '#');
+                  setIsOpen(false);
+                  setOpenDropdown(null);
+                }}
                 className={`${
                   pathname === item.href
                     ? 'text-[#D6805F] bg-white/5'
                     : 'text-white hover:bg-white/5'
-                } flex items-center px-4 py-2 text-sm font-medium`}
-                onClick={() => {
-                  setIsOpen(false);
-                  setOpenDropdown(null);
-                }}
+                } flex items-center px-4 py-2 text-sm font-medium w-full text-left`}
               >
                 <span className="mr-2">{item.icon}</span>
                 {item.name}
-              </Link>
+              </button>
             )
           ))}
         </div>
