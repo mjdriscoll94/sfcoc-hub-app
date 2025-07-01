@@ -9,6 +9,7 @@ import { Phone, Mail, MapPin, Search, Plus, Users, User } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import BackButton from '@/components/BackButton';
+import DirectoryModal from '@/components/DirectoryModal';
 
 interface DirectoryMember {
   id: string;
@@ -31,6 +32,8 @@ export default function DirectoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedMember, setSelectedMember] = useState<DirectoryMember | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const { userProfile } = useAuth();
 
   // Check if user has permission to access directory
@@ -86,6 +89,11 @@ export default function DirectoryPage() {
     );
   });
 
+  const handleCardClick = (member: DirectoryMember) => {
+    setSelectedMember(member);
+    setIsModalOpen(true);
+  };
+
   if (!canAccessDirectory) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-[#171717] py-12">
@@ -102,6 +110,12 @@ export default function DirectoryPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <DirectoryModal
+        member={selectedMember}
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
+
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center">
           <BackButton className="mr-4" />
@@ -150,7 +164,8 @@ export default function DirectoryPage() {
           {displayMembers.map((member) => (
             <div
               key={member.id}
-              className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden"
+              onClick={() => handleCardClick(member)}
+              className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden cursor-pointer hover:shadow-md dark:hover:bg-white/10 transition-all"
             >
               <div className="p-6">
                 <div className="flex items-start space-x-4">
@@ -171,63 +186,11 @@ export default function DirectoryPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                      The {member.lastName} Family
+                      {member.lastName}
                     </h2>
-                    {member.email && (
-                      <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-white/60">
-                        <Mail className="h-4 w-4 mr-2" />
-                        <a href={`mailto:${member.email}`} className="truncate hover:text-[#D6805F]">
-                          {member.email}
-                        </a>
-                      </div>
-                    )}
-                    {member.phoneNumber && (
-                      <div className="mt-1 flex items-center text-sm text-gray-500 dark:text-white/60">
-                        <Phone className="h-4 w-4 mr-2" />
-                        <a href={`tel:${member.phoneNumber}`} className="hover:text-[#D6805F]">
-                          {member.phoneNumber}
-                        </a>
-                      </div>
-                    )}
-                    {member.address && (
-                      <div className="mt-1 flex items-center text-sm text-gray-500 dark:text-white/60">
-                        <MapPin className="h-4 w-4 mr-2" />
-                        <span className="truncate">{member.address}</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                    Family Members
-                  </h3>
-                  <div className="space-y-2">
-                    <div className="flex items-center text-sm">
-                      <User className="h-4 w-4 text-gray-400 dark:text-white/40 mr-2" />
-                      <span className="text-gray-900 dark:text-white">
-                        {member.firstName} {member.lastName}
-                      </span>
-                      <span className="text-gray-500 dark:text-white/60 ml-2">
-                        (Primary Contact)
-                      </span>
-                    </div>
-                    {member.familyMembers?.map((familyMember, index) => (
-                      <div key={index} className="flex items-center text-sm">
-                        <User className="h-4 w-4 text-gray-400 dark:text-white/40 mr-2" />
-                        <span className="text-gray-900 dark:text-white">
-                          {familyMember.firstName} {familyMember.lastName}
-                        </span>
-                        <span className="text-gray-500 dark:text-white/60 ml-2">
-                          ({familyMember.relationship})
-                        </span>
-                        {familyMember.birthday && (
-                          <span className="text-gray-500 dark:text-white/60 ml-2">
-                            • Born: {new Date(familyMember.birthday).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                    <p className="mt-1 text-sm text-gray-500 dark:text-white/60">
+                      Click to view details
+                    </p>
                   </div>
                 </div>
               </div>

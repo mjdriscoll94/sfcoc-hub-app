@@ -170,7 +170,7 @@ export default function DirectoryAdminPage() {
                     )}
                     <div>
                       <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        The {submission.lastName} Family
+                        {submission.lastName}
                       </h2>
                       <p className="text-sm text-gray-500 dark:text-white/60">
                         Submitted {submission.submittedAt.toLocaleDateString()}
