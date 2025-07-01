@@ -168,40 +168,38 @@ export default function DirectoryPage() {
               className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden cursor-pointer hover:shadow-md dark:hover:bg-white/10 transition-all"
             >
               <div className="p-6">
-                <div className="flex items-start space-x-4">
-                  {member.photoURL ? (
-                    <div className="relative h-24 w-24">
-                      <Image
-                        src={member.photoURL}
-                        alt={`${member.lastName} Family`}
-                        fill
-                        className="rounded-lg object-cover"
-                        sizes="96px"
-                      />
-                    </div>
-                  ) : (
-                    <div className="h-24 w-24 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                      <Users className="h-12 w-12 text-gray-400 dark:text-white/40" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                      {member.lastName}
-                    </h2>
-                    <div className="mt-2 space-y-1">
-                      <div className="text-sm text-gray-900 dark:text-white">
-                        {member.firstName} {member.lastName}
-                      </div>
-                      {member.familyMembers?.map((familyMember, index) => (
-                        <div key={index} className="text-sm text-gray-900 dark:text-white">
-                          {familyMember.firstName} {familyMember.lastName}
-                        </div>
-                      ))}
-                    </div>
-                    <p className="mt-2 text-sm text-gray-500 dark:text-white/60">
-                      Click to view details
-                    </p>
+                {member.photoURL ? (
+                  <div className="relative h-48 w-full mb-4">
+                    <Image
+                      src={member.photoURL}
+                      alt={`${member.lastName} Family`}
+                      fill
+                      className="rounded-lg object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    />
                   </div>
+                ) : (
+                  <div className="h-48 w-full mb-4 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center">
+                    <Users className="h-16 w-16 text-gray-400 dark:text-white/40" />
+                  </div>
+                )}
+                <div>
+                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
+                    {member.lastName}
+                  </h2>
+                  <div className="mt-2 space-y-1">
+                    <div className="text-sm text-gray-900 dark:text-white">
+                      {member.firstName} {member.lastName}
+                    </div>
+                    {member.familyMembers?.map((familyMember, index) => (
+                      <div key={index} className="text-sm text-gray-900 dark:text-white">
+                        {familyMember.firstName} {familyMember.lastName}
+                      </div>
+                    ))}
+                  </div>
+                  <p className="mt-2 text-sm text-gray-500 dark:text-white/60">
+                    Click to view details
+                  </p>
                 </div>
               </div>
             </div>
