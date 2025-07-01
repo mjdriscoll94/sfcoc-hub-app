@@ -188,7 +188,17 @@ export default function DirectoryPage() {
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
                       {member.lastName}
                     </h2>
-                    <p className="mt-1 text-sm text-gray-500 dark:text-white/60">
+                    <div className="mt-2 space-y-1">
+                      <div className="text-sm text-gray-900 dark:text-white">
+                        {member.firstName} {member.lastName}
+                      </div>
+                      {member.familyMembers?.map((familyMember, index) => (
+                        <div key={index} className="text-sm text-gray-900 dark:text-white">
+                          {familyMember.firstName} {familyMember.lastName}
+                        </div>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-sm text-gray-500 dark:text-white/60">
                       Click to view details
                     </p>
                   </div>
