@@ -20,6 +20,7 @@ interface UserProfile {
   createdAt: Date;
   approvalStatus: string;
   role?: string;
+  updatedAt: Date;
 }
 
 export default function AdminDashboard() {
@@ -46,7 +47,8 @@ export default function AdminDashboard() {
             return {
               ...data,
               uid: doc.id,
-              createdAt: data.createdAt?.toDate() || new Date() // Convert Firestore Timestamp to Date
+              createdAt: data.createdAt?.toDate?.() || new Date(),
+              updatedAt: data.updatedAt?.toDate?.() || new Date()
             } as UserProfile;
           })
           .filter(user => user.approvalStatus === 'approved')

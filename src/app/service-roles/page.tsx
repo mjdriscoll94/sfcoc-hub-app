@@ -99,13 +99,16 @@ export default function ServiceRolesPage() {
         );
         
         const assignmentsSnapshot = await getDocs(q);
-        const fetchedAssignments = assignmentsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date.toDate(),
-          assignedAt: doc.data().assignedAt.toDate(),
-          respondedAt: doc.data().respondedAt?.toDate()
-        })) as ServiceAssignment[];
+        const fetchedAssignments = assignmentsSnapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date: data.date?.toDate?.() || new Date(),
+            assignedAt: data.assignedAt?.toDate?.() || new Date(),
+            respondedAt: data.respondedAt?.toDate?.()
+          } as ServiceAssignment;
+        });
 
         // Group assignments by week and update state
         setWeeks(prevWeeks => 

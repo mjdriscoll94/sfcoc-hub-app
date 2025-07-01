@@ -180,7 +180,9 @@ export default function PrayerBoard() {
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
                       <span className="text-sm text-gray-600 dark:text-white/60">
-                        {new Date(request.dateCreated).toLocaleDateString()}
+                        {request.dateCreated instanceof Date 
+                          ? request.dateCreated.toLocaleDateString()
+                          : new Date(request.dateCreated).toLocaleDateString()}
                       </span>
                     </div>
                     <div className="mt-2 flex items-center justify-between">
