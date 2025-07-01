@@ -181,25 +181,7 @@ export default function Home() {
         </div>
       </section>
 
-      <div className="relative">
-        <Image
-          src="/images/church-hero.jpg"
-          alt="Church Building"
-          width={1920}
-          height={1080}
-          className="w-full h-[500px] object-cover"
-          priority
-        />
-        <div className="absolute inset-0 bg-black/50" />
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white">
-          <h1 className="text-4xl md:text-6xl font-bold text-center mb-4">
-            Welcome to South Fayette Church of Christ
-          </h1>
-          <p className="text-xl md:text-2xl text-center max-w-2xl mx-4">
-            Join us in worship and fellowship as we grow together in Christ
-          </p>
-        </div>
-      </div>
+      
       
       <BuildStatus />
 
