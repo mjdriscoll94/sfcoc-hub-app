@@ -3,24 +3,19 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X, Phone, Mail, MapPin, User } from 'lucide-react';
 import Image from 'next/image';
 
-interface DirectoryMember {
-  id: string;
+interface DirectoryEntry {
   firstName: string;
   lastName: string;
-  email: string | null;
-  phoneNumber: string | null;
-  address: string | null;
-  photoURL: string | null;
-  familyMembers?: {
-    firstName: string;
-    lastName: string;
-    relationship: string;
-    birthday: string;
-  }[];
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  anniversary?: string;
+  familyMembers: FamilyMember[];
+  photoURL?: string;
 }
 
 interface DirectoryModalProps {
-  member: DirectoryMember | null;
+  member: DirectoryEntry | null;
   isOpen: boolean;
   onClose: () => void;
 }
@@ -111,6 +106,11 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
                             <div className="flex items-center text-gray-500 dark:text-gray-300">
                               <MapPin className="h-5 w-5 mr-2" />
                               <span>{member.address}</span>
+                            </div>
+                          )}
+                          {member.anniversary && (
+                            <div className="flex items-center text-gray-500 dark:text-gray-300">
+                              <span className="font-semibold">Anniversary:</span> {new Date(member.anniversary).toLocaleDateString()}
                             </div>
                           )}
                         </div>

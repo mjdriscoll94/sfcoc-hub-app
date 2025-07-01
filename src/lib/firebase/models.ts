@@ -41,4 +41,26 @@ export interface VolunteerOpportunity {
   }>;
   requirements?: string[];
   status: 'open' | 'filled' | 'completed';
+}
+
+export interface FamilyMember {
+  firstName: string;
+  lastName: string;
+  relationship: string;
+  birthday: string;
+}
+
+export interface DirectoryEntry {
+  id?: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phoneNumber?: string;
+  address?: string;
+  anniversary?: string;
+  familyMembers: FamilyMember[];
+  submittedBy: string;
+  submittedAt: Date;
+  status: 'pending' | 'approved' | 'rejected';
+  photoURL?: string;
 } 

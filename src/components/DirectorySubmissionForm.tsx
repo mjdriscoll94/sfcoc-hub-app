@@ -18,8 +18,9 @@ interface DirectorySubmission {
   firstName: string;
   lastName: string;
   email: string;
-  phoneNumber: string;
-  address: string;
+  phoneNumber?: string;
+  address?: string;
+  anniversary?: string;
   familyMembers: FamilyMember[];
   submittedBy: string;
   submittedAt: Date;
@@ -41,6 +42,7 @@ export default function DirectorySubmissionForm() {
     email: user?.email || '',
     phoneNumber: '',
     address: '',
+    anniversary: '',
     familyMembers: [],
     photoURL: ''
   });
@@ -127,6 +129,7 @@ export default function DirectorySubmissionForm() {
         email: user.email || '',
         phoneNumber: '',
         address: '',
+        anniversary: '',
         familyMembers: [],
         photoURL: ''
       });
@@ -281,12 +284,11 @@ export default function DirectorySubmissionForm() {
 
           <div>
             <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-white/70">
-              Phone Number
+              Phone Number <span className="text-gray-500 dark:text-white/40">(optional)</span>
             </label>
             <input
               type="tel"
               id="phoneNumber"
-              required
               value={formData.phoneNumber}
               onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
               className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
@@ -295,15 +297,27 @@ export default function DirectorySubmissionForm() {
 
           <div className="sm:col-span-2">
             <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-white/70">
-              Address
+              Address <span className="text-gray-500 dark:text-white/40">(optional)</span>
             </label>
             <input
               type="text"
               id="address"
-              required
               value={formData.address}
               onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
               className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+            />
+          </div>
+
+          <div className="sm:col-span-2">
+            <label htmlFor="anniversary" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+              Anniversary <span className="text-gray-500 dark:text-white/40">(optional)</span>
+            </label>
+            <input
+              type="date"
+              id="anniversary"
+              value={formData.anniversary}
+              onChange={(e) => setFormData(prev => ({ ...prev, anniversary: e.target.value }))}
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
             />
           </div>
         </div>
