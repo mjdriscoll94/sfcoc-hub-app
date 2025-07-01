@@ -344,7 +344,8 @@ const Navigation = () => {
             item.dropdown ? (
               <div key={item.name}>
                 {/* Dropdown header */}
-                <div
+                <button
+                  onClick={() => handleDropdownClick(item.name)}
                   className={`${
                     item.items?.some(subItem => pathname === subItem.href)
                       ? 'text-[#D6805F] bg-white/5'
@@ -352,21 +353,16 @@ const Navigation = () => {
                   } w-full flex items-center px-4 py-2 text-sm font-medium`}
                 >
                   <span className="mr-2">{item.icon}</span>
-                  <span className="flex-1">{item.name}</span>
-                  <button
-                    onClick={() => handleDropdownClick(item.name)}
-                    className="p-1 hover:bg-white/10 rounded-full"
+                  <span className="flex-1 text-left">{item.name}</span>
+                  <svg
+                    className={`h-5 w-5 transform ${openDropdown === item.name ? 'rotate-180' : ''}`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
                   >
-                    <svg
-                      className={`h-5 w-5 transform ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                    </svg>
-                  </button>
-                </div>
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
                 {/* Dropdown items */}
                 {openDropdown === item.name && (
                   <div className="bg-[#1f1f1f]">
@@ -380,6 +376,7 @@ const Navigation = () => {
                             : 'text-white hover:bg-white/5'
                         } flex items-center pl-12 pr-4 py-2 text-sm`}
                         onClick={() => {
+                          router.push(subItem.href);
                           setIsOpen(false);
                           setOpenDropdown(null);
                         }}
@@ -401,6 +398,7 @@ const Navigation = () => {
                     : 'text-white hover:bg-white/5'
                 } flex items-center px-4 py-2 text-sm font-medium`}
                 onClick={() => {
+                  router.push(item.href || '#');
                   setIsOpen(false);
                   setOpenDropdown(null);
                 }}
