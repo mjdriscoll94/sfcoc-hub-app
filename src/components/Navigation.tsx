@@ -181,7 +181,7 @@ const Navigation = () => {
   const activeNavItems = [...publicNavItems, ...(user ? [...protectedNavItems, ...adminNavItems] : [])];
 
   return (
-    <nav className="bg-[#171717]/50 backdrop-blur-sm border-b border-white/10">
+    <nav className="bg-[#171717]/50 backdrop-blur-sm border-b border-white/10 relative z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -229,7 +229,7 @@ const Navigation = () => {
                       </svg>
                     </button>
                     {openDropdown === item.name && (
-                      <div className="absolute z-10 top-full pt-2 left-0 w-56">
+                      <div className="absolute z-50 top-full pt-2 left-0 w-56">
                         <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5">
                           <div className="py-1">
                             {item.items?.map((subItem) => (
@@ -284,7 +284,7 @@ const Navigation = () => {
                   </div>
                 </button>
                 {isUserMenuOpen && (
-                  <div className="absolute z-10 top-full right-0 pt-2 w-48">
+                  <div className="absolute z-50 top-full right-0 pt-2 w-48">
                     <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5 divide-y divide-white/10">
                       <div className="py-1">
                         <div className="px-4 py-2 text-sm text-white">
