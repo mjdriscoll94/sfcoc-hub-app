@@ -1,20 +1,22 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, Timestamp } from 'firebase/firestore';
-import { Upload, FileText } from 'lucide-react';
+import { collection, addDoc, Timestamp, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
+import { Upload, FileText, Trash2, ExternalLink } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { uploadLessonNotes } from '@/lib/cloudinary/upload';
 
 interface LessonNote {
+  id: string;
   title: string;
   date: Date;
   fileUrl: string;
   uploadedAt: Date;
   uploadedBy: string;
+  fileName: string;
 }
 
 export default function LessonNotesManagement() {
@@ -23,6 +25,7 @@ export default function LessonNotesManagement() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [notes, setNotes] = useState<LessonNote[]>([]);
   const { userProfile } = useAuth();
   const router = useRouter();
 
@@ -31,6 +34,28 @@ export default function LessonNotesManagement() {
     router.push('/');
     return null;
   }
+
+  // Fetch existing notes
+  useEffect(() => {
+    const fetchNotes = async () => {
+      try {
+        const q = query(collection(db, 'lesson-notes'), orderBy('uploadedAt', 'desc'));
+        const querySnapshot = await getDocs(q);
+        const notesData = querySnapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+          date: doc.data().date.toDate(),
+          uploadedAt: doc.data().uploadedAt.toDate()
+        })) as LessonNote[];
+        setNotes(notesData);
+      } catch (err) {
+        console.error('Error fetching notes:', err);
+        setError('Failed to load existing notes');
+      }
+    };
+
+    fetchNotes();
+  }, []);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -67,7 +92,7 @@ export default function LessonNotesManagement() {
       const fileUrl = await uploadLessonNotes(file);
       
       // Add metadata to Firestore
-      await addDoc(collection(db, 'lesson-notes'), {
+      const docRef = await addDoc(collection(db, 'lesson-notes'), {
         title: title.trim(),
         date: new Date(),
         fileUrl,
@@ -75,6 +100,18 @@ export default function LessonNotesManagement() {
         uploadedBy: userProfile.uid,
         fileName: file.name
       });
+
+      // Add the new note to the state
+      const newNote = {
+        id: docRef.id,
+        title: title.trim(),
+        date: new Date(),
+        fileUrl,
+        uploadedAt: new Date(),
+        uploadedBy: userProfile.uid,
+        fileName: file.name
+      };
+      setNotes(prevNotes => [newNote, ...prevNotes]);
 
       setSuccess(true);
       setTitle('');
@@ -87,6 +124,20 @@ export default function LessonNotesManagement() {
       console.error('Upload error:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async (noteId: string) => {
+    if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'lesson-notes', noteId));
+      setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
+    } catch (err) {
+      console.error('Error deleting note:', err);
+      setError('Failed to delete note');
     }
   };
 
@@ -108,7 +159,7 @@ export default function LessonNotesManagement() {
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              className="mt-1 block w-full rounded-md border-gray-300 dark:border-white/10 shadow-sm focus:border-[#D6805F] focus:ring-[#D6805F] dark:bg-white/5 dark:text-white sm:text-sm"
+              className="mt-1 block w-full rounded-md border-gray-300 dark:border-white/10 shadow-sm focus:border-[#D6805F] focus:ring-[#D6805F] dark:bg-white/5 dark:text-white sm:text-sm px-4 py-2"
               placeholder="Enter the title for this lesson's notes"
             />
           </div>
@@ -180,6 +231,53 @@ export default function LessonNotesManagement() {
             </button>
           </div>
         </form>
+      </div>
+
+      {/* List of uploaded notes */}
+      <div className="mt-8">
+        <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">Uploaded Notes</h2>
+        <div className="bg-white dark:bg-white/5 rounded-lg shadow-sm overflow-hidden">
+          <ul className="divide-y divide-gray-200 dark:divide-white/10">
+            {notes.map((note) => (
+              <li key={note.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <FileText className="h-5 w-5 text-gray-400" />
+                    <div>
+                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">{note.title}</h3>
+                      <p className="text-sm text-gray-500 dark:text-gray-400">
+                        Uploaded on {note.uploadedAt.toLocaleDateString()}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <a
+                      href={note.fileUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-[#D6805F] hover:text-[#c0734f] p-2 rounded-full hover:bg-[#D6805F]/10"
+                      title="Open PDF"
+                    >
+                      <ExternalLink className="h-5 w-5" />
+                    </a>
+                    <button
+                      onClick={() => handleDelete(note.id)}
+                      className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/50"
+                      title="Delete"
+                    >
+                      <Trash2 className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+            {notes.length === 0 && (
+              <li className="p-4 text-center text-gray-500 dark:text-gray-400">
+                No notes have been uploaded yet.
+              </li>
+            )}
+          </ul>
+        </div>
       </div>
     </div>
   );
