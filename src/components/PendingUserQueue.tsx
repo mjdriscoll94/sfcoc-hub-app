@@ -29,12 +29,15 @@ export default function PendingUserQueue() {
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const pendingUsers = snapshot.docs.map(doc => {
         const data = doc.data();
+        const createdAt = data.createdAt?.toDate?.() ||
+                         (data.createdAt instanceof Date ? data.createdAt :
+                         new Date());
         return {
           uid: doc.id,
           email: data.email,
           displayName: data.displayName,
           approvalStatus: data.approvalStatus,
-          createdAt: data.createdAt?.toDate() || new Date(),
+          createdAt
         } as PendingUser;
       });
       setUsers(pendingUsers);

@@ -9,7 +9,9 @@ import { UserProfile } from '@/types';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import ConfirmationModal from '@/components/ConfirmationModal';
-import { Users } from 'lucide-react';
+import { Users, FileText } from 'lucide-react';
+import Link from 'next/link';
+import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<UserProfile[]>([]);
@@ -32,10 +34,13 @@ export default function AdminDashboard() {
         const usersData = usersSnapshot.docs
           .map(doc => {
             const data = doc.data();
+            const createdAt = data.createdAt?.toDate?.() ||
+                             (data.createdAt instanceof Date ? data.createdAt :
+                             new Date());
             return {
               uid: doc.id,
               ...data,
-              createdAt: data.createdAt?.toDate() || new Date(),
+              createdAt
             } as UserProfile;
           });
         setUsers(usersData);
@@ -62,6 +67,54 @@ export default function AdminDashboard() {
           <p className="mt-2 text-sm text-gray-700 dark:text-gray-300">
             Manage prayer requests, users, and other administrative tasks.
           </p>
+        </div>
+
+        {/* Quick Actions Grid */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {/* User Management */}
+          <Link
+            href="/admin/users"
+            className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+          >
+            <div className="flex-shrink-0">
+              <Users className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="absolute inset-0" aria-hidden="true" />
+              <p className="text-sm font-medium text-gray-900 dark:text-white">User Management</p>
+              <p className="text-sm text-gray-500 dark:text-white/60">Manage user accounts and approvals</p>
+            </div>
+          </Link>
+
+          {/* Add Announcement */}
+          <Link
+            href="/admin/announcements/new"
+            className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+          >
+            <div className="flex-shrink-0">
+              <PlusIcon className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="absolute inset-0" aria-hidden="true" />
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Add Announcement</p>
+              <p className="text-sm text-gray-500 dark:text-white/60">Create a new announcement</p>
+            </div>
+          </Link>
+
+          {/* Directory Management */}
+          <Link
+            href="/admin/directory"
+            className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+          >
+            <div className="flex-shrink-0">
+              <FileText className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="absolute inset-0" aria-hidden="true" />
+              <p className="text-sm font-medium text-gray-900 dark:text-white">Directory</p>
+              <p className="text-sm text-gray-500 dark:text-white/60">Manage church directory</p>
+            </div>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-8">
