@@ -150,12 +150,12 @@ export default function LessonNotesManagement() {
       }
       console.log('Upload Index:', uploadIndex);
 
-      // Get the folder and filename parts
+      // Get everything after 'upload' EXCEPT the file extension and cloudinary domain
       const relevantParts = urlParts.slice(uploadIndex + 1);
       console.log('Relevant Parts:', relevantParts);
 
-      // Remove the file extension
-      const publicId = relevantParts.join('/').replace(/\.[^/.]+$/, '');
+      // Join the parts and remove the file extension
+      const publicId = relevantParts.join('/').split('.')[0];
       console.log('Final Public ID:', publicId);
 
       // Log Cloudinary configuration (without showing actual secrets)

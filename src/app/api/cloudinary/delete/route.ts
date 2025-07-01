@@ -39,16 +39,31 @@ export async function POST(request: Request) {
     // Configure Cloudinary
     cloudinary.config(config);
 
-    // Delete the file from Cloudinary
-    const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
-    console.log('Cloudinary delete result:', result);
+    // Try to delete with different resource types
+    const resourceTypes = ['raw', 'image', 'video'];
+    let deleted = false;
+    let lastError: Error | null = null;
 
-    if (result.result === 'ok') {
-      return NextResponse.json({ message: 'File deleted successfully' });
-    } else {
-      console.error('Cloudinary deletion failed:', result);
+    for (const resourceType of resourceTypes) {
+      try {
+        console.log(`Attempting to delete with resource_type: ${resourceType}`);
+        const result = await cloudinary.uploader.destroy(publicId, { resource_type: resourceType });
+        console.log(`Result for ${resourceType}:`, result);
+        
+        if (result.result === 'ok') {
+          deleted = true;
+          return NextResponse.json({ message: 'File deleted successfully' });
+        }
+      } catch (error) {
+        console.log(`Error with ${resourceType}:`, error);
+        lastError = error instanceof Error ? error : new Error('Unknown error');
+      }
+    }
+
+    if (!deleted) {
+      console.error('Failed to delete with all resource types. Last error:', lastError);
       return NextResponse.json(
-        { error: `Failed to delete file from Cloudinary: ${result.result}` },
+        { error: `Failed to delete file from Cloudinary: ${lastError?.message || 'not found'}` },
         { status: 500 }
       );
     }
