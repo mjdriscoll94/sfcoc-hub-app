@@ -1,0 +1,176 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { doc, updateDoc } from 'firebase/firestore';
+import { db } from '@/lib/firebase/config';
+
+export default function SettingsPage() {
+  const { userProfile } = useAuth();
+  const [isSaving, setIsSaving] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
+  const [error, setError] = useState('');
+  const [localSubscriptions, setLocalSubscriptions] = useState({
+    announcements: true,
+    events: true,
+    newsletter: true
+  });
+
+  // Initialize local state from userProfile
+  useEffect(() => {
+    if (userProfile?.emailSubscriptions) {
+      console.log('Updating local subscriptions from profile:', userProfile.emailSubscriptions);
+      setLocalSubscriptions(userProfile.emailSubscriptions);
+    }
+  }, [userProfile]);
+
+  const handleSubscriptionChange = async (type: 'announcements' | 'events' | 'newsletter', checked: boolean) => {
+    if (!userProfile) return;
+
+    console.log(`Toggling ${type} to ${checked}`);
+    setIsSaving(true);
+    setSuccessMessage('');
+    setError('');
+
+    // Update local state immediately for responsive UI
+    const newSubscriptions = {
+      ...localSubscriptions,
+      [type]: checked
+    };
+    console.log('New subscription state:', newSubscriptions);
+    setLocalSubscriptions(newSubscriptions);
+
+    try {
+      const userRef = doc(db, 'users', userProfile.uid);
+      
+      console.log('Updating Firestore with:', newSubscriptions);
+      await updateDoc(userRef, {
+        emailSubscriptions: newSubscriptions,
+        updatedAt: new Date()
+      });
+
+      setSuccessMessage('Settings updated successfully');
+
+      // Clear success message after 3 seconds
+      setTimeout(() => {
+        setSuccessMessage('');
+      }, 3000);
+    } catch (err) {
+      console.error('Error updating settings:', err);
+      setError('Failed to update settings. Please try again.');
+      
+      // Revert local state on error
+      setLocalSubscriptions(userProfile.emailSubscriptions);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  if (!userProfile) {
+    return (
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <p className="text-gray-900 dark:text-white">Loading...</p>
+      </div>
+    );
+  }
+
+  console.log('Current local subscriptions:', localSubscriptions);
+  console.log('Current profile subscriptions:', userProfile.emailSubscriptions);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
+      </div>
+
+      <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
+        <div className="space-y-6">
+          {/* Email Subscriptions */}
+          <div>
+            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Email Notifications</h2>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <label htmlFor="announcements" className="text-gray-900 dark:text-white font-medium">
+                    Announcements
+                  </label>
+                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                    Receive emails about new church announcements
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="announcements"
+                    checked={localSubscriptions.announcements}
+                    onChange={(e) => handleSubscriptionChange('announcements', e.target.checked)}
+                    disabled={isSaving}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <label htmlFor="events" className="text-gray-900 dark:text-white font-medium">
+                    Events
+                  </label>
+                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                    Receive emails about upcoming church events
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="events"
+                    checked={localSubscriptions.events}
+                    onChange={(e) => handleSubscriptionChange('events', e.target.checked)}
+                    disabled={isSaving}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <label htmlFor="newsletter" className="text-gray-900 dark:text-white font-medium">
+                    Newsletter
+                  </label>
+                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                    Receive our weekly church newsletter
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="newsletter"
+                    checked={localSubscriptions.newsletter}
+                    onChange={(e) => handleSubscriptionChange('newsletter', e.target.checked)}
+                    disabled={isSaving}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          {/* Status Messages */}
+          {successMessage && (
+            <div className="p-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-500/50 rounded-md">
+              <p className="text-green-800 dark:text-green-200">{successMessage}</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="p-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 rounded-md">
+              <p className="text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+} 

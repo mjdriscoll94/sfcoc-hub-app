@@ -1,0 +1,24 @@
+{
+  "rules": {
+    "push_subscriptions": {
+      ".read": true,  // Anyone can read subscriptions
+      ".write": true, // Anyone can write subscriptions
+      "$subscription_id": {
+        ".validate": "newData.hasChildren(['endpoint', 'keys', 'topics']) &&
+                     newData.child('endpoint').isString() &&
+                     newData.child('keys').hasChildren(['p256dh', 'auth']) &&
+                     newData.child('keys').child('p256dh').isString() &&
+                     newData.child('keys').child('auth').isString()"
+      }
+    },
+    "push_topics": {
+      ".read": true,  // Anyone can read topics
+      ".write": true, // Anyone can write topics
+      "$topic": {
+        "$subscription_id": {
+          ".validate": "newData.isBoolean()"
+        }
+      }
+    }
+  }
+} 

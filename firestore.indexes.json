@@ -1,0 +1,51 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "prayerPraise",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "type",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "dateCreated",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "announcements",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "datePosted",
+          "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "volunteerOpportunities",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "status",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "eventDate",
+          "order": "ASCENDING"
+        }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+} 

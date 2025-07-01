@@ -1,103 +1,268 @@
+'use client';
+
 import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+
+const eventCategories = [
+  {
+    title: "Group Events",
+    events: [
+      {
+        name: "Sunday Service",
+        time: "9:45AM - 12:00PM",
+        day: "Every Sunday",
+        description: "Join us for worship, fellowship, and bible classes",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+          </svg>
+        )
+      },
+      {
+        name: "Wednesday Study",
+        time: "7:00 PM",
+        day: "Every Wednesday",
+        description: "Deep dive into God's word",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        )
+      },
+      {
+        name: "4th Sunday Fellowship",
+        time: "5:00 PM",
+        day: "Last Sunday of each month",
+        description: "Food and fellowship",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        )
+      },
+      {
+        name: "5th Sunday Singing",
+        time: "5:00 PM",
+        day: "Each 5th Sunday of a month",
+        description: "Worship and a shared meal with other congregations",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        )
+      }
+    ]
+  },
+  {
+    title: "Men's Events",
+    events: [
+      {
+        name: "Men's Bible Study",
+        time: "8:30 PM",
+        day: "Every Thursday",
+        description: "Bible study and discussion for men",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        )
+      },
+      {
+        name: "Men's Breakfast",
+        time: "8:00 AM",
+        day: "Last Saturday of each month",
+        description: "Breakfast and fellowship for men",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        )
+      }
+    ]
+  },
+  {
+    title: "Women's Events",
+    events: [
+      {
+        name: "Ladies Bible Study",
+        time: "8:30 AM",
+        day: "Every Other Thursday",
+        description: "Bible study and discussion for ladies",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        )
+      }
+    ]
+  },
+  {
+    title: "Youth Events",
+    events: [
+      {
+        name: "Youth Group",
+        time: "7:00 PM",
+        day: "Every Wednesday",
+        description: "Bible Study classes for youth",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        )
+      },
+      {
+        name: "Youth/Young Adults Bible Study",
+        time: "7:00 PM",
+        day: "One Saturday of each month",
+        description: "Bible study and discussion for youth and young adults",
+        icon: (
+          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+          </svg>
+        )
+      }
+      
+    ]
+  },
+];
 
 export default function Home() {
-  return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [expandedCategories, setExpandedCategories] = useState(new Set([0])); // Start with first category expanded
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+  const toggleCategory = (index: number) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(index)) {
+        newSet.delete(index);
+      } else {
+        newSet.add(index);
+      }
+      return newSet;
+    });
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen">
+      {/* Hero Section */}
+      <section className="relative h-[600px]">
+        <div className="absolute inset-0">
+          <Image
+            src="/images/church-interior.jpg"
+            alt="Church sanctuary with congregation"
+            fill
+            className="object-cover"
+            priority
+            quality={100}
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/50" />
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+        <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
+          <div className="text-white max-w-2xl text-center">
+            <h1 className="text-3xl md:text-5xl font-bold mb-4">
+              Sioux Falls Church of Christ
+            </h1>
+            <p className="text-xl md:text-2xl mb-8">
+              One body. Many members. United and serving together.
+            </p>
+            <div className="flex justify-center">
+              <Link
+                href="/calendar"
+                className="bg-[#D6805F] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#c57355] transition-colors inline-flex items-center space-x-2"
+              >
+                <span>View Calendar</span>
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Regular Events Section */}
+      <section className="py-16 bg-[#1A1A1A] dark:bg-[#1A1A1A]">
+        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">Events</h2>
+            <p className="mt-4 text-lg text-white/60">Join us for our regular gatherings</p>
+          </div>
+          
+          <div className="space-y-6">
+            {eventCategories.map((category, categoryIndex) => (
+              <div 
+                key={categoryIndex} 
+                className="bg-white dark:bg-white/5 rounded-lg border-2 border-gray-300 dark:border-white/10 overflow-hidden shadow-sm"
+              >
+                <button
+                  onClick={() => toggleCategory(categoryIndex)}
+                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                >
+                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                    {category.title}
+                  </h3>
+                  <svg
+                    className={`w-5 h-5 text-gray-900 dark:text-white transform transition-transform ${
+                      expandedCategories.has(categoryIndex) ? 'rotate-180' : ''
+                    }`}
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+                
+                <div
+                  className={`transition-all duration-200 ease-in-out ${
+                    expandedCategories.has(categoryIndex)
+                      ? 'max-h-[1000px] opacity-100'
+                      : 'max-h-0 opacity-0 overflow-hidden'
+                  }`}
+                >
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 pt-2">
+                    {category.events.map((event, eventIndex) => (
+                      <div
+                        key={eventIndex}
+                        className="bg-white dark:bg-white/5 rounded-lg p-4 border-2 border-gray-300 dark:border-white/10 hover:border-[#D6805F] transition-colors flex items-start space-x-4 shadow-sm"
+                      >
+                        <div className="flex-shrink-0">
+                          <div className="p-2 bg-[#D6805F]/20 dark:bg-[#D6805F]/10 rounded-full">
+                            {event.icon}
+                          </div>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{event.name}</h4>
+                          <p className="text-[#D6805F] font-medium text-sm mb-1">{event.time}</p>
+                          <p className="text-gray-600 dark:text-white/60 text-sm mb-1">{event.day}</p>
+                          <p className="text-gray-700 dark:text-white/80 text-sm leading-snug">{event.description}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center mt-12">
+            <Link
+              href="/calendar"
+              className="inline-flex items-center text-[#D6805F] hover:text-[#c57355] transition-colors"
+            >
+              <span>View Full Calendar</span>
+              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </Link>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
