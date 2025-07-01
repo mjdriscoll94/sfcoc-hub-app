@@ -192,7 +192,7 @@ export default function DirectorySubmissionForm() {
       <div className="space-y-6">
         {/* Photo Upload Section */}
         <div className="col-span-full">
-          <label htmlFor="photo" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+          <label htmlFor="photo" className="block text-sm font-medium text-white">
             Family Photo
           </label>
           <div className="mt-2 flex items-center gap-x-3">
@@ -241,7 +241,7 @@ export default function DirectorySubmissionForm() {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
-            <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+            <label htmlFor="firstName" className="block text-sm font-medium text-white">
               First Name
             </label>
             <input
@@ -255,7 +255,7 @@ export default function DirectorySubmissionForm() {
           </div>
 
           <div>
-            <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+            <label htmlFor="lastName" className="block text-sm font-medium text-white">
               Last Name
             </label>
             <input
@@ -269,7 +269,7 @@ export default function DirectorySubmissionForm() {
           </div>
 
           <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+            <label htmlFor="email" className="block text-sm font-medium text-white">
               Email
             </label>
             <input
@@ -283,8 +283,8 @@ export default function DirectorySubmissionForm() {
           </div>
 
           <div>
-            <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-white/70">
-              Phone Number <span className="text-gray-500 dark:text-white/40">(optional)</span>
+            <label htmlFor="phoneNumber" className="block text-sm font-medium text-white">
+              Phone Number <span className="text-white/40">(optional)</span>
             </label>
             <input
               type="tel"
@@ -296,8 +296,8 @@ export default function DirectorySubmissionForm() {
           </div>
 
           <div className="sm:col-span-2">
-            <label htmlFor="address" className="block text-sm font-medium text-gray-700 dark:text-white/70">
-              Address <span className="text-gray-500 dark:text-white/40">(optional)</span>
+            <label htmlFor="address" className="block text-sm font-medium text-white">
+              Address <span className="text-white/40">(optional)</span>
             </label>
             <input
               type="text"
@@ -309,8 +309,8 @@ export default function DirectorySubmissionForm() {
           </div>
 
           <div className="sm:col-span-2">
-            <label htmlFor="anniversary" className="block text-sm font-medium text-gray-700 dark:text-white/70">
-              Anniversary <span className="text-gray-500 dark:text-white/40">(optional)</span>
+            <label htmlFor="anniversary" className="block text-sm font-medium text-white">
+              Anniversary <span className="text-white/40">(optional)</span>
             </label>
             <input
               type="date"
@@ -350,7 +350,7 @@ export default function DirectorySubmissionForm() {
 
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-4 sm:gap-3">
             <div>
-              <label htmlFor="familyFirstName" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+              <label htmlFor="familyFirstName" className="block text-sm font-medium text-white">
                 First Name
               </label>
               <input
@@ -363,7 +363,7 @@ export default function DirectorySubmissionForm() {
             </div>
 
             <div>
-              <label htmlFor="familyLastName" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+              <label htmlFor="familyLastName" className="block text-sm font-medium text-white">
                 Last Name
               </label>
               <input
@@ -376,7 +376,7 @@ export default function DirectorySubmissionForm() {
             </div>
 
             <div>
-              <label htmlFor="relationship" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+              <label htmlFor="relationship" className="block text-sm font-medium text-white">
                 Relationship
               </label>
               <select
@@ -394,7 +394,7 @@ export default function DirectorySubmissionForm() {
             </div>
 
             <div>
-              <label htmlFor="birthday" className="block text-sm font-medium text-gray-700 dark:text-white/70">
+              <label htmlFor="birthday" className="block text-sm font-medium text-white">
                 Birthday
               </label>
               <input
