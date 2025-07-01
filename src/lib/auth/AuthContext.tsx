@@ -223,11 +223,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     try {
+      console.log('AuthContext: Starting sign out process');
       setError(null);
       await firebaseSignOut(auth);
+      console.log('AuthContext: Firebase sign out successful');
       setUserProfile(null);
+      console.log('AuthContext: User profile cleared');
     } catch (error) {
-      console.error('Sign out error:', error);
+      console.error('AuthContext: Sign out error:', error);
       setError(error as Error);
       throw error;
     }

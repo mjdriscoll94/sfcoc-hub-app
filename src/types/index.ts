@@ -7,7 +7,11 @@ export interface UserProfile {
   uid: string;
   email: string | null;
   displayName: string | null;
-  photoURL: string | null;
+  photoURL?: string;
+  role?: string;
+  isAdmin: boolean;
+  notificationsEnabled: boolean;
+  approvalStatus: 'pending' | 'approved' | 'rejected';
   createdAt: Date;
   updatedAt: Date;
   emailSubscriptions: {
@@ -15,9 +19,4 @@ export interface UserProfile {
     events: boolean;
     newsletter: boolean;
   };
-  role: UserRole;
-  isAdmin?: boolean;
-  notificationsEnabled?: boolean;
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
-  [key: string]: any; // For additional fields
 } 
