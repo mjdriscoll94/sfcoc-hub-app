@@ -1,13 +1,6 @@
 import { NextResponse } from 'next/server';
 import { v2 as cloudinary } from 'cloudinary';
 
-// Configure Cloudinary
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET
-});
-
 export async function POST(request: Request) {
   try {
     const { publicId } = await request.json();
@@ -20,20 +13,37 @@ export async function POST(request: Request) {
       );
     }
 
-    // Log Cloudinary configuration (without sensitive data)
-    console.log('Cloudinary Configuration:', {
-      cloud_name: process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-      hasApiKey: !!process.env.CLOUDINARY_API_KEY,
-      hasApiSecret: !!process.env.CLOUDINARY_API_SECRET
+    // Configure Cloudinary with direct values
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
+    const apiKey = process.env.CLOUDINARY_API_KEY;
+    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+
+    // Log configuration status
+    console.log('Cloudinary Configuration Status:', {
+      hasCloudName: !!cloudName,
+      hasApiKey: !!apiKey,
+      hasApiSecret: !!apiSecret,
+      cloudName: cloudName // safe to log cloud name
     });
 
-    if (!process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
-      console.error('Missing Cloudinary credentials');
+    if (!cloudName || !apiKey || !apiSecret) {
+      console.error('Missing Cloudinary credentials:', {
+        cloudName: !!cloudName,
+        apiKey: !!apiKey,
+        apiSecret: !!apiSecret
+      });
       return NextResponse.json(
         { error: 'Server configuration error - missing Cloudinary credentials' },
         { status: 500 }
       );
     }
+
+    // Configure Cloudinary with the verified credentials
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret
+    });
 
     // Delete the file from Cloudinary
     const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
