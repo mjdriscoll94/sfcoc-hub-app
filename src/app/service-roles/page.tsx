@@ -283,8 +283,6 @@ export default function ServiceRolesPage() {
         <div className="text-center pb-12">
           <h1 className="text-3xl font-bold text-white mb-4">Sunday Service Roles List</h1>
         </div>
-
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Sunday Service Roles</h2>
         
         {error && (
           <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 rounded-md p-4 text-red-600 dark:text-red-200">
