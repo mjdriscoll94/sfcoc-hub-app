@@ -74,7 +74,10 @@ export const uploadLessonNotes = async (file: File): Promise<string> => {
     const data = await response.json();
     console.log('Upload successful:', data);
     
-    return data.secure_url;
+    // Modify the URL to ensure public access
+    // Replace /upload/ with /upload/fl_attachment/ to force download and ensure public access
+    const secureUrl = data.secure_url.replace('/upload/', '/upload/fl_attachment/');
+    return secureUrl;
   } catch (error) {
     console.error('Error in uploadLessonNotes:', error);
     if (error instanceof Error) {
