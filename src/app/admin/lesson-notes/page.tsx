@@ -127,17 +127,41 @@ export default function LessonNotesManagement() {
     }
   };
 
-  const handleDelete = async (noteId: string) => {
+  const handleDelete = async (noteId: string, fileUrl: string) => {
     if (!confirm('Are you sure you want to delete this note? This action cannot be undone.')) {
       return;
     }
 
     try {
+      // Extract the public ID from the Cloudinary URL
+      const urlParts = fileUrl.split('/');
+      const rawIndex = urlParts.indexOf('raw');
+      if (rawIndex === -1) {
+        throw new Error('Invalid Cloudinary URL');
+      }
+      // Get everything after 'raw/upload/' including the file name
+      const publicId = urlParts.slice(rawIndex + 2).join('/').split('.')[0];
+
+      // Delete from Cloudinary first
+      const cloudinaryResponse = await fetch('/api/cloudinary/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ publicId }),
+      });
+
+      if (!cloudinaryResponse.ok) {
+        const errorData = await cloudinaryResponse.json();
+        throw new Error(`Failed to delete from Cloudinary: ${errorData.error}`);
+      }
+
+      // If Cloudinary deletion was successful, delete from Firestore
       await deleteDoc(doc(db, 'lesson-notes', noteId));
       setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
     } catch (err) {
       console.error('Error deleting note:', err);
-      setError('Failed to delete note');
+      setError('Failed to delete note. Please try again.');
     }
   };
 
@@ -261,7 +285,7 @@ export default function LessonNotesManagement() {
                       <ExternalLink className="h-5 w-5" />
                     </a>
                     <button
-                      onClick={() => handleDelete(note.id)}
+                      onClick={() => handleDelete(note.id, note.fileUrl)}
                       className="text-red-600 hover:text-red-900 dark:text-red-400 dark:hover:text-red-300 p-2 rounded-full hover:bg-red-50 dark:hover:bg-red-900/50"
                       title="Delete"
                     >
