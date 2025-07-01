@@ -150,18 +150,32 @@ export default function LessonNotesManagement() {
       const publicId = urlParts.slice(uploadIndex + 1).join('/').split('.')[0];
       console.log('Extracted public ID:', publicId);
 
+      // Log Cloudinary configuration (without showing actual secrets)
+      console.log('Cloudinary Config Check:', {
+        hasCloudName: !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+        hasApiKey: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+        hasApiSecret: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
+        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+      });
+
+      const credentials = {
+        publicId,
+        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+        apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+        apiSecret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
+      };
+
+      if (!credentials.cloudName || !credentials.apiKey || !credentials.apiSecret) {
+        throw new Error('Missing Cloudinary credentials in frontend configuration');
+      }
+
       // Delete from Cloudinary first
       const cloudinaryResponse = await fetch('/api/cloudinary/delete', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          publicId,
-          cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-          apiKey: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-          apiSecret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
-        }),
+        body: JSON.stringify(credentials),
       });
 
       const responseData = await cloudinaryResponse.json();
