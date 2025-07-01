@@ -225,12 +225,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       console.log('AuthContext: Starting sign out process');
       setError(null);
-      // Clear user profile first
+      
+      // Clear all state first
       setUserProfile(null);
-      // Then sign out from Firebase
-      await firebaseSignOut(auth);
-      // Clear user state
       setUser(null);
+      
+      // Unsubscribe from any Firestore listeners
+      if (typeof window !== 'undefined') {
+        const unsubFuncs = (window as any).__firebaseUnsubscribes || [];
+        unsubFuncs.forEach((unsub: () => void) => unsub());
+      }
+      
+      // Sign out from Firebase
+      await firebaseSignOut(auth);
+      
+      // Clear any persisted state
+      localStorage.removeItem('user');
+      sessionStorage.removeItem('user');
+      
+      // Force reload the page to clear any remaining state
+      if (typeof window !== 'undefined') {
+        window.location.href = '/auth/signin';
+      }
+      
       console.log('AuthContext: Sign out complete');
     } catch (error) {
       console.error('AuthContext: Sign out error:', error);

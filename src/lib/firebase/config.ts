@@ -2,7 +2,7 @@
 
 import { initializeApp, getApps } from 'firebase/app';
 import { getFirestore } from 'firebase/firestore';
-import { getAuth } from 'firebase/auth';
+import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'firebase/auth';
 import { getDatabase } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
 
@@ -52,9 +52,20 @@ try {
 console.log('Initializing Firestore...');
 const db = getFirestore(app);
 
-// Initialize Auth
+// Initialize Auth with persistence
 console.log('Initializing Auth...');
 const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log('Auth persistence set to local');
+    // Add auth state change listener for debugging
+    onAuthStateChanged(auth, (user) => {
+      console.log('Auth state changed:', user ? 'User is signed in' : 'User is signed out');
+    });
+  })
+  .catch((error) => {
+    console.error('Error setting auth persistence:', error);
+  });
 
 // Initialize Realtime Database
 console.log('Initializing Realtime Database...');

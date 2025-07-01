@@ -309,14 +309,8 @@ const Navigation = () => {
                             if (isSigningOut) return;
                             
                             setIsSigningOut(true);
-                            console.log('Sign out link clicked');
                             try {
-                              console.log('Attempting to sign out...');
                               await signOut();
-                              console.log('Sign out successful');
-                              setIsUserMenuOpen(false);
-                              // Force a hard navigation to the sign-in page
-                              window.location.href = '/auth/signin';
                             } catch (error) {
                               console.error('Error in sign out:', error);
                               setIsSigningOut(false);
