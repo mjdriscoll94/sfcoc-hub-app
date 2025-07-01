@@ -86,6 +86,26 @@ export default function SettingsPage() {
         <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
       </div>
 
+      {/* Role Information */}
+      <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10 mb-8">
+        <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Account Role</h2>
+        <div className="flex items-center space-x-4">
+          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+            userProfile.role === 'admin' ? 'bg-[#D6805F] text-white' :
+            userProfile.role === 'organizer' ? 'bg-[#85AAA0] text-white' :
+            'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/60'
+          }`}>
+            {userProfile.role ? userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1) : 'User'}
+          </div>
+          <p className="text-sm text-gray-500 dark:text-white/60">
+            {userProfile.role === 'admin' ? 'Full access to all features and administrative controls' :
+             userProfile.role === 'organizer' ? 'Can manage service roles and access member directory' :
+             userProfile.role === 'member' ? 'Can access member directory and participate in church activities' :
+             'Basic access to church information and features'}
+          </p>
+        </div>
+      </div>
+
       <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
         <div className="space-y-6">
           {/* Email Subscriptions */}

@@ -8,7 +8,7 @@ export interface UserProfile {
   email: string | null;
   displayName: string | null;
   photoURL?: string;
-  role?: string;
+  role: UserRole;
   isAdmin: boolean;
   notificationsEnabled: boolean;
   approvalStatus: 'pending' | 'approved' | 'rejected';

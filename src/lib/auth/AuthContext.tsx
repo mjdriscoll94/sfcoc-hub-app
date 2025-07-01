@@ -95,6 +95,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           approvalStatus: 'pending',
           createdAt: new Date(),
           updatedAt: new Date(),
+          role: 'user',
           emailSubscriptions: {
             announcements: false,
             events: false,
@@ -201,6 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         approvalStatus: 'pending',
         createdAt: new Date(),
         updatedAt: new Date(),
+        role: 'user',
         emailSubscriptions: {
           announcements: false,
           events: false,

@@ -18,6 +18,7 @@ interface UserData {
   createdAt: Date;
   disabled?: boolean;
   customClaims?: { admin: boolean };
+  role?: string;
 }
 
 export default function UserManagement() {
@@ -57,7 +58,8 @@ export default function UserManagement() {
             createdAt: createdAtDate,
             approvalStatus: data.approvalStatus || 'approved',
             disabled: data.disabled || false,
-            customClaims: data.customClaims
+            customClaims: data.customClaims,
+            role: data.role || 'user'
           };
           
           userData.push(processedData);
@@ -263,7 +265,7 @@ export default function UserManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {user.customClaims?.admin ? 'Admin' : 'User'}
+                      {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       {user.approvalStatus === 'pending' && (
@@ -291,15 +293,6 @@ export default function UserManagement() {
                           title="Approve User"
                         >
                           <CheckIcon className="h-5 w-5" />
-                        </button>
-                      )}
-                      {user.approvalStatus === 'approved' && !user.customClaims?.admin && (
-                        <button
-                          onClick={() => handleMakeAdmin(user.uid)}
-                          className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors duration-200"
-                          title="Make Admin"
-                        >
-                          <UserPlusIcon className="h-5 w-5" />
                         </button>
                       )}
                     </td>
@@ -358,15 +351,6 @@ export default function UserManagement() {
                             title="Approve User"
                           >
                             <CheckIcon className="h-5 w-5" />
-                          </button>
-                        )}
-                        {user.approvalStatus === 'approved' && !user.customClaims?.admin && (
-                          <button
-                            onClick={() => handleMakeAdmin(user.uid)}
-                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors duration-200"
-                            title="Make Admin"
-                          >
-                            <UserPlusIcon className="h-5 w-5" />
                           </button>
                         )}
                       </div>

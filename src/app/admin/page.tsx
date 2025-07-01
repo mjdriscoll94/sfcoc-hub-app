@@ -140,91 +140,27 @@ export default function AdminDashboard() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Admin Dashboard</h1>
-      </div>
+      <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-8">Admin Dashboard</h1>
 
-      {/* Admin Actions */}
-      <div className="mb-8">
-        <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-          <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">Quick Actions</h2>
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Link
-              href="/admin/announcements/new"
-              className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
-            >
-              <div className="flex-shrink-0">
-                <PlusIcon className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">New Announcement</p>
-                <p className="text-sm text-gray-500 dark:text-white/60">Create a new announcement</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/volunteer/new"
-              className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
-            >
-              <div className="flex-shrink-0">
-                <PlusIcon className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">New Volunteer Opportunity</p>
-                <p className="text-sm text-gray-500 dark:text-white/60">Create a new volunteer opportunity</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/users"
-              className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
-            >
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">User Management</p>
-                <p className="text-sm text-gray-500 dark:text-white/60">Manage user accounts and permissions</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/directory"
-              className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
-            >
-              <div className="flex-shrink-0">
-                <Users className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Directory Submissions</p>
-                <p className="text-sm text-gray-500 dark:text-white/60">Review and approve directory submissions</p>
-              </div>
-            </Link>
-
-            <Link
-              href="/admin/lesson-notes"
-              className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
-            >
-              <div className="flex-shrink-0">
-                <FileText className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-white">Lesson Notes</p>
-                <p className="text-sm text-gray-500 dark:text-white/60">Upload and manage lesson notes</p>
-              </div>
-            </Link>
+      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {/* User Management */}
+        <Link
+          href="/admin/users"
+          className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+        >
+          <div className="flex-shrink-0">
+            <Users className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
           </div>
-        </div>
-      </div>
+          <div className="flex-1 min-w-0">
+            <span className="absolute inset-0" aria-hidden="true" />
+            <p className="text-sm font-medium text-gray-900 dark:text-white">User Management</p>
+            <p className="text-sm text-gray-500 dark:text-white/60">Manage user accounts and approvals</p>
+          </div>
+        </Link>
 
-      {/* Prayer Request Approval Queue */}
-      <div className="mb-8">
-        <div className="bg-white dark:bg-white/5 rounded-lg p-6">
+        {/* Prayer Request Management */}
+        <div className="bg-white dark:bg-white/5 rounded-lg shadow-sm p-6 border border-gray-200 dark:border-white/10">
+          <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Prayer Request Queue</h2>
           <PrayerRequestApprovalQueue />
         </div>
       </div>
