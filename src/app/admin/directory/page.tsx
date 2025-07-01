@@ -76,6 +76,7 @@ export default function DirectoryAdminPage() {
         email: submission.email,
         phoneNumber: submission.phoneNumber,
         address: submission.address,
+        photoURL: submission.photoURL,
         familyMembers: submission.familyMembers,
         addedAt: Timestamp.now(),
         addedBy: userProfile?.uid
