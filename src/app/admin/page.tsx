@@ -7,6 +7,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { collection, getDocs, doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { FileText } from 'lucide-react';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { Users } from 'lucide-react';
@@ -203,6 +204,20 @@ export default function AdminDashboard() {
                 <span className="absolute inset-0" aria-hidden="true" />
                 <p className="text-sm font-medium text-gray-900 dark:text-white">Directory Submissions</p>
                 <p className="text-sm text-gray-500 dark:text-white/60">Review and approve directory submissions</p>
+              </div>
+            </Link>
+
+            <Link
+              href="/admin/lesson-notes"
+              className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-gray-50 dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+            >
+              <div className="flex-shrink-0">
+                <FileText className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className="absolute inset-0" aria-hidden="true" />
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Lesson Notes</p>
+                <p className="text-sm text-gray-500 dark:text-white/60">Upload and manage lesson notes</p>
               </div>
             </Link>
           </div>
