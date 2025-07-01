@@ -158,7 +158,7 @@ export default function DirectoryPage() {
                     <div className="relative h-24 w-24">
                       <Image
                         src={member.photoURL}
-                        alt={`${member.firstName} ${member.lastName}'s family`}
+                        alt={`${member.lastName} Family`}
                         fill
                         className="rounded-lg object-cover"
                         sizes="96px"
@@ -171,7 +171,7 @@ export default function DirectoryPage() {
                   )}
                   <div className="flex-1 min-w-0">
                     <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                      {member.firstName} {member.lastName}
+                      The {member.lastName} Family
                     </h2>
                     {member.email && (
                       <div className="mt-2 flex items-center text-sm text-gray-500 dark:text-white/60">
@@ -198,31 +198,38 @@ export default function DirectoryPage() {
                   </div>
                 </div>
 
-                {member.familyMembers && member.familyMembers.length > 0 && (
-                  <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-                    <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
-                      Family Members
-                    </h3>
-                    <div className="space-y-2">
-                      {member.familyMembers.map((familyMember, index) => (
-                        <div key={index} className="flex items-center text-sm">
-                          <User className="h-4 w-4 text-gray-400 dark:text-white/40 mr-2" />
-                          <span className="text-gray-900 dark:text-white">
-                            {familyMember.firstName} {familyMember.lastName}
-                          </span>
-                          <span className="text-gray-500 dark:text-white/60 ml-2">
-                            ({familyMember.relationship})
-                          </span>
-                          {familyMember.birthday && (
-                            <span className="text-gray-500 dark:text-white/60 ml-2">
-                              • Born: {new Date(familyMember.birthday).toLocaleDateString()}
-                            </span>
-                          )}
-                        </div>
-                      ))}
+                <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
+                  <h3 className="text-sm font-medium text-gray-900 dark:text-white mb-2">
+                    Family Members
+                  </h3>
+                  <div className="space-y-2">
+                    <div className="flex items-center text-sm">
+                      <User className="h-4 w-4 text-gray-400 dark:text-white/40 mr-2" />
+                      <span className="text-gray-900 dark:text-white">
+                        {member.firstName} {member.lastName}
+                      </span>
+                      <span className="text-gray-500 dark:text-white/60 ml-2">
+                        (Primary Contact)
+                      </span>
                     </div>
+                    {member.familyMembers?.map((familyMember, index) => (
+                      <div key={index} className="flex items-center text-sm">
+                        <User className="h-4 w-4 text-gray-400 dark:text-white/40 mr-2" />
+                        <span className="text-gray-900 dark:text-white">
+                          {familyMember.firstName} {familyMember.lastName}
+                        </span>
+                        <span className="text-gray-500 dark:text-white/60 ml-2">
+                          ({familyMember.relationship})
+                        </span>
+                        {familyMember.birthday && (
+                          <span className="text-gray-500 dark:text-white/60 ml-2">
+                            • Born: {new Date(familyMember.birthday).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    ))}
                   </div>
-                )}
+                </div>
               </div>
             </div>
           ))}

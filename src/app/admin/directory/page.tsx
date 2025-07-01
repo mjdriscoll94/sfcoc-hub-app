@@ -157,7 +157,7 @@ export default function DirectoryAdminPage() {
                       <div className="relative h-24 w-24">
                         <Image
                           src={submission.photoURL}
-                          alt={`${submission.firstName} ${submission.lastName}'s family`}
+                          alt={`${submission.lastName} Family`}
                           fill
                           className="rounded-lg object-cover"
                           sizes="96px"
@@ -170,7 +170,7 @@ export default function DirectoryAdminPage() {
                     )}
                     <div>
                       <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-                        {submission.firstName} {submission.lastName}
+                        The {submission.lastName} Family
                       </h2>
                       <p className="text-sm text-gray-500 dark:text-white/60">
                         Submitted {submission.submittedAt.toLocaleDateString()}
@@ -207,29 +207,36 @@ export default function DirectoryAdminPage() {
                     </div>
                   </div>
 
-                  {submission.familyMembers.length > 0 && (
-                    <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-white/60 mb-2">Family Members</h3>
-                      <div className="space-y-2">
-                        {submission.familyMembers.map((member, index) => (
-                          <div key={index} className="flex items-center">
-                            <User className="h-5 w-5 text-gray-400 dark:text-white/40 mr-2" />
-                            <span className="text-sm text-gray-900 dark:text-white">
-                              {member.firstName} {member.lastName}
-                            </span>
-                            <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
-                              ({member.relationship})
-                            </span>
-                            {member.birthday && (
-                              <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
-                                • Born: {new Date(member.birthday).toLocaleDateString()}
-                              </span>
-                            )}
-                          </div>
-                        ))}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-500 dark:text-white/60 mb-2">Family Members</h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center">
+                        <User className="h-5 w-5 text-gray-400 dark:text-white/40 mr-2" />
+                        <span className="text-sm text-gray-900 dark:text-white">
+                          {submission.firstName} {submission.lastName}
+                        </span>
+                        <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
+                          (Primary Contact)
+                        </span>
                       </div>
+                      {submission.familyMembers.map((member, index) => (
+                        <div key={index} className="flex items-center">
+                          <User className="h-5 w-5 text-gray-400 dark:text-white/40 mr-2" />
+                          <span className="text-sm text-gray-900 dark:text-white">
+                            {member.firstName} {member.lastName}
+                          </span>
+                          <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
+                            ({member.relationship})
+                          </span>
+                          {member.birthday && (
+                            <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
+                              • Born: {new Date(member.birthday).toLocaleDateString()}
+                            </span>
+                          )}
+                        </div>
+                      ))}
                     </div>
-                  )}
+                  </div>
                 </div>
               </div>
             </div>
