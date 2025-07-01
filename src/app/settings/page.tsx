@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
+import { useRouter } from 'next/navigation';
 
 export default function SettingsPage() {
-  const { userProfile } = useAuth();
+  const { userProfile, user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
+  const router = useRouter();
   const [localSubscriptions, setLocalSubscriptions] = useState({
     announcements: true,
     events: true,
@@ -18,49 +20,50 @@ export default function SettingsPage() {
 
   // Initialize local state from userProfile
   useEffect(() => {
+    if (!user) {
+      console.log('Settings: No user found, redirecting to signin');
+      router.push('/auth/signin');
+      return;
+    }
+
     if (userProfile?.emailSubscriptions) {
-      console.log('Updating local subscriptions from profile:', userProfile.emailSubscriptions);
+      console.log('Settings: Updating local subscriptions from profile:', userProfile.emailSubscriptions);
       setLocalSubscriptions(userProfile.emailSubscriptions);
     }
-  }, [userProfile]);
+  }, [userProfile, user, router]);
 
-  const handleSubscriptionChange = async (type: 'announcements' | 'events' | 'newsletter', checked: boolean) => {
-    if (!userProfile) return;
-
-    console.log(`Toggling ${type} to ${checked}`);
-    setIsSaving(true);
-    setSuccessMessage('');
-    setError('');
-
-    // Update local state immediately for responsive UI
-    const newSubscriptions = {
-      ...localSubscriptions,
-      [type]: checked
-    };
-    console.log('New subscription state:', newSubscriptions);
-    setLocalSubscriptions(newSubscriptions);
-
+  const handleSubscriptionChange = async (type: keyof typeof localSubscriptions, value: boolean) => {
     try {
-      const userRef = doc(db, 'users', userProfile.uid);
-      
-      console.log('Updating Firestore with:', newSubscriptions);
+      if (!user) {
+        console.error('Settings: No user found when trying to update subscriptions');
+        return;
+      }
+
+      setIsSaving(true);
+      setError('');
+      setSuccessMessage('');
+
+      const newSubscriptions = {
+        ...localSubscriptions,
+        [type]: value
+      };
+
+      setLocalSubscriptions(newSubscriptions);
+
+      // Update Firestore
+      const userRef = doc(db, 'users', user.uid);
       await updateDoc(userRef, {
         emailSubscriptions: newSubscriptions,
         updatedAt: new Date()
       });
 
       setSuccessMessage('Settings updated successfully');
-
-      // Clear success message after 3 seconds
-      setTimeout(() => {
-        setSuccessMessage('');
-      }, 3000);
+      console.log('Settings: Subscription updated successfully:', { type, value });
     } catch (err) {
-      console.error('Error updating settings:', err);
+      console.error('Settings: Error updating subscription:', err);
       setError('Failed to update settings. Please try again.');
-      
       // Revert local state on error
-      setLocalSubscriptions(userProfile.emailSubscriptions);
+      setLocalSubscriptions(userProfile?.emailSubscriptions || localSubscriptions);
     } finally {
       setIsSaving(false);
     }

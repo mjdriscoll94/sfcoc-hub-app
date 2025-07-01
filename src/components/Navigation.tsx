@@ -301,24 +301,25 @@ const Navigation = () => {
                         >
                           Settings
                         </Link>
-                        <Link
-                          href="#"
+                        <button
                           className={`block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5 cursor-pointer ${isSigningOut ? 'opacity-50' : ''}`}
-                          onClick={async (e) => {
-                            e.preventDefault();
+                          onClick={async () => {
                             if (isSigningOut) return;
                             
                             setIsSigningOut(true);
                             try {
+                              console.log('Navigation: Sign out button clicked');
                               await signOut();
+                              setIsUserMenuOpen(false);
                             } catch (error) {
-                              console.error('Error in sign out:', error);
+                              console.error('Navigation: Error during sign out:', error);
                               setIsSigningOut(false);
                             }
                           }}
+                          disabled={isSigningOut}
                         >
                           {isSigningOut ? 'Signing out...' : 'Sign out'}
-                        </Link>
+                        </button>
                       </div>
                     </div>
                   </div>
