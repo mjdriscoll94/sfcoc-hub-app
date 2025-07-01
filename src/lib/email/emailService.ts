@@ -134,4 +134,38 @@ export async function sendWelcomeEmail(email: string, name?: string) {
   `;
 
   return sendEmail('welcome', 'Welcome to SFCOC!', content, [email]);
+}
+
+export async function sendPasswordResetEmail(email: string, resetLink: string) {
+  const content = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h1 style="color: #333;">Password Reset Request</h1>
+      <p style="color: #666; line-height: 1.6;">We received a request to reset your password. Click the link below to reset it:</p>
+      <p style="margin: 20px 0;">
+        <a href="${resetLink}" 
+           style="background-color: #ff7c54; 
+                  color: white; 
+                  padding: 12px 24px; 
+                  text-decoration: none; 
+                  border-radius: 4px; 
+                  display: inline-block;">
+          Reset Password
+        </a>
+      </p>
+      <p style="color: #666; line-height: 1.6;">If you didn't request this password reset, you can safely ignore this email.</p>
+      <p style="color: #666; line-height: 1.6;">The link will expire in 1 hour for security reasons.</p>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #999; font-size: 12px;">
+        This is an automated message from SFCOC. Please do not reply to this email.
+      </p>
+    </div>
+  `;
+
+  try {
+    await sendEmail('password-reset', 'Reset Your Password', content, [email]);
+    return { success: true };
+  } catch (error) {
+    console.error('Failed to send password reset email:', error);
+    return { success: false, error };
+  }
 } 
