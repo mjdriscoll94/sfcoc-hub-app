@@ -26,7 +26,7 @@ interface UserData {
   displayName: string | null;
   isAdmin: boolean;
   approvalStatus?: 'pending' | 'approved' | 'rejected';
-  createdAt: string;
+  createdAt: Date;
   disabled?: boolean;
   customClaims?: { admin: boolean };
 }
@@ -67,7 +67,7 @@ export default function UserManagement() {
             email: data.email || null,
             displayName: data.displayName || null,
             isAdmin: data.isAdmin || false,
-            createdAt: createdAtDate.toISOString(),
+            createdAt: createdAtDate,
             approvalStatus: data.approvalStatus || 'approved',
             disabled: data.disabled || false,
             customClaims: data.customClaims
@@ -320,7 +320,9 @@ export default function UserManagement() {
                           {(user.approvalStatus || 'approved').charAt(0).toUpperCase() + (user.approvalStatus || 'approved').slice(1)}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {new Date(user.createdAt).toLocaleDateString()}
+                          {user.createdAt instanceof Date 
+                            ? user.createdAt.toLocaleDateString()
+                            : new Date(user.createdAt).toLocaleDateString()}
                         </span>
                       </div>
                       <div>
