@@ -7,6 +7,7 @@ import { collection, addDoc, serverTimestamp, getDocs, query, where } from 'fire
 import { db } from '@/lib/firebase/config';
 import RichTextEditor from '@/components/RichTextEditor';
 import { sendAnnouncementEmail, type EmailSubscriber } from '@/lib/email/emailService';
+import BackButton from '@/components/BackButton';
 
 type AnnouncementType = 'Weekly' | 'KFC' | 'General' | 'Youth' | 'Young Adult';
 
@@ -143,11 +144,11 @@ export default function NewAnnouncementPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create New Announcement</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8 flex items-center">
+        <BackButton className="mr-4" />
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">New Announcement</h1>
       </div>
-
       <div className="bg-white dark:bg-white/5 rounded-lg p-6 border-2 border-gray-200 dark:border-white/10 shadow-lg">
         <form onSubmit={handleSubmit} className="space-y-6">
           {error && (

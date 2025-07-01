@@ -6,6 +6,7 @@ import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { UserPlusIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
+import BackButton from '@/components/BackButton';
 
 // Add CheckIcon and XMarkIcon components at the top
 const CheckIcon = () => (
@@ -216,8 +217,9 @@ export default function UserManagement() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-white">User Management</h1>
+      <div className="mb-8 flex items-center">
+        <BackButton className="mr-4" />
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
       </div>
 
       {error && (

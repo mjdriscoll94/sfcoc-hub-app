@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { addVolunteerOpportunity } from '@/lib/firebase/utils';
+import BackButton from '@/components/BackButton';
 
 export default function NewVolunteerOpportunityPage() {
   const router = useRouter();
@@ -68,9 +69,10 @@ export default function NewVolunteerOpportunityPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Create Volunteer Opportunity</h1>
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8 flex items-center">
+        <BackButton className="mr-4" />
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">New Volunteer Opportunity</h1>
       </div>
 
       <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
