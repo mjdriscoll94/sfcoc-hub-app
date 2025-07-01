@@ -27,6 +27,7 @@ const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -300,26 +301,29 @@ const Navigation = () => {
                         >
                           Settings
                         </Link>
-                        <button
+                        <Link
+                          href="/auth/signin"
+                          className={`block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5 cursor-pointer ${isSigningOut ? 'opacity-50' : ''}`}
                           onClick={async (e) => {
                             e.preventDefault();
-                            e.stopPropagation();
-                            console.log('Sign out button clicked');
+                            if (isSigningOut) return;
+                            
+                            setIsSigningOut(true);
+                            console.log('Sign out link clicked');
                             try {
                               console.log('Attempting to sign out...');
                               await signOut();
-                              console.log('Sign out function called');
+                              console.log('Sign out successful');
                               setIsUserMenuOpen(false);
                               router.push('/auth/signin');
                             } catch (error) {
                               console.error('Error in sign out:', error);
+                              setIsSigningOut(false);
                             }
                           }}
-                          type="button"
-                          className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5 cursor-pointer"
                         >
-                          Sign out
-                        </button>
+                          {isSigningOut ? 'Signing out...' : 'Sign out'}
+                        </Link>
                       </div>
                     </div>
                   </div>
