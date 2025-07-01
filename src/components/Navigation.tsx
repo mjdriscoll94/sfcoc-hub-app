@@ -428,38 +428,30 @@ const Navigation = () => {
                 </button>
                 {/* Dropdown items */}
                 {openDropdown === item.name && (
-                  <div 
-                    className="bg-[#1f1f1f] relative z-50"
-                    onClick={(e) => {
-                      console.log('Dropdown items container clicked');
-                      e.stopPropagation();
-                    }}
-                  >
+                  <div className="bg-[#1f1f1f] relative z-50">
                     {item.items?.map((subItem) => {
                       console.log('Rendering dropdown item:', subItem.name);
                       return (
-                        <div 
+                        <button
                           key={subItem.name}
-                          className="w-full"
+                          type="button"
                           onClick={(e) => {
-                            console.log('Dropdown item wrapper clicked:', subItem.name);
+                            console.log('Dropdown item clicked:', subItem.name);
                             e.stopPropagation();
-                            e.preventDefault();
-                            handleNavigation(subItem.href, subItem.name);
+                            setIsOpen(false);
+                            setOpenDropdown(null);
+                            console.log('Attempting navigation to:', subItem.href);
+                            window.location.href = subItem.href;
                           }}
+                          className={`${
+                            pathname === subItem.href
+                              ? 'text-[#D6805F] bg-white/5'
+                              : 'text-white hover:bg-white/5'
+                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left`}
                         >
-                          <button
-                            type="button"
-                            className={`${
-                              pathname === subItem.href
-                                ? 'text-[#D6805F] bg-white/5'
-                                : 'text-white hover:bg-white/5'
-                            } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left`}
-                          >
-                            {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                            {subItem.name}
-                          </button>
-                        </div>
+                          {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                          {subItem.name}
+                        </button>
                       );
                     })}
                   </div>
