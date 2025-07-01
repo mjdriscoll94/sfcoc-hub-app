@@ -134,13 +134,21 @@ export default function LessonNotesManagement() {
 
     try {
       // Extract the public ID from the Cloudinary URL
-      const urlParts = fileUrl.split('/');
-      const rawIndex = urlParts.indexOf('raw');
-      if (rawIndex === -1) {
-        throw new Error('Invalid Cloudinary URL');
+      console.log('File URL:', fileUrl);
+      
+      // Remove any query parameters or transformations
+      const cleanUrl = fileUrl.split('?')[0];
+      const urlParts = cleanUrl.split('/');
+      
+      // Find the upload type (raw or fl_attachment)
+      const uploadIndex = urlParts.findIndex(part => part === 'upload' || part === 'fl_attachment');
+      if (uploadIndex === -1) {
+        throw new Error('Invalid Cloudinary URL structure');
       }
-      // Get everything after 'raw/upload/' including the file name
-      const publicId = urlParts.slice(rawIndex + 2).join('/').split('.')[0];
+      
+      // Get everything after upload/fl_attachment up to the file extension
+      const publicId = urlParts.slice(uploadIndex + 1).join('/').split('.')[0];
+      console.log('Extracted public ID:', publicId);
 
       // Delete from Cloudinary first
       const cloudinaryResponse = await fetch('/api/cloudinary/delete', {
@@ -151,17 +159,20 @@ export default function LessonNotesManagement() {
         body: JSON.stringify({ publicId }),
       });
 
+      const responseData = await cloudinaryResponse.json();
+      
       if (!cloudinaryResponse.ok) {
-        const errorData = await cloudinaryResponse.json();
-        throw new Error(`Failed to delete from Cloudinary: ${errorData.error}`);
+        console.error('Cloudinary deletion failed:', responseData);
+        throw new Error(responseData.error || 'Failed to delete from Cloudinary');
       }
 
       // If Cloudinary deletion was successful, delete from Firestore
       await deleteDoc(doc(db, 'lesson-notes', noteId));
       setNotes(prevNotes => prevNotes.filter(note => note.id !== noteId));
+      setError(null); // Clear any existing errors
     } catch (err) {
       console.error('Error deleting note:', err);
-      setError('Failed to delete note. Please try again.');
+      setError(err instanceof Error ? err.message : 'Failed to delete note. Please try again.');
     }
   };
 
