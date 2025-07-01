@@ -343,8 +343,8 @@ const Navigation = () => {
           {activeNavItems.map((item) => (
             item.dropdown ? (
               <div key={item.name}>
-                <button
-                  onClick={() => handleDropdownClick(item.name)}
+                {/* Dropdown header */}
+                <div
                   className={`${
                     item.items?.some(subItem => pathname === subItem.href)
                       ? 'text-[#D6805F] bg-white/5'
@@ -352,16 +352,22 @@ const Navigation = () => {
                   } w-full flex items-center px-4 py-2 text-sm font-medium`}
                 >
                   <span className="mr-2">{item.icon}</span>
-                  {item.name}
-                  <svg
-                    className={`ml-2 h-5 w-5 transform ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
+                  <span className="flex-1">{item.name}</span>
+                  <button
+                    onClick={() => handleDropdownClick(item.name)}
+                    className="p-1 hover:bg-white/10 rounded-full"
                   >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
+                    <svg
+                      className={`h-5 w-5 transform ${openDropdown === item.name ? 'rotate-180' : ''}`}
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                  </button>
+                </div>
+                {/* Dropdown items */}
                 {openDropdown === item.name && (
                   <div className="bg-[#1f1f1f]">
                     {item.items?.map((subItem) => (
@@ -373,7 +379,10 @@ const Navigation = () => {
                             ? 'text-[#D6805F] bg-white/5'
                             : 'text-white hover:bg-white/5'
                         } flex items-center pl-12 pr-4 py-2 text-sm`}
-                        onClick={() => setIsOpen(false)}
+                        onClick={() => {
+                          setIsOpen(false);
+                          setOpenDropdown(null);
+                        }}
                       >
                         {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
                         {subItem.name}
@@ -391,7 +400,10 @@ const Navigation = () => {
                     ? 'text-[#D6805F] bg-white/5'
                     : 'text-white hover:bg-white/5'
                 } flex items-center px-4 py-2 text-sm font-medium`}
-                onClick={() => setIsOpen(false)}
+                onClick={() => {
+                  setIsOpen(false);
+                  setOpenDropdown(null);
+                }}
               >
                 <span className="mr-2">{item.icon}</span>
                 {item.name}
