@@ -369,10 +369,11 @@ const Navigation = () => {
                     {item.items?.map((subItem) => (
                       <button
                         key={subItem.name}
-                        onClick={() => {
-                          router.replace(subItem.href);
+                        onClick={async () => {
                           setIsOpen(false);
                           setOpenDropdown(null);
+                          await Promise.resolve(); // Ensure state updates complete
+                          router.push(subItem.href);
                         }}
                         className={`${
                           pathname === subItem.href
@@ -390,10 +391,11 @@ const Navigation = () => {
             ) : (
               <button
                 key={item.name}
-                onClick={() => {
-                  router.replace(item.href || '#');
+                onClick={async () => {
                   setIsOpen(false);
                   setOpenDropdown(null);
+                  await Promise.resolve(); // Ensure state updates complete
+                  router.push(item.href || '#');
                 }}
                 className={`${
                   pathname === item.href
