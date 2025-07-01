@@ -13,37 +13,31 @@ export async function POST(request: Request) {
       );
     }
 
-    // Configure Cloudinary with direct values
-    const cloudName = process.env.CLOUDINARY_CLOUD_NAME || process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME;
-    const apiKey = process.env.CLOUDINARY_API_KEY;
-    const apiSecret = process.env.CLOUDINARY_API_SECRET;
+    // Configure Cloudinary with the environment variables
+    const config = {
+      cloud_name: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      api_key: process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
+      api_secret: process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
+    };
 
     // Log configuration status
     console.log('Cloudinary Configuration Status:', {
-      hasCloudName: !!cloudName,
-      hasApiKey: !!apiKey,
-      hasApiSecret: !!apiSecret,
-      cloudName: cloudName // safe to log cloud name
+      hasCloudName: !!config.cloud_name,
+      hasApiKey: !!config.api_key,
+      hasApiSecret: !!config.api_secret,
+      cloudName: config.cloud_name
     });
 
-    if (!cloudName || !apiKey || !apiSecret) {
-      console.error('Missing Cloudinary credentials:', {
-        cloudName: !!cloudName,
-        apiKey: !!apiKey,
-        apiSecret: !!apiSecret
-      });
+    if (!config.cloud_name || !config.api_key || !config.api_secret) {
+      console.error('Missing Cloudinary credentials');
       return NextResponse.json(
         { error: 'Server configuration error - missing Cloudinary credentials' },
         { status: 500 }
       );
     }
 
-    // Configure Cloudinary with the verified credentials
-    cloudinary.config({
-      cloud_name: cloudName,
-      api_key: apiKey,
-      api_secret: apiSecret
-    });
+    // Configure Cloudinary
+    cloudinary.config(config);
 
     // Delete the file from Cloudinary
     const result = await cloudinary.uploader.destroy(publicId, { resource_type: 'raw' });
