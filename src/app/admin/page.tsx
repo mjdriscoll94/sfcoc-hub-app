@@ -44,11 +44,21 @@ export default function AdminDashboard() {
         const usersData = usersSnapshot.docs
           .map(doc => {
             const data = doc.data();
+            // Safely handle Timestamp conversion
+            const createdAtDate = data.createdAt?.toDate?.() || new Date();
+            const updatedAtDate = data.updatedAt?.toDate?.() || createdAtDate;
+            
             return {
               ...data,
               uid: doc.id,
-              createdAt: data.createdAt?.toDate?.() || new Date(),
-              updatedAt: data.updatedAt?.toDate?.() || new Date()
+              createdAt: createdAtDate,
+              updatedAt: updatedAtDate,
+              email: data.email || null,
+              displayName: data.displayName || null,
+              isAdmin: data.isAdmin || false,
+              notificationsEnabled: data.notificationsEnabled || false,
+              approvalStatus: data.approvalStatus || 'approved',
+              role: data.role || 'user'
             } as UserProfile;
           })
           .filter(user => user.approvalStatus === 'approved')
