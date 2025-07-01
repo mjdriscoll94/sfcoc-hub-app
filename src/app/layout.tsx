@@ -11,13 +11,7 @@ export const metadata: Metadata = {
   title: 'SFCOC',
   description: 'Sioux Falls Church of Christ',
   icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: 'any' },
-      { url: '/favicon.svg', type: 'image/svg+xml' }
-    ],
-    apple: [
-      { url: '/apple-touch-icon.png' }
-    ]
+    icon: '/favicon.ico'
   }
 };
 
