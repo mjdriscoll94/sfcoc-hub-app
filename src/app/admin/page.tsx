@@ -11,6 +11,7 @@ import { FileText } from 'lucide-react';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { Users } from 'lucide-react';
+import PendingUserQueue from '@/components/PendingUserQueue';
 
 interface UserProfile {
   uid: string;
@@ -163,6 +164,14 @@ export default function AdminDashboard() {
           <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Prayer Request Queue</h2>
           <PrayerRequestApprovalQueue />
         </div>
+      </div>
+
+      {/* Pending User Accounts Section */}
+      <div className="mb-12">
+        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
+          Pending User Accounts
+        </h2>
+        <PendingUserQueue />
       </div>
 
       {loading ? (
