@@ -309,10 +309,10 @@ export default function UserManagement() {
                 <li key={user.uid} className="px-4 py-4">
                   <div className="space-y-2">
                     <div>
-                      <div className="text-sm font-medium text-gray-900">
+                      <div className="text-sm font-medium text-gray-900 dark:text-white">
                         {user.displayName || 'No display name'}
                       </div>
-                      <div className="text-xs text-gray-500">
+                      <div className="text-xs text-gray-500 dark:text-gray-300">
                         {user.email}
                       </div>
                     </div>
