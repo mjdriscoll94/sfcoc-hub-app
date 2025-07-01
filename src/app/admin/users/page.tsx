@@ -8,25 +8,18 @@ import { useRouter } from 'next/navigation';
 import { UserPlusIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import BackButton from '@/components/BackButton';
 import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
-
-interface UserData {
-  uid: string;
-  email: string | null;
-  displayName: string | null;
-  isAdmin: boolean;
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
-  createdAt: Date;
-  disabled?: boolean;
-  customClaims?: { admin: boolean };
-  role?: string;
-}
+import { UserProfile } from '@/types';
+import { Users } from 'lucide-react';
+import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function UserManagement() {
-  const [users, setUsers] = useState<UserData[]>([]);
+  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
   const router = useRouter();
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -44,13 +37,13 @@ export default function UserManagement() {
           orderBy('createdAt', 'desc')
         );
         const querySnapshot = await getDocs(q);
-        const userData: UserData[] = [];
+        const usersData: UserProfile[] = [];
         
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const createdAtDate = data.createdAt?.toDate?.() || new Date();
           
-          const processedData: UserData = {
+          const processedData: UserProfile = {
             uid: doc.id,
             email: data.email || null,
             displayName: data.displayName || null,
@@ -62,10 +55,10 @@ export default function UserManagement() {
             role: data.role || 'user'
           };
           
-          userData.push(processedData);
+          usersData.push(processedData);
         });
         
-        setUsers(userData);
+        setUsers(usersData);
       } catch (error) {
         console.error('Error fetching users:', error);
         setError('Failed to load users');
@@ -193,6 +186,59 @@ export default function UserManagement() {
     }
   };
 
+  const handleRoleClick = (user: UserProfile) => {
+    setSelectedUser(user);
+    setIsConfirmationOpen(true);
+  };
+
+  const handleConfirmRoleChange = async () => {
+    if (!selectedUser) return;
+
+    try {
+      const userRef = doc(db, 'users', selectedUser.uid);
+      const currentRole = selectedUser.role || 'user';
+      const newRole = currentRole === 'user' ? 'organizer' : currentRole === 'organizer' ? 'admin' : 'user';
+      
+      await updateDoc(userRef, {
+        role: newRole,
+        isAdmin: newRole === 'admin', // Keep isAdmin for backward compatibility
+        updatedAt: new Date()
+      });
+
+      setUsers(users.map(u => 
+        u.uid === selectedUser.uid ? { ...u, role: newRole, isAdmin: newRole === 'admin' } : u
+      ));
+    } catch (error) {
+      console.error('Error updating user:', error);
+      setError('Failed to update user');
+    } finally {
+      setIsConfirmationOpen(false);
+      setSelectedUser(null);
+    }
+  };
+
+  const getRoleStyle = (role: string) => {
+    switch(role) {
+      case 'admin':
+        return 'bg-[#D6805F] text-white hover:bg-[#C57050] cursor-pointer';
+      case 'organizer':
+        return 'bg-[#85AAA0] text-white hover:bg-[#769B91] cursor-pointer';
+      default:
+        return 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/60 hover:bg-gray-200 dark:hover:bg-white/20 cursor-pointer';
+    }
+  };
+
+  const getNextRole = (currentRole: string) => {
+    switch(currentRole) {
+      case 'user':
+        return 'organizer';
+      case 'organizer':
+        return 'admin';
+      default:
+        return 'user';
+    }
+  };
+
   if (!userProfile?.isAdmin) {
     return null;
   }
@@ -265,7 +311,12 @@ export default function UserManagement() {
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                      {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
+                      <button
+                        onClick={() => handleRoleClick(user)}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
+                      >
+                        {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       {user.approvalStatus === 'pending' && (
@@ -362,6 +413,19 @@ export default function UserManagement() {
           </div>
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={isConfirmationOpen}
+        onClose={() => {
+          setIsConfirmationOpen(false);
+          setSelectedUser(null);
+        }}
+        onConfirm={handleConfirmRoleChange}
+        title="Change User Role"
+        message={selectedUser ? `Are you sure you want to change ${selectedUser.displayName || selectedUser.email || 'this user'}'s role from ${selectedUser.role || 'user'} to ${getNextRole(selectedUser.role || 'user')}?` : ''}
+        confirmText={`Change to ${selectedUser ? getNextRole(selectedUser.role || 'user') : ''}`}
+        cancelText="Cancel"
+      />
     </div>
   );
 } 

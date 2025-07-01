@@ -14,6 +14,8 @@ export interface UserProfile {
   approvalStatus: 'pending' | 'approved' | 'rejected';
   createdAt: Date;
   updatedAt: Date;
+  disabled?: boolean;
+  customClaims?: { admin: boolean };
   emailSubscriptions: {
     announcements: boolean;
     events: boolean;
