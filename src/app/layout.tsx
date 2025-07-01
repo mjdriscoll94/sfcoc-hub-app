@@ -9,7 +9,16 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
   title: 'SFCOC',
-  description: 'San Francisco Church of Christ',
+  description: 'Sioux Falls Church of Christ',
+  icons: {
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' }
+    ],
+    apple: [
+      { url: '/apple-touch-icon.png' }
+    ]
+  }
 };
 
 export default function RootLayout({
