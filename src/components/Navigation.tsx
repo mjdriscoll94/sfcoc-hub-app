@@ -302,7 +302,7 @@ const Navigation = () => {
                           Settings
                         </Link>
                         <Link
-                          href="/auth/signin"
+                          href="#"
                           className={`block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5 cursor-pointer ${isSigningOut ? 'opacity-50' : ''}`}
                           onClick={async (e) => {
                             e.preventDefault();
@@ -315,7 +315,8 @@ const Navigation = () => {
                               await signOut();
                               console.log('Sign out successful');
                               setIsUserMenuOpen(false);
-                              router.push('/auth/signin');
+                              // Force a hard navigation to the sign-in page
+                              window.location.href = '/auth/signin';
                             } catch (error) {
                               console.error('Error in sign out:', error);
                               setIsSigningOut(false);
