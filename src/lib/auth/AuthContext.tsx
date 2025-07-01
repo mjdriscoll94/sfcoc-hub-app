@@ -75,9 +75,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Set default approvalStatus for existing users
         if (!data.approvalStatus) {
           await updateDoc(docRef, {
-            approvalStatus: 'approved' // Assume existing users are approved
+            approvalStatus: 'pending' // Changed from 'approved' to 'pending'
           });
-          data.approvalStatus = 'approved';
+          data.approvalStatus = 'pending';
         }
         const profile = data as UserProfile;
         // Check PWA status and reset notifications if needed
