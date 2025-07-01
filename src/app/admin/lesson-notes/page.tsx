@@ -134,21 +134,29 @@ export default function LessonNotesManagement() {
 
     try {
       // Extract the public ID from the Cloudinary URL
-      console.log('File URL:', fileUrl);
+      console.log('Original File URL:', fileUrl);
       
       // Remove any query parameters or transformations
       const cleanUrl = fileUrl.split('?')[0];
+      console.log('Clean URL:', cleanUrl);
+      
       const urlParts = cleanUrl.split('/');
+      console.log('URL Parts:', urlParts);
       
       // Find the upload type (raw or fl_attachment)
       const uploadIndex = urlParts.findIndex(part => part === 'upload' || part === 'fl_attachment');
       if (uploadIndex === -1) {
         throw new Error('Invalid Cloudinary URL structure');
       }
-      
-      // Get everything after upload/fl_attachment up to the file extension
-      const publicId = urlParts.slice(uploadIndex + 1).join('/').split('.')[0];
-      console.log('Extracted public ID:', publicId);
+      console.log('Upload Index:', uploadIndex);
+
+      // Get the folder and filename parts
+      const relevantParts = urlParts.slice(uploadIndex + 1);
+      console.log('Relevant Parts:', relevantParts);
+
+      // Remove the file extension
+      const publicId = relevantParts.join('/').replace(/\.[^/.]+$/, '');
+      console.log('Final Public ID:', publicId);
 
       // Log Cloudinary configuration (without showing actual secrets)
       console.log('Cloudinary Config Check:', {
