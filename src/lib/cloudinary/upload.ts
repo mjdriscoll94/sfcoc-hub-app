@@ -44,6 +44,7 @@ export const uploadLessonNotes = async (file: File): Promise<string> => {
     formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
     formData.append('folder', 'lesson-notes');
     formData.append('resource_type', 'raw'); // This allows non-image files like PDFs
+    formData.append('access_mode', 'public'); // Make the file publicly accessible
     
     // Upload to Cloudinary using the upload preset
     const response = await fetch(
