@@ -17,7 +17,7 @@ interface UserProfile {
   displayName: string | null;
   isAdmin: boolean;
   notificationsEnabled: boolean;
-  createdAt: any;
+  createdAt: Date;
   approvalStatus: string;
   role?: string;
 }
@@ -41,10 +41,14 @@ export default function AdminDashboard() {
       try {
         const usersSnapshot = await getDocs(collection(db, 'users'));
         const usersData = usersSnapshot.docs
-          .map(doc => ({
-            ...(doc.data() as UserProfile),
-            uid: doc.id
-          }))
+          .map(doc => {
+            const data = doc.data();
+            return {
+              ...data,
+              uid: doc.id,
+              createdAt: data.createdAt?.toDate() || new Date() // Convert Firestore Timestamp to Date
+            } as UserProfile;
+          })
           .filter(user => user.approvalStatus === 'approved')
           .sort((a, b) => {
             // Get display text for sorting (display name or email)

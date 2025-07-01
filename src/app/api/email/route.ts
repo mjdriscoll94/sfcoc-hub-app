@@ -20,13 +20,14 @@ export async function POST(request: Request) {
     try {
       await transporter.verify();
       console.log('SMTP connection verified successfully');
-    } catch (verifyError: any) {
+    } catch (verifyError: unknown) {
+      const error = verifyError instanceof Error ? verifyError : new Error(String(verifyError));
       console.error('SMTP connection verification failed:', {
-        error: verifyError.message,
-        stack: verifyError.stack
+        error: error.message,
+        stack: error.stack
       });
       return NextResponse.json(
-        { error: 'Failed to connect to SMTP server', details: verifyError.message },
+        { error: 'Failed to connect to SMTP server', details: error.message },
         { status: 500 }
       );
     }
@@ -35,8 +36,9 @@ export async function POST(request: Request) {
     let body;
     try {
       body = await request.json();
-    } catch (parseError) {
-      console.error('Failed to parse request body:', parseError);
+    } catch (parseError: unknown) {
+      const error = parseError instanceof Error ? parseError : new Error(String(parseError));
+      console.error('Failed to parse request body:', error);
       return NextResponse.json(
         { error: 'Invalid request body' },
         { status: 400 }

@@ -1,23 +1,29 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { collection, onSnapshot, orderBy, query, limit } from 'firebase/firestore';
+import { collection, onSnapshot, orderBy, query } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { subscribeToNotifications, unsubscribeFromNotifications, isPushNotificationSupported, checkNotificationStatus } from '@/lib/notifications/pushNotifications';
+import { subscribeToNotifications, unsubscribeFromNotifications, isPushNotificationSupported } from '@/lib/notifications/pushNotifications';
 import { BellIcon, PlusIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 import RichTextContent from '@/components/RichTextContent';
+import { Timestamp } from 'firebase/firestore';
+import { UserProfile } from '@/types';
 
 interface Announcement {
   id: string;
   title: string;
   content: string;
   type: 'Weekly' | 'KFC' | 'General' | 'Youth' | 'Young Adult';
-  createdAt: any;
+  createdAt: Timestamp;
   createdBy: {
     uid: string;
     displayName: string;
   };
+}
+
+interface UserProfileUpdate {
+  notificationsEnabled: boolean;
 }
 
 const ANNOUNCEMENT_TYPES = ['All', 'Weekly', 'KFC', 'General', 'Youth', 'Young Adult'] as const;
@@ -85,7 +91,9 @@ export default function AnnouncementsPage() {
 
     try {
       if (userProfile.notificationsEnabled) {
-        await unsubscribeFromNotifications(updateUserProfile);
+        await unsubscribeFromNotifications(async (update: Partial<UserProfile>) => {
+          await updateUserProfile({ ...userProfile, ...update });
+        });
       } else {
         // Check if we need to request permission first
         if (Notification.permission === 'default') {
@@ -97,18 +105,20 @@ export default function AnnouncementsPage() {
           throw new Error('Notifications are blocked. Please enable them in your browser settings.');
         }
         
-        await subscribeToNotifications(updateUserProfile);
+        await subscribeToNotifications(async (update: Partial<UserProfile>) => {
+          await updateUserProfile({ ...userProfile, ...update });
+        });
       }
-    } catch (error: any) {
+    } catch (error) {
       console.error('Subscription error:', error);
       // Extract the most user-friendly error message
-      const errorMessage = error.message || 'Failed to update notification settings';
+      const errorMessage = error instanceof Error ? error.message : 'Failed to update notification settings';
       setError(errorMessage);
       
       // Ensure the profile is updated to reflect the failed state
       if (userProfile && !userProfile.notificationsEnabled) {
         try {
-          await updateUserProfile({ notificationsEnabled: false });
+          await updateUserProfile({ ...userProfile, notificationsEnabled: false });
         } catch (profileError) {
           console.error('Failed to update profile after error:', profileError);
         }

@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { usePrayerPraise } from '@/hooks/usePrayerPraise';
 import PrayerRequestForm from '@/components/PrayerRequestForm';
 import { addPrayerPraise } from '@/lib/firebase/utils';
-import { getApp } from 'firebase/app';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 type FilterType = 'all' | 'prayer' | 'praise';
@@ -13,24 +12,7 @@ export default function PrayerBoard() {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
-  const [firebaseStatus, setFirebaseStatus] = useState<string>('');
   const { userProfile } = useAuth();
-  
-  // Check Firebase connection on mount
-  useEffect(() => {
-    try {
-      const app = getApp();
-      console.log('Firebase Config:', {
-        projectId: app.options.projectId,
-        authDomain: app.options.authDomain,
-        databaseURL: app.options.databaseURL
-      });
-      setFirebaseStatus(`Connected to project: ${app.options.projectId}`);
-    } catch (error) {
-      console.error('Firebase initialization error:', error);
-      setFirebaseStatus('Failed to initialize Firebase');
-    }
-  }, []);
   
   // Use the Firestore hook with the active filter
   const { items: requests, loading, error, isIndexBuilding, incrementPrayerCount } = usePrayerPraise(
@@ -165,7 +147,7 @@ export default function PrayerBoard() {
             Optimizing Database
           </h3>
           <p className="text-blue-700 dark:text-blue-300">
-            We're optimizing the database for faster queries. This may take a few minutes.
+            We&apos;re optimizing the database for faster queries. This may take a few minutes.
             Please refresh the page shortly.
           </p>
         </div>

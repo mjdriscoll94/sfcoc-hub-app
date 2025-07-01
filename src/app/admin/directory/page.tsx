@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
-import { collection, query, getDocs, doc, updateDoc, deleteDoc, addDoc, Timestamp, where } from 'firebase/firestore';
+import { collection, query, getDocs, doc, updateDoc, addDoc, Timestamp, where } from 'firebase/firestore';
 import { CheckCircle, XCircle, User, Users } from 'lucide-react';
+import Image from 'next/image';
 
 interface DirectorySubmission {
   id: string;
@@ -149,11 +150,15 @@ export default function DirectoryAdminPage() {
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-4">
                       {submission.photoURL ? (
-                        <img
-                          src={submission.photoURL}
-                          alt={`${submission.firstName} ${submission.lastName}'s family`}
-                          className="h-24 w-24 rounded-lg object-cover"
-                        />
+                        <div className="relative h-24 w-24">
+                          <Image
+                            src={submission.photoURL}
+                            alt={`${submission.firstName} ${submission.lastName}'s family`}
+                            fill
+                            className="rounded-lg object-cover"
+                            sizes="96px"
+                          />
+                        </div>
                       ) : (
                         <div className="h-24 w-24 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center">
                           <Users className="h-12 w-12 text-gray-400 dark:text-white/40" />
