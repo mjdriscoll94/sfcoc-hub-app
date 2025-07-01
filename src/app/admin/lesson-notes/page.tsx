@@ -140,30 +140,31 @@ export default function LessonNotesManagement() {
       const cleanUrl = fileUrl.split('?')[0];
       console.log('Clean URL:', cleanUrl);
       
+      // Split the URL into parts
       const urlParts = cleanUrl.split('/');
       console.log('URL Parts:', urlParts);
       
-      // Find the upload type (raw or fl_attachment)
-      const uploadIndex = urlParts.findIndex(part => part === 'upload' || part === 'fl_attachment');
+      // Find the upload index
+      const uploadIndex = urlParts.findIndex(part => part === 'upload');
       if (uploadIndex === -1) {
         throw new Error('Invalid Cloudinary URL structure');
       }
       console.log('Upload Index:', uploadIndex);
 
-      // Get everything after 'upload', including version number if present
+      // Get the parts after 'upload' including version number if present
       const relevantParts = urlParts.slice(uploadIndex + 1);
       console.log('Relevant Parts:', relevantParts);
 
-      // Join all parts including version number, but remove file extension
+      // Remove file extension but keep version number
       const publicId = relevantParts.join('/').replace(/\.[^/.]+$/, '');
       console.log('Final Public ID:', publicId);
 
-      // Log Cloudinary configuration (without showing actual secrets)
-      console.log('Cloudinary Config Check:', {
-        hasCloudName: !!process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
+      // Log the full deletion request
+      console.log('Deletion Request:', {
+        publicId,
+        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
         hasApiKey: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-        hasApiSecret: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET,
-        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME
+        hasApiSecret: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
       });
 
       const credentials = {
