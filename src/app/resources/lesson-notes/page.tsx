@@ -1,13 +1,7 @@
 'use client';
 
-import { Metadata } from 'next';
 import { useLessonNotes } from '@/hooks/useLessonNotes';
 import { FileText, Download, Calendar, Clock } from 'lucide-react';
-
-export const metadata: Metadata = {
-  title: 'Lesson Notes PDFs | South Franklin Church of Christ',
-  description: 'Access lesson notes and study materials from our services and Bible classes.',
-};
 
 export default function LessonNotesPage() {
   const { notes, loading, error } = useLessonNotes();
