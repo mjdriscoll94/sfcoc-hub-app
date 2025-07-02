@@ -69,7 +69,7 @@ export async function POST(request: Request) {
     }
 
     const mailOptions = {
-      from: `SFCOC ${type} <onboarding@resend.dev>`,
+      from: `SFCOC ${type} <announcements@sfcoc.org>`,
       to: recipients,
       subject,
       html: content,
