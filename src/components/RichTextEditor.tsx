@@ -180,11 +180,14 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           editor.commands.setContent(content);
         }
       }
-      editor.commands.focus('end');
+      // Only focus at the end when the content is initially empty
+      if (!editor.getText().trim()) {
+        editor.commands.focus('end');
+      }
     }
   }, [content, editor]);
 
-  // Add autofocus to empty paragraphs
+  // Remove the autofocus on empty paragraphs
   useEffect(() => {
     if (editor) {
       const handleUpdate = () => {
