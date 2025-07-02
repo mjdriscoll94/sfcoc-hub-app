@@ -3,10 +3,17 @@ import { Dialog, Transition } from '@headlessui/react';
 import { X, Phone, Mail, MapPin, User } from 'lucide-react';
 import Image from 'next/image';
 
+interface FamilyMember {
+  firstName: string;
+  lastName: string;
+  relationship: string;
+  birthday: string;
+}
+
 interface DirectoryEntry {
   firstName: string;
   lastName: string;
-  email: string;
+  email: string | null;
   phoneNumber?: string;
   address?: string;
   anniversary?: string;

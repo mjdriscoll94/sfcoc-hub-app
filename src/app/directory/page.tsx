@@ -132,18 +132,17 @@ export default function DirectoryPage() {
         )}
       </div>
 
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search directory..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-[#D6805F] focus:border-[#D6805F]"
-            />
-            <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-white/40" />
-          </div>
+      {/* Full width search box */}
+      <div className="mb-8">
+        <div className="relative w-full">
+          <input
+            type="text"
+            placeholder="Search directory..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-[#D6805F] focus:border-[#D6805F]"
+          />
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-white/40" />
         </div>
       </div>
 
@@ -160,30 +159,35 @@ export default function DirectoryPage() {
           <p className="text-gray-500 dark:text-white/60">No directory entries found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {displayMembers.map((member) => (
             <div
               key={member.id}
               onClick={() => handleCardClick(member)}
               className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden cursor-pointer hover:shadow-md dark:hover:bg-white/10 transition-all"
             >
-              <div className="p-6">
-                {member.photoURL ? (
-                  <div className="relative h-48 w-full mb-4">
-                    <Image
-                      src={member.photoURL}
-                      alt={`${member.lastName} Family`}
-                      fill
-                      className="rounded-lg object-cover"
-                      sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                    />
-                  </div>
-                ) : (
-                  <div className="h-48 w-full mb-4 rounded-lg bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                    <Users className="h-16 w-16 text-gray-400 dark:text-white/40" />
-                  </div>
-                )}
-                <div>
+              <div className="flex sm:block">
+                {/* Image container - left side on mobile, top on larger screens */}
+                <div className="w-1/3 sm:w-full relative">
+                  {member.photoURL ? (
+                    <div className="relative h-32 sm:h-48 w-full">
+                      <Image
+                        src={member.photoURL}
+                        alt={`${member.lastName} Family`}
+                        fill
+                        className="rounded-l-lg sm:rounded-t-lg sm:rounded-b-none object-cover"
+                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 50vw, 33vw"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-32 sm:h-48 w-full rounded-l-lg sm:rounded-t-lg sm:rounded-b-none bg-gray-100 dark:bg-white/10 flex items-center justify-center">
+                      <Users className="h-12 w-12 text-gray-400 dark:text-white/40" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Content container - right side on mobile, bottom on larger screens */}
+                <div className="w-2/3 sm:w-full p-4 sm:p-6">
                   <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
                     {member.lastName}
                   </h2>
