@@ -18,7 +18,14 @@ import {
 import { useEffect } from 'react';
 
 interface RichTextEditorProps {
-  content: string;
+  content: string | {
+    type: string;
+    content: Array<{
+      type: string;
+      attrs?: { level?: number };
+      content?: Array<{ type: string; text: string }>;
+    }>;
+  };
   onChange: (html: string) => void;
 }
 
@@ -149,15 +156,23 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
   });
 
   useEffect(() => {
-    if (editor && content !== editor.getHTML()) {
+    if (editor && content) {
       try {
         // Try to parse as JSON first
-        const jsonContent = JSON.parse(content);
-        editor.commands.setContent(jsonContent);
-        // Set cursor to the end of the last paragraph
+        const jsonContent = typeof content === 'string' ? JSON.parse(content) : content;
+        
+        // Check if it's a valid TipTap document structure
+        if (jsonContent.type === 'doc' && Array.isArray(jsonContent.content)) {
+          editor.commands.setContent(jsonContent);
+        } else {
+          // If not a valid TipTap document, treat as HTML
+          editor.commands.setContent(content);
+        }
+        
+        // Set cursor to the end
         editor.commands.focus('end');
       } catch (e) {
-        // If not valid JSON, treat as HTML
+        // If JSON parsing fails, treat as HTML
         editor.commands.setContent(content);
         editor.commands.focus('end');
       }

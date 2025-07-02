@@ -11,9 +11,19 @@ import BackButton from '@/components/BackButton';
 
 type AnnouncementType = 'Weekly' | 'KFC' | 'General' | 'Youth' | 'Young Adult';
 
+// Define TipTap document type
+type TipTapContent = {
+  type: string;
+  content: Array<{
+    type: string;
+    attrs?: { level?: number };
+    content?: Array<{ type: string; text: string }>;
+  }>;
+};
+
 export default function NewAnnouncementPage() {
   const [title, setTitle] = useState('');
-  const [content, setContent] = useState('');
+  const [content, setContent] = useState<string | TipTapContent>('');
   const [type, setType] = useState<AnnouncementType>('General');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +86,7 @@ export default function NewAnnouncementPage() {
       // Create the announcement data
       const announcementData = {
         title,
-        content: content.trim(), // Ensure no leading/trailing whitespace
+        content: typeof content === 'string' ? content.trim() : JSON.stringify(content),
         type,
         createdAt: serverTimestamp(),
         createdBy: {
@@ -118,14 +128,19 @@ export default function NewAnnouncementPage() {
 
       try {
         // Send email to subscribers
-        const emailResult = await sendAnnouncementEmail(subscribers, title, content);
+        const emailContent = typeof content === 'string' ? content : JSON.stringify(content);
+        const emailResult = await sendAnnouncementEmail(subscribers, title, emailContent);
         console.log('Email sending result:', emailResult);
       } catch (emailError) {
         console.error('Error sending announcement email:', emailError);
       }
 
       // Send push notification
-      await sendNotification(announcementData);
+      await sendNotification({
+        title,
+        content: typeof content === 'string' ? content : JSON.stringify(content),
+        type
+      });
 
       // Show success message
       setShowSuccess(true);
@@ -245,11 +260,11 @@ export default function NewAnnouncementPage() {
                       }
                     ]
                   };
-                  // Set content and type in a single update
-                  setContent(JSON.stringify(template));
+                  // Set content directly without stringifying
+                  setContent(template);
                   setType('Weekly');
                 }}
-                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-white/20 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-white bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"
+                className="px-3 py-1 text-sm bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-md text-gray-900 dark:text-white"
               >
                 Weekly Announcement
               </button>
