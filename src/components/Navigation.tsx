@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 import { Fragment } from 'react';
@@ -29,16 +29,37 @@ const Navigation = () => {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownButtonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+  const router = useRouter();
+
   const pathname = usePathname();
   const { user, userProfile, signOut } = useAuth();
+
+  // Validate router on mount
+  useEffect(() => {
+    if (!router) {
+      console.error('Router instance is not available');
+    } else {
+      console.log('Router instance is available');
+    }
+  }, [router]);
+
+  // Debug state changes
+  useEffect(() => {
+    console.log('=== State Debug ===');
+    console.log('isOpen:', isOpen);
+    console.log('openDropdown:', openDropdown);
+    console.log('pathname:', pathname);
+  }, [isOpen, openDropdown, pathname]);
 
   // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
+      // Check if click is outside all dropdowns
       if (openDropdown) {
         const dropdownButton = dropdownButtonRefs.current[openDropdown];
         const dropdownContent = document.querySelector(`[data-dropdown="${openDropdown}"]`);
         
+        // If click is not on the button or inside the dropdown content
         if (
           (!dropdownButton || !dropdownButton.contains(event.target as Node)) &&
           (!dropdownContent || !dropdownContent.contains(event.target as Node))
@@ -54,19 +75,36 @@ const Navigation = () => {
     };
   }, [openDropdown]);
 
-  const handleDropdownClick = (dropdownName: string) => {
-    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
+  // Debug navigation attempts
+  const handleNavigation = async (href: string, itemName: string) => {
+    console.log('=== Navigation Debug ===');
+    console.log('1. handleNavigation called');
+    console.log('- Item:', itemName);
+    console.log('- Current pathname:', pathname);
+    console.log('- Target href:', href);
+    console.log('- Menu open:', isOpen);
+    console.log('- Current dropdown:', openDropdown);
+    
+    try {
+      // Close menus first
+      console.log('2. Closing menus');
+      setIsOpen(false);
+      setOpenDropdown(null);
+      
+      console.log('3. Starting navigation');
+      await router.push(href);
+      console.log('4. Navigation completed');
+    } catch (error) {
+      console.error('Navigation error:', error);
+    }
   };
 
-  const handleSignOut = async () => {
-    try {
-      setIsSigningOut(true);
-      await signOut();
-    } catch (error) {
-      console.error('Error signing out:', error);
-    } finally {
-      setIsSigningOut(false);
-    }
+  const handleDropdownClick = (dropdownName: string) => {
+    console.log('=== Dropdown Click ===');
+    console.log('Clicked dropdown:', dropdownName);
+    console.log('Current openDropdown:', openDropdown);
+    console.log('Will set to:', openDropdown === dropdownName ? 'null' : dropdownName);
+    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
   };
 
   const publicNavItems: NavItem[] = [
@@ -210,187 +248,257 @@ const Navigation = () => {
     }
   ] : [];
 
-  const renderNavItem = (item: NavItem) => {
-    if (item.dropdown) {
-      return (
-        <div key={item.name} className="relative">
-          <button
-            ref={(el) => {
-              dropdownButtonRefs.current[item.name] = el;
-            }}
-            onClick={() => handleDropdownClick(item.name)}
-            className="flex items-center px-3 py-2 text-sm font-medium text-white rounded-md hover:bg-white/10"
-          >
-            {item.icon}
-            <span className="ml-3">{item.name}</span>
-            <ChevronUpIcon
-              className={`ml-2 h-5 w-5 transform transition-transform ${
-                openDropdown === item.name ? 'rotate-0' : 'rotate-180'
-              }`}
-            />
-          </button>
-
-          <Transition
-            show={openDropdown === item.name}
-            as={Fragment}
-            enter="transition ease-out duration-100"
-            enterFrom="transform opacity-0 scale-95"
-            enterTo="transform opacity-100 scale-100"
-            leave="transition ease-in duration-75"
-            leaveFrom="transform opacity-100 scale-100"
-            leaveTo="transform opacity-0 scale-95"
-          >
-            <div
-              data-dropdown={item.name}
-              className="absolute left-0 z-10 mt-2 w-48 origin-top-left rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
-            >
-              {item.items?.map((subItem) => (
-                <Link
-                  key={subItem.name}
-                  href={subItem.href}
-                  onClick={() => setOpenDropdown(null)}
-                  className={`flex items-center px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                    pathname === subItem.href
-                      ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white'
-                      : 'text-gray-700 dark:text-gray-200'
-                  }`}
-                >
-                  {subItem.icon && <span className="mr-3">{subItem.icon}</span>}
-                  {subItem.name}
-                </Link>
-              ))}
-            </div>
-          </Transition>
-        </div>
-      );
-    }
-
-    return (
-      <Link
-        key={item.name}
-        href={item.href || '#'}
-        className={`flex items-center px-3 py-2 text-sm font-medium rounded-md ${
-          pathname === item.href
-            ? 'bg-white/10 text-white'
-            : 'text-white hover:bg-white/10'
-        }`}
-      >
-        {item.icon}
-        <span className="ml-3">{item.name}</span>
-      </Link>
-    );
-  };
+  const activeNavItems = [...publicNavItems, ...(user ? [...protectedNavItems, ...adminNavItems] : [])];
 
   return (
-    <>
-      {/* Mobile menu button */}
-      <div className="absolute top-0 right-0 -mr-12 pt-2">
-        <button
-          type="button"
-          className="ml-1 flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-          onClick={() => setIsOpen(false)}
-        >
-          <span className="sr-only">Close sidebar</span>
-          <XMarkIcon className="h-6 w-6 text-white" aria-hidden="true" />
-        </button>
-      </div>
+    <nav className="bg-[#171717]/50 backdrop-blur-sm border-b border-white/10 relative z-40">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between h-16">
+          <div className="flex">
+            {/* Mobile menu button */}
+            <div className="flex items-center md:hidden">
+              <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-[#D6805F] focus:outline-none"
+              >
+                <span className="sr-only">Open main menu</span>
+                {isOpen ? (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                ) : (
+                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
+                  </svg>
+                )}
+              </button>
+            </div>
 
-      {/* Logo */}
-      <div className="flex shrink-0 items-center px-6">
-        <Link href="/" className="flex items-center" onClick={() => setIsOpen(false)}>
-          <Image
-            className="h-8 w-auto"
-            src="/images/logo_white.svg"
-            alt="South Franklin Church of Christ"
-            width={32}
-            height={32}
-          />
-          <span className="ml-4 text-lg font-semibold text-white">South Franklin</span>
-        </Link>
-      </div>
-
-      {/* Navigation Items */}
-      <div className="mt-5 flex flex-grow flex-col">
-        <nav className="flex-1 space-y-1 px-4">
-          {publicNavItems.map(renderNavItem)}
-          {user && protectedNavItems.map(renderNavItem)}
-          {adminNavItems.map(renderNavItem)}
-        </nav>
-      </div>
-
-      {/* User Menu */}
-      {user ? (
-        <div className="px-4 py-4">
-          <Menu as="div" className="relative">
-            <Menu.Button className="flex w-full items-center justify-between rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-white/10">
-              <div className="flex items-center">
-                <span className="sr-only">Open user menu</span>
-                <div className="flex items-center">
-                  <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-coral">
-                    <span className="text-sm font-medium leading-none text-white">
-                      {userProfile?.displayName?.[0] || user.email?.[0] || 'U'}
-                    </span>
-                  </span>
-                  <span className="ml-3 truncate">
-                    {userProfile?.displayName || user.email || 'User'}
-                  </span>
-                </div>
-              </div>
-              <ChevronUpIcon
-                className="ml-2 h-5 w-5 transform transition-transform rotate-180"
-                aria-hidden="true"
-              />
-            </Menu.Button>
-            <Transition
-              as={Fragment}
-              enter="transition ease-out duration-100"
-              enterFrom="transform opacity-0 scale-95"
-              enterTo="transform opacity-100 scale-100"
-              leave="transition ease-in duration-75"
-              leaveFrom="transform opacity-100 scale-100"
-              leaveTo="transform opacity-0 scale-95"
-            >
-              <Menu.Items className="absolute bottom-full left-0 z-10 mb-2 w-48 origin-bottom-left rounded-md bg-white dark:bg-gray-800 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                <Menu.Item>
-                  {({ active }) => (
-                    <Link
-                      href="/settings"
-                      className={`block px-4 py-2 text-sm ${
-                        active ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'
-                      }`}
-                    >
-                      Settings
-                    </Link>
-                  )}
-                </Menu.Item>
-                <Menu.Item>
-                  {({ active }) => (
+            {/* Desktop navigation */}
+            <div className="hidden md:ml-6 md:flex md:space-x-8" ref={dropdownRef}>
+              {activeNavItems.map((item) => (
+                item.dropdown ? (
+                  <div key={item.name} className="relative inline-flex items-center">
                     <button
-                      onClick={handleSignOut}
-                      disabled={isSigningOut}
-                      className={`block w-full text-left px-4 py-2 text-sm ${
-                        active ? 'bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-white' : 'text-gray-700 dark:text-gray-200'
-                      }`}
+                      ref={el => {
+                        dropdownButtonRefs.current[item.name] = el;
+                      }}
+                      onClick={() => handleDropdownClick(item.name)}
+                      className={`${
+                        item.items?.some(subItem => pathname === subItem.href)
+                          ? 'text-[#D6805F] border-[#D6805F]'
+                          : 'text-white hover:text-[#D6805F] border-transparent'
+                      } inline-flex items-center h-16 px-1 border-b-2 text-sm font-medium`}
                     >
-                      {isSigningOut ? 'Signing out...' : 'Sign out'}
+                      <span className="mr-2">{item.icon}</span>
+                      {item.name}
+                      <svg
+                        className={`ml-2 h-5 w-5 transform ${openDropdown === item.name ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+                      </svg>
                     </button>
-                  )}
-                </Menu.Item>
-              </Menu.Items>
-            </Transition>
-          </Menu>
+                    {openDropdown === item.name && (
+                      <div 
+                        data-dropdown={item.name}
+                        className="absolute z-50 top-full pt-2 left-0 w-56"
+                      >
+                        <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5">
+                          <div className="py-1">
+                            {item.items?.map((subItem) => (
+                              <Link
+                                key={subItem.name}
+                                href={subItem.href}
+                                className={`${
+                                  pathname === subItem.href
+                                    ? 'text-[#D6805F] bg-white/5'
+                                    : 'text-white hover:bg-white/5'
+                                } flex items-center px-4 py-2 text-sm`}
+                                onClick={() => handleDropdownClick(item.name)}
+                              >
+                                {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                                {subItem.name}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link
+                    key={item.name}
+                    href={item.href || '#'}
+                    className={`${
+                      pathname === item.href
+                        ? 'text-[#D6805F] border-[#D6805F]'
+                        : 'text-white hover:text-[#D6805F] border-transparent'
+                    } inline-flex items-center h-16 px-1 border-b-2 text-sm font-medium`}
+                  >
+                    <span className="mr-2">{item.icon}</span>
+                    {item.name}
+                  </Link>
+                )
+              ))}
+            </div>
+          </div>
+
+          {/* Right side - User menu */}
+          <div className="flex items-center">
+            {user ? (
+              <Menu as="div" className="relative">
+                {({ open }) => (
+                  <>
+                    <Menu.Button className="max-w-xs bg-[#D6805F] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#171717] focus:ring-white">
+                      <span className="sr-only">Open user menu</span>
+                      <div className="h-8 w-8 rounded-full bg-[#D6805F] flex items-center justify-center text-white">
+                        {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
+                      </div>
+                    </Menu.Button>
+                    <Transition
+                      show={open}
+                      as={Fragment}
+                      enter="transition ease-out duration-100"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
+                    >
+                      <Menu.Items className="absolute z-50 top-full right-0 pt-2 w-48">
+                        <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5 divide-y divide-white/10">
+                          <div className="py-1">
+                            <div className="px-4 py-2 text-sm text-white">
+                              {userProfile?.displayName || user.email}
+                            </div>
+                          </div>
+                          <div className="py-1">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link
+                                  href="/settings"
+                                  className={`block w-full text-left px-4 py-2 text-sm text-white ${
+                                    active ? 'bg-white/5' : ''
+                                  }`}
+                                >
+                                  Settings
+                                </Link>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  className={`block w-full text-left px-4 py-2 text-sm text-white ${
+                                    active ? 'bg-white/5' : ''
+                                  } ${isSigningOut ? 'opacity-50' : ''}`}
+                                  onClick={async () => {
+                                    if (isSigningOut) return;
+                                    
+                                    setIsSigningOut(true);
+                                    try {
+                                      console.log('Navigation: Sign out button clicked');
+                                      await signOut();
+                                    } catch (error) {
+                                      console.error('Navigation: Error during sign out:', error);
+                                      setIsSigningOut(false);
+                                    }
+                                  }}
+                                  disabled={isSigningOut}
+                                >
+                                  {isSigningOut ? 'Signing out...' : 'Sign out'}
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </div>
+                        </div>
+                      </Menu.Items>
+                    </Transition>
+                  </>
+                )}
+              </Menu>
+            ) : (
+              <Link
+                href="/auth/signin"
+                className="text-white hover:text-[#D6805F] text-sm font-medium"
+              >
+                Sign in
+              </Link>
+            )}
+          </div>
         </div>
-      ) : (
-        <div className="px-4 py-4">
-          <Link
-            href="/auth/signin"
-            className="flex items-center justify-center rounded-md px-3 py-2 text-sm font-medium text-white hover:bg-white/10"
-          >
-            Sign in
-          </Link>
+      </div>
+
+      {/* Mobile menu */}
+      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#171717]`}>
+        <div className="pt-2 pb-3 space-y-1">
+          {activeNavItems.map((item) => (
+            item.dropdown ? (
+              <Disclosure as="div" key={item.name}>
+                {({ open }) => (
+                  <>
+                    <Disclosure.Button
+                      className={`${
+                        item.items?.some(subItem => pathname === subItem.href)
+                          ? 'text-[#D6805F] bg-white/5'
+                          : 'text-white hover:bg-white/5'
+                      } w-full flex items-center px-4 py-2 text-sm font-medium`}
+                    >
+                      <span className="mr-2">{item.icon}</span>
+                      <span className="flex-1 text-left">{item.name}</span>
+                      <ChevronUpIcon
+                        className={`${
+                          open ? 'transform rotate-180' : ''
+                        } w-5 h-5 text-white`}
+                      />
+                    </Disclosure.Button>
+                    <Disclosure.Panel className="bg-[#1f1f1f]">
+                      {item.items?.map((subItem) => (
+                        <Link
+                          key={subItem.name}
+                          href={subItem.href}
+                          className={`${
+                            pathname === subItem.href
+                              ? 'text-[#D6805F] bg-white/5'
+                              : 'text-white hover:bg-white/5'
+                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
+                          onClick={() => {
+                            console.log('Mobile link clicked:', subItem.name);
+                            setIsOpen(false);
+                          }}
+                        >
+                          {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                          {subItem.name}
+                        </Link>
+                      ))}
+                    </Disclosure.Panel>
+                  </>
+                )}
+              </Disclosure>
+            ) : (
+              <Link
+                key={item.name}
+                href={item.href || '#'}
+                className={`${
+                  pathname === item.href
+                    ? 'text-[#D6805F] bg-white/5'
+                    : 'text-white hover:bg-white/5'
+                } flex items-center px-4 py-2 text-sm font-medium w-full text-left block`}
+                onClick={() => {
+                  console.log('Mobile nav item clicked:', item.name);
+                  setIsOpen(false);
+                }}
+              >
+                <span className="mr-2">{item.icon}</span>
+                {item.name}
+              </Link>
+            )
+          ))}
         </div>
-      )}
-    </>
+      </div>
+    </nav>
   );
 };
 

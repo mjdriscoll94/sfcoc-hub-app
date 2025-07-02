@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect } from 'react';
 import { fetchSermons, YouTubeVideo } from '@/lib/youtube/api';
 
 export function useSermons() {
@@ -8,7 +8,6 @@ export function useSermons() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedVideo, setSelectedVideo] = useState<YouTubeVideo | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     async function loadSermons() {
@@ -35,37 +34,11 @@ export function useSermons() {
     setSelectedVideo(video);
   };
 
-  // Memoized filtered videos
-  const filteredVideos = useMemo(() => {
-    if (!searchTerm.trim()) {
-      return videos;
-    }
-
-    const searchTerms = searchTerm.toLowerCase().split(' ').filter(term => term.length > 0);
-    
-    return videos.filter(video => {
-      const searchableText = [
-        video.title,
-        video.description,
-        new Date(video.publishedAt).toLocaleDateString('en-US', {
-          month: 'long',
-          day: 'numeric',
-          year: 'numeric'
-        })
-      ].join(' ').toLowerCase();
-
-      // All search terms must match
-      return searchTerms.every(term => searchableText.includes(term));
-    });
-  }, [videos, searchTerm]);
-
   return {
-    videos: filteredVideos,
+    videos,
     loading,
     error,
     selectedVideo,
-    selectVideo,
-    searchTerm,
-    setSearchTerm
+    selectVideo
   };
 } 
