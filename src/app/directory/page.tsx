@@ -19,7 +19,23 @@ interface DirectoryMember {
   phoneNumber: string | null;
   address: string | null;
   photoURL: string | null;
-  familyMembers?: {
+  familyMembers: {
+    firstName: string;
+    lastName: string;
+    relationship: string;
+    birthday: string;
+  }[];
+}
+
+interface DirectoryEntry {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  phoneNumber: string | null;
+  address: string | null;
+  photoURL: string | null;
+  familyMembers: {
     firstName: string;
     lastName: string;
     relationship: string;
@@ -28,12 +44,12 @@ interface DirectoryMember {
 }
 
 export default function DirectoryPage() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedMember, setSelectedMember] = useState<DirectoryMember | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const [members, setMembers] = useState<DirectoryMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedMember, setSelectedMember] = useState<DirectoryMember | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
   const { userProfile } = useAuth();
 
   // Check if user has permission to access directory
@@ -75,7 +91,7 @@ export default function DirectoryPage() {
 
   // Filter members based on search term
   const displayMembers = members.filter(member => {
-    const searchLower = searchTerm.toLowerCase();
+    const searchLower = searchQuery.toLowerCase();
     return (
       member.firstName.toLowerCase().includes(searchLower) ||
       member.lastName.toLowerCase().includes(searchLower) ||
@@ -89,7 +105,7 @@ export default function DirectoryPage() {
     );
   });
 
-  const handleCardClick = (member: DirectoryMember) => {
+  const openModal = (member: DirectoryMember) => {
     setSelectedMember(member);
     setIsModalOpen(true);
   };
@@ -138,8 +154,8 @@ export default function DirectoryPage() {
           <input
             type="text"
             placeholder="Search directory..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-[#D6805F] focus:border-[#D6805F]"
           />
           <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-white/40" />
@@ -159,51 +175,58 @@ export default function DirectoryPage() {
           <p className="text-gray-500 dark:text-white/60">No directory entries found.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {displayMembers.map((member) => (
             <div
               key={member.id}
-              onClick={() => handleCardClick(member)}
-              className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden cursor-pointer hover:shadow-md dark:hover:bg-white/10 transition-all"
+              onClick={() => openModal(member)}
+              className="bg-white dark:bg-white/5 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-white/10 cursor-pointer hover:shadow-md transition-shadow"
             >
-              <div className="flex sm:block">
-                {/* Image container - left side on mobile, top on larger screens */}
-                <div className="w-1/3 sm:w-full relative">
-                  {member.photoURL ? (
-                    <div className="relative h-32 sm:h-48 w-full">
+              {/* Mobile Layout (flex row) */}
+              <div className="flex md:block">
+                {/* Image Container - Full height on mobile */}
+                <div className="w-1/3 md:w-full relative">
+                  <div className="h-full md:h-48">
+                    {member.photoURL ? (
                       <Image
                         src={member.photoURL}
-                        alt={`${member.lastName} Family`}
+                        alt={`${member.firstName} ${member.lastName}`}
                         fill
-                        className="rounded-l-lg sm:rounded-t-lg sm:rounded-b-none object-cover"
-                        sizes="(max-width: 640px) 33vw, (max-width: 1024px) 50vw, 33vw"
+                        className="object-cover"
                       />
-                    </div>
-                  ) : (
-                    <div className="h-32 sm:h-48 w-full rounded-l-lg sm:rounded-t-lg sm:rounded-b-none bg-gray-100 dark:bg-white/10 flex items-center justify-center">
-                      <Users className="h-12 w-12 text-gray-400 dark:text-white/40" />
-                    </div>
-                  )}
+                    ) : (
+                      <div className="w-full h-full bg-gray-100 dark:bg-white/5 flex items-center justify-center">
+                        <User className="w-12 h-12 text-gray-400 dark:text-white/40" />
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                {/* Content container - right side on mobile, bottom on larger screens */}
-                <div className="w-2/3 sm:w-full p-4 sm:p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 dark:text-white truncate">
-                    {member.lastName}
-                  </h2>
-                  <div className="mt-2 space-y-1">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      {member.firstName} {member.lastName}
-                    </div>
-                    {member.familyMembers?.map((familyMember, index) => (
-                      <div key={index} className="text-sm text-gray-900 dark:text-white">
-                        {familyMember.firstName} {familyMember.lastName}
+                {/* Content Container */}
+                <div className="w-2/3 md:w-full p-4 md:p-6">
+                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    {member.firstName} {member.lastName}
+                  </h3>
+                  <div className="mt-2 space-y-2">
+                    {member.email && (
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
+                        <Mail className="h-4 w-4 mr-2" />
+                        <span className="truncate">{member.email}</span>
                       </div>
-                    ))}
+                    )}
+                    {member.phoneNumber && (
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
+                        <Phone className="h-4 w-4 mr-2" />
+                        <span>{member.phoneNumber}</span>
+                      </div>
+                    )}
+                    {member.address && (
+                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
+                        <MapPin className="h-4 w-4 mr-2" />
+                        <span className="truncate">{member.address}</span>
+                      </div>
+                    )}
                   </div>
-                  <p className="mt-2 text-sm text-gray-500 dark:text-white/60">
-                    Click to view details
-                  </p>
                 </div>
               </div>
             </div>

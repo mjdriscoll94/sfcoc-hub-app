@@ -11,14 +11,14 @@ interface FamilyMember {
 }
 
 interface DirectoryEntry {
+  id: string;
   firstName: string;
   lastName: string;
   email: string | null;
-  phoneNumber?: string;
-  address?: string;
-  anniversary?: string;
+  phoneNumber: string | null;
+  address: string | null;
+  photoURL: string | null;
   familyMembers: FamilyMember[];
-  photoURL?: string;
 }
 
 interface DirectoryModalProps {
@@ -115,11 +115,6 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
                               <span>{member.address}</span>
                             </div>
                           )}
-                          {member.anniversary && (
-                            <div className="flex items-center text-gray-500 dark:text-gray-300">
-                              <span className="font-semibold">Anniversary:</span> {new Date(member.anniversary).toLocaleDateString()}
-                            </div>
-                          )}
                         </div>
                       </div>
 
@@ -130,9 +125,6 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
                             <User className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-2" />
                             <span className="text-gray-900 dark:text-white">
                               {member.firstName} {member.lastName}
-                            </span>
-                            <span className="text-gray-500 dark:text-gray-400 ml-2">
-                              (Primary Contact)
                             </span>
                           </div>
                           {member.familyMembers?.map((familyMember, index) => (
