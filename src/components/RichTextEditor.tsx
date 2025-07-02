@@ -130,11 +130,31 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
             class: 'text-gray-900 dark:text-white',
           },
         },
-        bold: {},
-        italic: {},
-        bulletList: {},
-        orderedList: {},
-        listItem: {},
+        bold: {
+          HTMLAttributes: {
+            class: 'text-gray-900 dark:text-white',
+          },
+        },
+        italic: {
+          HTMLAttributes: {
+            class: 'text-gray-900 dark:text-white',
+          },
+        },
+        bulletList: {
+          HTMLAttributes: {
+            class: 'text-gray-900 dark:text-white',
+          },
+        },
+        orderedList: {
+          HTMLAttributes: {
+            class: 'text-gray-900 dark:text-white',
+          },
+        },
+        listItem: {
+          HTMLAttributes: {
+            class: 'text-gray-900 dark:text-white',
+          },
+        },
       }),
       Link.configure({
         openOnClick: false,
@@ -147,7 +167,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       }),
       Underline.configure({
         HTMLAttributes: {
-          class: 'underline',
+          class: 'text-gray-900 dark:text-white underline',
         },
       }),
       TextStyle,
@@ -163,7 +183,13 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .replace(/<p>\s*<\/p>/g, '<p>&nbsp;</p>')
         .replace(/\n/g, '')
         .replace(/contenteditable="true"/g, '')
-        .replace(/class="ProseMirror"/g, '');
+        .replace(/class="ProseMirror"/g, '')
+        .replace(/<p>/g, '<p class="text-gray-900 dark:text-white">')
+        .replace(/<h1>/g, '<h1 class="text-gray-900 dark:text-white">')
+        .replace(/<h2>/g, '<h2 class="text-gray-900 dark:text-white">')
+        .replace(/<ul>/g, '<ul class="text-gray-900 dark:text-white">')
+        .replace(/<ol>/g, '<ol class="text-gray-900 dark:text-white">')
+        .replace(/<li>/g, '<li class="text-gray-900 dark:text-white">');
       onChange(cleanHtml);
     },
     parseOptions: {
@@ -320,4 +346,4 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       </div>
     </div>
   );
-} 
+}
