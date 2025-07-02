@@ -230,8 +230,8 @@ export default function PrayerBoard() {
                     </span>
                     <span className={`${
                       request.type === 'prayer'
-                        ? 'bg-[#F7E6E1] group-hover:bg-[#F7E6E1]'
-                        : 'bg-[#E2EAE8] group-hover:bg-[#E2EAE8]'
+                        ? 'bg-[#F7E6E1] group-hover:bg-[#F7E6E1] text-[#D6805F] dark:text-[#D6805F]'
+                        : 'bg-[#E2EAE8] group-hover:bg-[#E2EAE8] text-[#85AAA0] dark:text-[#85AAA0]'
                     } px-2 py-0.5 rounded-full text-sm transition-colors`}>
                       {request.prayerCount}
                     </span>
