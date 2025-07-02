@@ -227,14 +227,21 @@ export default function NewAnnouncementPage() {
                   const template = {
                     type: 'doc',
                     content: [
-                      
                       {
                         type: 'paragraph',
                         content: [{ type: 'text', text: 'Church Family,' }]
                       },
                       {
                         type: 'paragraph',
+                        content: [{ type: 'text', text: '\u200B' }]
+                      },
+                      {
+                        type: 'paragraph',
                         content: [{ type: 'text', text: 'Here are some things to keep in mind this week:' }]
+                      },
+                      {
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: '\u200B' }]
                       },
                       {
                         type: 'heading',
