@@ -385,30 +385,15 @@ const Navigation = () => {
       {/* Mobile menu */}
       <div 
         className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#171717]`}
-        onClick={(e) => {
-          console.log('Mobile menu container clicked');
-          e.stopPropagation();
-        }}
       >
         <div className="pt-2 pb-3 space-y-1">
           {activeNavItems.map((item) => (
             item.dropdown ? (
-              <div 
-                key={item.name}
-                onClick={(e) => {
-                  console.log('Dropdown container clicked:', item.name);
-                  e.stopPropagation();
-                }}
-              >
+              <div key={item.name}>
                 {/* Dropdown header */}
                 <button
                   type="button"
-                  onClick={(e) => {
-                    console.log('Dropdown header clicked:', item.name);
-                    e.stopPropagation();
-                    e.preventDefault();
-                    handleDropdownClick(item.name);
-                  }}
+                  onClick={() => handleDropdownClick(item.name)}
                   className={`${
                     item.items?.some(subItem => pathname === subItem.href)
                       ? 'text-[#D6805F] bg-white/5'
@@ -430,52 +415,49 @@ const Navigation = () => {
                 {openDropdown === item.name && (
                   <div className="bg-[#1f1f1f] relative z-50">
                     {item.items?.map((subItem) => {
-                      console.log('Rendering dropdown item:', subItem.name);
+                      console.log('Rendering mobile dropdown item:', subItem.name);
                       return (
-                        <button
+                        <Link
                           key={subItem.name}
-                          type="button"
-                          onClick={(e) => {
-                            console.log('Dropdown item clicked:', subItem.name);
-                            e.stopPropagation();
-                            setIsOpen(false);
-                            setOpenDropdown(null);
-                            console.log('Attempting navigation to:', subItem.href);
-                            window.location.href = subItem.href;
-                          }}
+                          href={subItem.href}
                           className={`${
                             pathname === subItem.href
                               ? 'text-[#D6805F] bg-white/5'
                               : 'text-white hover:bg-white/5'
-                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left`}
+                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
+                          onClick={() => {
+                            console.log('Mobile dropdown item clicked:', subItem.name);
+                            console.log('Closing menus...');
+                            setIsOpen(false);
+                            setOpenDropdown(null);
+                          }}
                         >
                           {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
                           {subItem.name}
-                        </button>
+                        </Link>
                       );
                     })}
                   </div>
                 )}
               </div>
             ) : (
-              <button
+              <Link
                 key={item.name}
-                type="button"
-                onClick={(e) => {
-                  console.log('Navigation item clicked:', item.name);
-                  e.stopPropagation();
-                  e.preventDefault();
-                  handleNavigation(item.href || '#', item.name);
-                }}
+                href={item.href || '#'}
                 className={`${
                   pathname === item.href
                     ? 'text-[#D6805F] bg-white/5'
                     : 'text-white hover:bg-white/5'
-                } flex items-center px-4 py-2 text-sm font-medium w-full text-left`}
+                } flex items-center px-4 py-2 text-sm font-medium w-full text-left block`}
+                onClick={() => {
+                  console.log('Mobile nav item clicked:', item.name);
+                  setIsOpen(false);
+                  setOpenDropdown(null);
+                }}
               >
                 <span className="mr-2">{item.icon}</span>
                 {item.name}
-              </button>
+              </Link>
             )
           ))}
         </div>
