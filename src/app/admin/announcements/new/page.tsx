@@ -220,34 +220,7 @@ export default function NewAnnouncementPage() {
           {/* Templates Section */}
           <div>
             <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Templates</h2>
-            <div className="flex items-center space-x-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const template = {
-                    type: 'doc',
-                    content: [
-                      {
-                        type: 'paragraph',
-                        content: [{ type: 'text', text: 'Church Family,' }]
-                      },
-                      {
-                        type: 'paragraph',
-                        content: [{ type: 'text', text: '\u200B' }]
-                      }
-                    ]
-                  };
-                  
-                  // Set content first, then type
-                  setContent(template);
-                  requestAnimationFrame(() => {
-                    setType('General');
-                  });
-                }}
-                className="px-3 py-1 text-sm bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-md text-gray-900 dark:text-white"
-              >
-                General Announcement
-              </button>
+            <div className="flex gap-2">
               <button
                 type="button"
                 onClick={() => {

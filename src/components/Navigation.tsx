@@ -28,6 +28,7 @@ const Navigation = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownButtonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const router = useRouter();
 
   const pathname = usePathname();
@@ -49,6 +50,30 @@ const Navigation = () => {
     console.log('openDropdown:', openDropdown);
     console.log('pathname:', pathname);
   }, [isOpen, openDropdown, pathname]);
+
+  // Handle clicks outside dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // Check if click is outside all dropdowns
+      if (openDropdown) {
+        const dropdownButton = dropdownButtonRefs.current[openDropdown];
+        const dropdownContent = document.querySelector(`[data-dropdown="${openDropdown}"]`);
+        
+        // If click is not on the button or inside the dropdown content
+        if (
+          (!dropdownButton || !dropdownButton.contains(event.target as Node)) &&
+          (!dropdownContent || !dropdownContent.contains(event.target as Node))
+        ) {
+          setOpenDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [openDropdown]);
 
   // Debug navigation attempts
   const handleNavigation = async (href: string, itemName: string) => {
@@ -73,19 +98,6 @@ const Navigation = () => {
       console.error('Navigation error:', error);
     }
   };
-
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setOpenDropdown(null);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, []);
 
   const handleDropdownClick = (dropdownName: string) => {
     console.log('=== Dropdown Click ===');
@@ -269,6 +281,9 @@ const Navigation = () => {
                 item.dropdown ? (
                   <div key={item.name} className="relative inline-flex items-center">
                     <button
+                      ref={el => {
+                        dropdownButtonRefs.current[item.name] = el;
+                      }}
                       onClick={() => handleDropdownClick(item.name)}
                       className={`${
                         item.items?.some(subItem => pathname === subItem.href)
@@ -288,7 +303,10 @@ const Navigation = () => {
                       </svg>
                     </button>
                     {openDropdown === item.name && (
-                      <div className="absolute z-50 top-full pt-2 left-0 w-56">
+                      <div 
+                        data-dropdown={item.name}
+                        className="absolute z-50 top-full pt-2 left-0 w-56"
+                      >
                         <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5">
                           <div className="py-1">
                             {item.items?.map((subItem) => (
@@ -333,69 +351,74 @@ const Navigation = () => {
           <div className="flex items-center">
             {user ? (
               <Menu as="div" className="relative">
-                <Menu.Button className="max-w-xs bg-[#D6805F] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#171717] focus:ring-white">
-                  <span className="sr-only">Open user menu</span>
-                  <div className="h-8 w-8 rounded-full bg-[#D6805F] flex items-center justify-center text-white">
-                    {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
-                  </div>
-                </Menu.Button>
-                <Transition
-                  as={Fragment}
-                  enter="transition ease-out duration-100"
-                  enterFrom="transform opacity-0 scale-95"
-                  enterTo="transform opacity-100 scale-100"
-                  leave="transition ease-in duration-75"
-                  leaveFrom="transform opacity-100 scale-100"
-                  leaveTo="transform opacity-0 scale-95"
-                >
-                  <Menu.Items className="absolute z-50 top-full right-0 pt-2 w-48">
-                    <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5 divide-y divide-white/10">
-                      <div className="py-1">
-                        <div className="px-4 py-2 text-sm text-white">
-                          {userProfile?.displayName || user.email}
+                {({ open }) => (
+                  <>
+                    <Menu.Button className="max-w-xs bg-[#D6805F] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#171717] focus:ring-white">
+                      <span className="sr-only">Open user menu</span>
+                      <div className="h-8 w-8 rounded-full bg-[#D6805F] flex items-center justify-center text-white">
+                        {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
+                      </div>
+                    </Menu.Button>
+                    <Transition
+                      show={open}
+                      as={Fragment}
+                      enter="transition ease-out duration-100"
+                      enterFrom="transform opacity-0 scale-95"
+                      enterTo="transform opacity-100 scale-100"
+                      leave="transition ease-in duration-75"
+                      leaveFrom="transform opacity-100 scale-100"
+                      leaveTo="transform opacity-0 scale-95"
+                    >
+                      <Menu.Items className="absolute z-50 top-full right-0 pt-2 w-48">
+                        <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5 divide-y divide-white/10">
+                          <div className="py-1">
+                            <div className="px-4 py-2 text-sm text-white">
+                              {userProfile?.displayName || user.email}
+                            </div>
+                          </div>
+                          <div className="py-1">
+                            <Menu.Item>
+                              {({ active }) => (
+                                <Link
+                                  href="/settings"
+                                  className={`block w-full text-left px-4 py-2 text-sm text-white ${
+                                    active ? 'bg-white/5' : ''
+                                  }`}
+                                >
+                                  Settings
+                                </Link>
+                              )}
+                            </Menu.Item>
+                            <Menu.Item>
+                              {({ active }) => (
+                                <button
+                                  className={`block w-full text-left px-4 py-2 text-sm text-white ${
+                                    active ? 'bg-white/5' : ''
+                                  } ${isSigningOut ? 'opacity-50' : ''}`}
+                                  onClick={async () => {
+                                    if (isSigningOut) return;
+                                    
+                                    setIsSigningOut(true);
+                                    try {
+                                      console.log('Navigation: Sign out button clicked');
+                                      await signOut();
+                                    } catch (error) {
+                                      console.error('Navigation: Error during sign out:', error);
+                                      setIsSigningOut(false);
+                                    }
+                                  }}
+                                  disabled={isSigningOut}
+                                >
+                                  {isSigningOut ? 'Signing out...' : 'Sign out'}
+                                </button>
+                              )}
+                            </Menu.Item>
+                          </div>
                         </div>
-                      </div>
-                      <div className="py-1">
-                        <Menu.Item>
-                          {({ active }) => (
-                            <Link
-                              href="/settings"
-                              className={`block w-full text-left px-4 py-2 text-sm text-white ${
-                                active ? 'bg-white/5' : ''
-                              }`}
-                            >
-                              Settings
-                            </Link>
-                          )}
-                        </Menu.Item>
-                        <Menu.Item>
-                          {({ active }) => (
-                            <button
-                              className={`block w-full text-left px-4 py-2 text-sm text-white ${
-                                active ? 'bg-white/5' : ''
-                              } ${isSigningOut ? 'opacity-50' : ''}`}
-                              onClick={async () => {
-                                if (isSigningOut) return;
-                                
-                                setIsSigningOut(true);
-                                try {
-                                  console.log('Navigation: Sign out button clicked');
-                                  await signOut();
-                                } catch (error) {
-                                  console.error('Navigation: Error during sign out:', error);
-                                  setIsSigningOut(false);
-                                }
-                              }}
-                              disabled={isSigningOut}
-                            >
-                              {isSigningOut ? 'Signing out...' : 'Sign out'}
-                            </button>
-                          )}
-                        </Menu.Item>
-                      </div>
-                    </div>
-                  </Menu.Items>
-                </Transition>
+                      </Menu.Items>
+                    </Transition>
+                  </>
+                )}
               </Menu>
             ) : (
               <Link

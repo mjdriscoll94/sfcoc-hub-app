@@ -116,7 +116,7 @@ export async function sendAnnouncementEmail(subscribers: EmailSubscriber[], subj
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 20px;">
-        <img src="https://sfcoc.vercel.app/images/sfcoc-logo.png" 
+        <img src="https://res.cloudinary.com/dzjsztwqp/image/upload/v1751485185/SFCOC_Colored_lxaty4.png" 
              alt="SFCOC Logo" 
              style="width: 120px; height: auto;"
              loading="eager"
