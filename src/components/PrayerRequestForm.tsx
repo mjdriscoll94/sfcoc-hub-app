@@ -87,7 +87,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
         <select
           value={formData.type}
           onChange={(e) => setFormData({ ...formData, type: e.target.value as 'prayer' | 'praise' })}
-          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-white dark:bg-white/5 dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-white/40 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-[#2F3437] dark:bg-white dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-[#2F3437]/40 px-3 py-2"
         >
           <option value="prayer">Prayer Request</option>
           <option value="praise">Praise Report</option>
@@ -101,7 +101,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
           required
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-white dark:bg-white/5 dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-white/40 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-[#2F3437] dark:bg-white dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-[#2F3437]/40 px-3 py-2"
           placeholder={formData.type === 'prayer' 
             ? "e.g., Healing for my grandmother" 
             : "e.g., Answered prayer for new job"}
@@ -115,7 +115,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={4}
-          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-white dark:bg-white/5 dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-white/40 px-3 py-2"
+          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-[#2F3437] dark:bg-white dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-[#2F3437]/40 px-3 py-2"
           placeholder={formData.type === 'prayer'
             ? "Please share the details of your prayer request. What specifically would you like others to pray for?"
             : "Share how God has blessed you or answered your prayers. Your testimony can encourage others!"}
@@ -129,7 +129,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
             id="anonymous"
             checked={formData.isAnonymous}
             onChange={(e) => setFormData({ ...formData, isAnonymous: e.target.checked })}
-            className="h-4 w-4 rounded border-[#8BAF95]/20 text-[#FF6B6B] focus:ring-[#FF6B6B] dark:border-white/10"
+            className="h-4 w-4 rounded border-[#8BAF95]/20 text-[#FF6B6B] focus:ring-[#FF6B6B] dark:border-white/10 dark:bg-white"
           />
           <label htmlFor="anonymous" className="ml-2 block text-sm text-[#2F3437] dark:text-white">
             Submit anonymously
@@ -142,7 +142,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
             id="adminOnly"
             checked={formData.isAdminOnly}
             onChange={(e) => setFormData({ ...formData, isAdminOnly: e.target.checked })}
-            className="h-4 w-4 rounded border-[#8BAF95]/20 text-[#FF6B6B] focus:ring-[#FF6B6B] dark:border-white/10"
+            className="h-4 w-4 rounded border-[#8BAF95]/20 text-[#FF6B6B] focus:ring-[#FF6B6B] dark:border-white/10 dark:bg-white"
           />
           <label htmlFor="adminOnly" className="ml-2 block text-sm text-[#2F3437] dark:text-white">
             Only admins can see this request
