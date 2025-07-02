@@ -209,20 +209,41 @@ export default function NewAnnouncementPage() {
               <button
                 type="button"
                 onClick={() => {
-                  const template = `<h1>Weekly Update</h1>
-
-<p>Church Family,</p><br />
-
-<p>Here are some things to keep in mind this week:</p><br />
-
-<h2>Birthdays and Anniversaries:</h2><br />
-
-<p>&nbsp;</p>
-
-<h2>Announcements:</h2><br />
-
-<p>&nbsp;</p>`;
-                  setContent(template);
+                  const template = {
+                    type: 'doc',
+                    content: [
+                      {
+                        type: 'heading',
+                        attrs: { level: 1 },
+                        content: [{ type: 'text', text: 'Weekly Update' }]
+                      },
+                      {
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: 'Church Family,' }]
+                      },
+                      {
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: 'Here are some things to keep in mind this week:' }]
+                      },
+                      {
+                        type: 'heading',
+                        attrs: { level: 2 },
+                        content: [{ type: 'text', text: 'Birthdays and Anniversaries:' }]
+                      },
+                      {
+                        type: 'paragraph'
+                      },
+                      {
+                        type: 'heading',
+                        attrs: { level: 2 },
+                        content: [{ type: 'text', text: 'Announcements:' }]
+                      },
+                      {
+                        type: 'paragraph'
+                      }
+                    ]
+                  };
+                  setContent(JSON.stringify(template));
                   setType('Weekly');
                 }}
                 className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-white/20 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-white bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"

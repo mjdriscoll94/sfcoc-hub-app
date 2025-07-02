@@ -150,7 +150,14 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
-      editor.commands.setContent(content);
+      try {
+        // Try to parse as JSON first
+        const jsonContent = JSON.parse(content);
+        editor.commands.setContent(jsonContent);
+      } catch (e) {
+        // If not valid JSON, treat as HTML
+        editor.commands.setContent(content);
+      }
     }
   }, [content, editor]);
 
