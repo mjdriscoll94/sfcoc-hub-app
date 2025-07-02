@@ -4,8 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
-import { collection, addDoc, Timestamp, getDocs, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
-import { Upload, FileText, Trash2, ExternalLink } from 'lucide-react';
+import { collection, addDoc, Timestamp, getDocs, deleteDoc, doc, query, orderBy, getDoc, DocumentData } from 'firebase/firestore';
+import { Upload, FileText, Trash2, ExternalLink, User } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { uploadLessonNotes } from '@/lib/cloudinary/upload';
 
@@ -16,7 +16,12 @@ interface LessonNote {
   fileUrl: string;
   uploadedAt: Date;
   uploadedBy: string;
+  uploaderName: string;
   fileName: string;
+}
+
+interface FirebaseUser extends DocumentData {
+  displayName: string | null;
 }
 
 export default function LessonNotesManagement() {
@@ -41,12 +46,24 @@ export default function LessonNotesManagement() {
       try {
         const q = query(collection(db, 'lesson-notes'), orderBy('uploadedAt', 'desc'));
         const querySnapshot = await getDocs(q);
-        const notesData = querySnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          date: doc.data().date.toDate(),
-          uploadedAt: doc.data().uploadedAt.toDate()
-        })) as LessonNote[];
+        
+        // Fetch user details for each note
+        const notesPromises = querySnapshot.docs.map(async (noteDoc) => {
+          const data = noteDoc.data();
+          // Get uploader's display name
+          const uploaderDoc = await getDoc(doc(db, 'users', data.uploadedBy));
+          const uploaderData = uploaderDoc.data() as FirebaseUser;
+          
+          return {
+            id: noteDoc.id,
+            ...data,
+            date: data.date.toDate(),
+            uploadedAt: data.uploadedAt.toDate(),
+            uploaderName: uploaderData?.displayName || 'Unknown User'
+          } as LessonNote;
+        });
+
+        const notesData = await Promise.all(notesPromises);
         setNotes(notesData);
       } catch (err) {
         console.error('Error fetching notes:', err);
@@ -80,7 +97,7 @@ export default function LessonNotesManagement() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!file || !title.trim()) {
+    if (!file || !title.trim() || !userProfile) {
       setError('Please provide both a title and a PDF file');
       return;
     }
@@ -102,13 +119,14 @@ export default function LessonNotesManagement() {
       });
 
       // Add the new note to the state
-      const newNote = {
+      const newNote: LessonNote = {
         id: docRef.id,
         title: title.trim(),
         date: new Date(),
         fileUrl,
         uploadedAt: new Date(),
         uploadedBy: userProfile.uid,
+        uploaderName: userProfile.displayName || 'Unknown User',
         fileName: file.name
       };
       setNotes(prevNotes => [newNote, ...prevNotes]);
@@ -144,28 +162,19 @@ export default function LessonNotesManagement() {
       const urlParts = cleanUrl.split('/');
       console.log('URL Parts:', urlParts);
       
-      // Find the upload index
-      const uploadIndex = urlParts.findIndex(part => part === 'upload');
-      if (uploadIndex === -1) {
-        throw new Error('Invalid Cloudinary URL structure');
+      // For raw files, we need to find the 'files' folder
+      const filesIndex = urlParts.findIndex(part => part === 'files');
+      if (filesIndex === -1) {
+        throw new Error('Invalid file URL structure - missing files folder');
       }
-      console.log('Upload Index:', uploadIndex);
-
-      // Get the parts after 'upload' including version number if present
-      const relevantParts = urlParts.slice(uploadIndex + 1);
+      
+      // Get everything after 'files' folder
+      const relevantParts = urlParts.slice(filesIndex);
       console.log('Relevant Parts:', relevantParts);
 
-      // Remove file extension but keep version number
-      const publicId = relevantParts.join('/').replace(/\.[^/.]+$/, '');
+      // Join the parts to form the public ID
+      const publicId = relevantParts.join('/');
       console.log('Final Public ID:', publicId);
-
-      // Log the full deletion request
-      console.log('Deletion Request:', {
-        publicId,
-        cloudName: process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME,
-        hasApiKey: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_KEY,
-        hasApiSecret: !!process.env.NEXT_PUBLIC_CLOUDINARY_API_SECRET
-      });
 
       const credentials = {
         publicId,
@@ -308,9 +317,14 @@ export default function LessonNotesManagement() {
                     <FileText className="h-5 w-5 text-gray-400" />
                     <div>
                       <h3 className="text-sm font-medium text-gray-900 dark:text-white">{note.title}</h3>
-                      <p className="text-sm text-gray-500 dark:text-gray-400">
-                        Uploaded on {note.uploadedAt.toLocaleDateString()}
-                      </p>
+                      <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
+                        <span>Uploaded on {note.uploadedAt.toLocaleDateString()}</span>
+                        <span>•</span>
+                        <div className="flex items-center space-x-1">
+                          <User className="h-4 w-4" />
+                          <span>{note.uploaderName}</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-center space-x-2">
