@@ -227,11 +227,7 @@ export default function NewAnnouncementPage() {
                   const template = {
                     type: 'doc',
                     content: [
-                      {
-                        type: 'heading',
-                        attrs: { level: 1 },
-                        content: [{ type: 'text', text: 'Weekly Update' }]
-                      },
+                      
                       {
                         type: 'paragraph',
                         content: [{ type: 'text', text: 'Church Family,' }]
