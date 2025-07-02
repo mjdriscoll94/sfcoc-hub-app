@@ -6,8 +6,8 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 import { Fragment } from 'react';
-import { Dialog, Transition } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon } from '@heroicons/react/24/outline';
+import { Dialog, Transition, Disclosure } from '@headlessui/react';
+import { Bars3Icon, XMarkIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 type SubItem = {
   name: string;
@@ -383,76 +383,51 @@ const Navigation = () => {
       </div>
 
       {/* Mobile menu */}
-      <div 
-        className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#171717]`}
-      >
+      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#171717]`}>
         <div className="pt-2 pb-3 space-y-1">
           {activeNavItems.map((item) => (
             item.dropdown ? (
-              <div key={item.name}>
-                {/* Dropdown header */}
-                <button
-                  type="button"
-                  onClick={() => handleDropdownClick(item.name)}
-                  className={`${
-                    item.items?.some(subItem => pathname === subItem.href)
-                      ? 'text-[#D6805F] bg-white/5'
-                      : 'text-white hover:bg-white/5'
-                  } w-full flex items-center px-4 py-2 text-sm font-medium`}
-                >
-                  <span className="mr-2">{item.icon}</span>
-                  <span className="flex-1 text-left">{item.name}</span>
-                  <svg
-                    className={`h-5 w-5 transform ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                  </svg>
-                </button>
-                {/* Dropdown items */}
-                {openDropdown === item.name && (
-                  <div className="bg-[#1f1f1f] relative z-50">
-                    {item.items?.map((subItem) => {
-                      console.log('Rendering mobile dropdown item:', subItem.name);
-                      return (
-                        <div
+              <Disclosure as="div" key={item.name}>
+                {({ open }) => (
+                  <>
+                    <Disclosure.Button
+                      className={`${
+                        item.items?.some(subItem => pathname === subItem.href)
+                          ? 'text-[#D6805F] bg-white/5'
+                          : 'text-white hover:bg-white/5'
+                      } w-full flex items-center px-4 py-2 text-sm font-medium`}
+                    >
+                      <span className="mr-2">{item.icon}</span>
+                      <span className="flex-1 text-left">{item.name}</span>
+                      <ChevronUpIcon
+                        className={`${
+                          open ? 'transform rotate-180' : ''
+                        } w-5 h-5 text-white`}
+                      />
+                    </Disclosure.Button>
+                    <Disclosure.Panel className="bg-[#1f1f1f]">
+                      {item.items?.map((subItem) => (
+                        <Link
                           key={subItem.name}
+                          href={subItem.href}
                           className={`${
                             pathname === subItem.href
                               ? 'text-[#D6805F] bg-white/5'
                               : 'text-white hover:bg-white/5'
-                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block cursor-pointer`}
-                          role="button"
-                          tabIndex={0}
+                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
                           onClick={() => {
-                            console.log('Click on mobile item:', subItem.name);
+                            console.log('Mobile link clicked:', subItem.name);
                             setIsOpen(false);
-                            setOpenDropdown(null);
-                            router.push(subItem.href);
-                          }}
-                          onTouchStart={(e) => {
-                            console.log('Touch start on mobile item:', subItem.name);
-                            e.preventDefault();
-                          }}
-                          onTouchEnd={(e) => {
-                            console.log('Touch end on mobile item:', subItem.name);
-                            e.preventDefault();
-                            setIsOpen(false);
-                            setOpenDropdown(null);
-                            console.log('Navigating to:', subItem.href);
-                            router.push(subItem.href);
                           }}
                         >
                           {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
                           {subItem.name}
-                        </div>
-                      );
-                    })}
-                  </div>
+                        </Link>
+                      ))}
+                    </Disclosure.Panel>
+                  </>
                 )}
-              </div>
+              </Disclosure>
             ) : (
               <Link
                 key={item.name}
@@ -465,7 +440,6 @@ const Navigation = () => {
                 onClick={() => {
                   console.log('Mobile nav item clicked:', item.name);
                   setIsOpen(false);
-                  setOpenDropdown(null);
                 }}
               >
                 <span className="mr-2">{item.icon}</span>
