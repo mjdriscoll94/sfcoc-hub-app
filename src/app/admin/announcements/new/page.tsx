@@ -211,15 +211,15 @@ export default function NewAnnouncementPage() {
                 onClick={() => {
                   const template = `<h1>Weekly Update</h1>
 
-<p>Church Family,</p>
+<p>Church Family,</p><br />
 
-<p>Here are some things to keep in mind this week:</p>
+<p>Here are some things to keep in mind this week:</p><br />
 
-<h2>Birthdays and Anniversaries:</h2>
+<h2>Birthdays and Anniversaries:</h2><br />
 
 <p>&nbsp;</p>
 
-<h2>Announcements:</h2>
+<h2>Announcements:</h2><br />
 
 <p>&nbsp;</p>`;
                   setContent(template);

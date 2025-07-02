@@ -19,7 +19,7 @@ export default function DirectorySubmitPage() {
       <div className="min-h-screen bg-gray-50 dark:bg-[#171717] py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <p className="text-center text-gray-500 dark:text-white/60">
+            <p className="text-center text-white/60 dark:text-white/60">
               You do not have permission to submit directory information. Please contact an administrator.
             </p>
           </div>
@@ -32,7 +32,7 @@ export default function DirectorySubmitPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
         <BackButton className="mr-4" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Submit Directory Information</h1>
+        <h1 className="text-3xl font-bold text-white dark:text-white">Submit Directory Information</h1>
       </div>
       <DirectorySubmissionForm />
     </div>

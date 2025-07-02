@@ -323,7 +323,7 @@ export default function DirectorySubmissionForm() {
         </div>
 
         <div className="border-t border-gray-200 dark:border-white/10 pt-6">
-          <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Family Members</h3>
+          <h3 className="text-lg font-medium text-white dark:text-white mb-4">Family Members</h3>
           
           {formData.familyMembers.length > 0 && (
             <div className="mb-4 space-y-2">
