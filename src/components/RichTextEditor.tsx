@@ -102,6 +102,10 @@ const editorStyles = `
     color: #FF6B6B;
     text-decoration: underline;
   }
+
+  .dark .ProseMirror * {
+    color: white !important;
+  }
 `;
 
 export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
