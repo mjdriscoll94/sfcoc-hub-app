@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function LessonNotesPage() {
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-[#D6805F]">Lesson Notes</h1>
+      <h1 className="text-3xl font-bold mb-6 text-[#D6805F] text-center sm:text-left">Lesson Notes</h1>
       <div className="bg-[#1f1f1f] rounded-lg p-6">
         <p className="text-gray-300 mb-4">
           This page will contain downloadable PDF files of lesson notes from our services and Bible classes.
