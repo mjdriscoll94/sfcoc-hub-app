@@ -81,7 +81,7 @@ export default function PendingUserQueue() {
 
   if (users.length === 0) {
     return (
-      <div className="text-gray-500 dark:text-gray-400 text-center py-4">
+      <div className="text-gray-900 dark:text-gray-500 text-center py-4">
         No pending user accounts to review.
       </div>
     );

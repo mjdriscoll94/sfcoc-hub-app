@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "init-db": "node -r ./src/scripts/loadEnv.js src/scripts/initializeCollections.ts"
+    "init-db": "node -r ./src/scripts/loadEnv.js src/scripts/initializeCollections.ts",
+    "version:patch": "npm version patch && node scripts/updateVersion.js",
+    "version:minor": "npm version minor && node scripts/updateVersion.js",
+    "version:major": "npm version major && node scripts/updateVersion.js"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",
