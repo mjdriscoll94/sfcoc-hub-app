@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSermons } from '@/hooks/useSermons';
 
 interface GroupedSermons {
@@ -11,14 +11,8 @@ interface GroupedSermons {
 }
 
 export default function SermonsPage() {
-  const { videos, loading, error, selectedVideo, selectVideo } = useSermons();
-  const [searchTerm, setSearchTerm] = useState('');
+  const { videos, loading, error, selectedVideo, selectVideo, searchTerm, setSearchTerm } = useSermons();
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
-
-  const filteredVideos = videos.filter(video =>
-    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const groupVideosByMonth = (videos: any[]): GroupedSermons => {
     return videos.reduce((groups: GroupedSermons, video) => {
@@ -66,7 +60,7 @@ export default function SermonsPage() {
     return `${num} views`;
   };
 
-  const groupedVideos = groupVideosByMonth(filteredVideos);
+  const groupedVideos = groupVideosByMonth(videos);
   const monthKeys = Object.keys(groupedVideos).sort().reverse();
 
   // Initialize expanded state for the current month if no search term
@@ -76,10 +70,19 @@ export default function SermonsPage() {
     }
   });
 
+  // Auto-expand all months when searching
+  useEffect(() => {
+    if (searchTerm) {
+      setExpandedMonths(new Set(monthKeys));
+    } else if (monthKeys.length > 0) {
+      setExpandedMonths(new Set([monthKeys[0]]));
+    }
+  }, [searchTerm, monthKeys]);
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-white">Sermons</h1>
+        <h1 className="text-3xl font-bold text-white">Sermons & Classes</h1>
       </div>
 
       {/* Search Bar */}
@@ -90,7 +93,7 @@ export default function SermonsPage() {
               type="text"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              placeholder="Search sermons..."
+              placeholder="Search sermons by title, description, or date..."
               className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent"
             />
             <svg
@@ -107,6 +110,11 @@ export default function SermonsPage() {
               />
             </svg>
           </div>
+          {searchTerm && videos.length === 0 && !loading && (
+            <p className="mt-2 text-sm text-white/60 text-center">
+              No sermons found matching your search.
+            </p>
+          )}
         </div>
       </div>
 
