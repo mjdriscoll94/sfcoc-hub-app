@@ -83,6 +83,35 @@ export async function sendAnnouncementEmail(subscribers: EmailSubscriber[], subj
     return;
   }
 
+  // Convert JSON content to HTML if needed
+  let formattedContent = content;
+  try {
+    const jsonContent = JSON.parse(content);
+    if (jsonContent.type === 'doc') {
+      // Convert the JSON content to HTML
+      formattedContent = '';
+      const processNode = (node: any) => {
+        switch (node.type) {
+          case 'text':
+            return node.text;
+          case 'paragraph':
+            const innerContent = node.content?.map(processNode).join('') || '';
+            return `<p>${innerContent || '&nbsp;'}</p>`;
+          case 'heading':
+            const level = node.attrs?.level || 1;
+            const headingContent = node.content?.map(processNode).join('') || '';
+            return `<h${level}>${headingContent}</h${level}>`;
+          default:
+            return node.content?.map(processNode).join('') || '';
+        }
+      };
+      formattedContent = jsonContent.content.map(processNode).join('');
+    }
+  } catch (e) {
+    // If parsing fails, assume it's already HTML
+    console.log('Content appears to be HTML already');
+  }
+
   // Format the email content with HTML
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -91,7 +120,7 @@ export async function sendAnnouncementEmail(subscribers: EmailSubscriber[], subj
       </div>
       <h1 style="color: #333;">${subject}</h1>
       <div style="color: #666; line-height: 1.6;">
-        ${content}
+        ${formattedContent}
       </div>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       <p style="color: #999; font-size: 12px;">
