@@ -248,7 +248,7 @@ export default function NewAnnouncementPage() {
                       },
                       {
                         type: 'paragraph',
-                        content: [{ type: 'text', text: '' }]
+                        content: [{ type: 'text', text: '\u200B' }]
                       },
                       {
                         type: 'heading',
@@ -257,7 +257,7 @@ export default function NewAnnouncementPage() {
                       },
                       {
                         type: 'paragraph',
-                        content: [{ type: 'text', text: '' }]
+                        content: [{ type: 'text', text: '\u200B' }]
                       }
                     ]
                   };
