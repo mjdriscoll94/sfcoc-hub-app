@@ -116,7 +116,7 @@ export async function sendAnnouncementEmail(subscribers: EmailSubscriber[], subj
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 20px;">
-        <img src="https://sfcoc.org/images/SFCOC%20Colored.png" alt="SFCOC Logo" style="width: 120px; height: auto;" />
+        <img src="https://sfcoc.vercel.app/images/SFCOC%20Colored.png" alt="SFCOC Logo" style="width: 120px; height: auto;" />
       </div>
       <h1 style="color: #333;">${subject}</h1>
       <div style="color: #666; line-height: 1.6;">
@@ -125,7 +125,7 @@ export async function sendAnnouncementEmail(subscribers: EmailSubscriber[], subj
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       <p style="color: #999; font-size: 12px;">
         You received this email because you're subscribed to SFCOC announcements. 
-        <a href="https://sfcoc.org/settings" style="color: #ff7c54;">Manage your email preferences</a>
+        <a href="https://sfcoc.vercel.app/settings" style="color: #ff7c54;">Manage your email preferences</a>
       </p>
     </div>
   `;
