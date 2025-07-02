@@ -346,7 +346,21 @@ export default function ServiceRolesPage() {
                                   <select
                                     value={week.pendingAssignments[role] || ''}
                                     onChange={(e) => handleAssignmentChange(weekIndex, role, e.target.value || null)}
-                                    className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-white/10 focus:outline-none focus:ring-[#D6805F] focus:border-[#D6805F] sm:text-sm rounded-md ${week.isEditing ? 'bg-white dark:bg-white/5' : 'bg-gray-50 dark:bg-white/5 cursor-not-allowed'}`}
+                                    className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-white/10 focus:outline-none focus:ring-[#D6805F] focus:border-[#D6805F] sm:text-sm rounded-md ${
+                                      week.isEditing 
+                                        ? 'bg-white dark:bg-white/5' 
+                                        : 'bg-gray-50 dark:bg-white/5 cursor-not-allowed'
+                                    } ${
+                                      !week.isEditing && assignment && assignment.status && 'sm:hidden' // Hide colored select on desktop
+                                    } ${
+                                      !week.isEditing && assignment && assignment.status === 'accepted'
+                                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                        : !week.isEditing && assignment && assignment.status === 'declined'
+                                        ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                                        : !week.isEditing && assignment && (assignment.status === 'pending' || assignment.status === 'awaiting_confirmation')
+                                        ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+                                        : ''
+                                    }`}
                                     disabled={!week.isEditing}
                                   >
                                     <option value="">Select a person</option>
