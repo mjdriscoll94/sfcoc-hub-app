@@ -26,12 +26,15 @@ const editorStyles = `
     min-height: 12rem;
     height: auto;
     padding: 1rem;
-    color: #1f2937;
   }
 
   .dark .ProseMirror {
     color: white !important;
     background-color: transparent !important;
+  }
+
+  .dark .ProseMirror * {
+    color: white !important;
   }
 
   .dark .ProseMirror[contenteditable="true"] {
@@ -51,68 +54,6 @@ const editorStyles = `
     color: #666;
   }
 
-  .ProseMirror h1 {
-    font-size: 1.5rem;
-    font-weight: bold;
-    margin: 1rem 0;
-    color: #111827;
-  }
-
-  .dark .ProseMirror h1 {
-    color: white !important;
-  }
-
-  .ProseMirror h2 {
-    font-size: 1.25rem;
-    font-weight: bold;
-    margin: 0.75rem 0;
-    color: #111827;
-  }
-
-  .dark .ProseMirror h2 {
-    color: white !important;
-  }
-
-  .ProseMirror p {
-    margin: 0.5rem 0;
-    color: #374151;
-  }
-
-  .dark .ProseMirror p {
-    color: white !important;
-  }
-
-  .ProseMirror ul {
-    list-style-type: disc;
-    padding-left: 1.5rem;
-    margin: 0.5rem 0;
-    color: #374151;
-  }
-
-  .dark .ProseMirror ul {
-    color: white !important;
-  }
-
-  .ProseMirror ol {
-    list-style-type: decimal;
-    padding-left: 1.5rem;
-    margin: 0.5rem 0;
-    color: #374151;
-  }
-
-  .dark .ProseMirror ol {
-    color: white !important;
-  }
-
-  .ProseMirror a {
-    color: #FF6B6B;
-    text-decoration: underline;
-  }
-
-  .dark .ProseMirror * {
-    color: white !important;
-  }
-
   .dark .ProseMirror *::selection {
     background-color: rgba(255, 255, 255, 0.2) !important;
   }
@@ -127,32 +68,32 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         },
         paragraph: {
           HTMLAttributes: {
-            class: 'text-gray-900 dark:text-white',
+            class: 'dark:text-white',
           },
         },
         bold: {
           HTMLAttributes: {
-            class: 'text-gray-900 dark:text-white',
+            class: 'dark:text-white',
           },
         },
         italic: {
           HTMLAttributes: {
-            class: 'text-gray-900 dark:text-white',
+            class: 'dark:text-white',
           },
         },
         bulletList: {
           HTMLAttributes: {
-            class: 'text-gray-900 dark:text-white',
+            class: 'dark:text-white',
           },
         },
         orderedList: {
           HTMLAttributes: {
-            class: 'text-gray-900 dark:text-white',
+            class: 'dark:text-white',
           },
         },
         listItem: {
           HTMLAttributes: {
-            class: 'text-gray-900 dark:text-white',
+            class: 'dark:text-white',
           },
         },
       }),
@@ -167,7 +108,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       }),
       Underline.configure({
         HTMLAttributes: {
-          class: 'text-gray-900 dark:text-white underline',
+          class: 'dark:text-white underline',
         },
       }),
       TextStyle,
@@ -184,12 +125,16 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .replace(/\n/g, '')
         .replace(/contenteditable="true"/g, '')
         .replace(/class="ProseMirror"/g, '')
-        .replace(/<p>/g, '<p class="text-gray-900 dark:text-white">')
-        .replace(/<h1>/g, '<h1 class="text-gray-900 dark:text-white">')
-        .replace(/<h2>/g, '<h2 class="text-gray-900 dark:text-white">')
-        .replace(/<ul>/g, '<ul class="text-gray-900 dark:text-white">')
-        .replace(/<ol>/g, '<ol class="text-gray-900 dark:text-white">')
-        .replace(/<li>/g, '<li class="text-gray-900 dark:text-white">');
+        .replace(/text-gray-[0-9]+/g, '')
+        .replace(/<p([^>]*)>/g, '<p class="dark:text-white"$1>')
+        .replace(/<h1([^>]*)>/g, '<h1 class="dark:text-white"$1>')
+        .replace(/<h2([^>]*)>/g, '<h2 class="dark:text-white"$1>')
+        .replace(/<ul([^>]*)>/g, '<ul class="dark:text-white"$1>')
+        .replace(/<ol([^>]*)>/g, '<ol class="dark:text-white"$1>')
+        .replace(/<li([^>]*)>/g, '<li class="dark:text-white"$1>')
+        .replace(/<strong([^>]*)>/g, '<strong class="dark:text-white"$1>')
+        .replace(/<em([^>]*)>/g, '<em class="dark:text-white"$1>')
+        .replace(/<u([^>]*)>/g, '<u class="dark:text-white"$1>');
       onChange(cleanHtml);
     },
     parseOptions: {
@@ -197,7 +142,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
     },
     editorProps: {
       attributes: {
-        class: 'prose dark:prose-invert max-w-none focus:outline-none prose-h1:text-2xl prose-h1:font-bold prose-h1:text-gray-900 dark:prose-h1:text-white prose-h1:mb-4 prose-h2:text-xl prose-h2:font-bold prose-h2:text-gray-900 dark:prose-h2:text-white prose-h2:mb-3 prose-p:text-gray-700 dark:prose-p:text-white prose-ul:text-gray-700 dark:prose-ul:text-white prose-ol:text-gray-700 dark:prose-ol:text-white',
+        class: 'prose dark:prose-invert max-w-none focus:outline-none dark:prose-p:text-white dark:prose-headings:text-white dark:prose-strong:text-white dark:prose-em:text-white dark:prose-ul:text-white dark:prose-ol:text-white dark:prose-li:text-white',
       },
     },
   });
