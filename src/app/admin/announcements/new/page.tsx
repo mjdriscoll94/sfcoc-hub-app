@@ -260,9 +260,12 @@ export default function NewAnnouncementPage() {
                       }
                     ]
                   };
-                  // Set content directly without stringifying
-                  setContent(template);
+                  // Set type first
                   setType('Weekly');
+                  // Then set content
+                  setTimeout(() => {
+                    setContent(template);
+                  }, 0);
                 }}
                 className="px-3 py-1 text-sm bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-md text-gray-900 dark:text-white"
               >
