@@ -202,6 +202,36 @@ export default function NewAnnouncementPage() {
             <RichTextEditor content={content} onChange={setContent} />
           </div>
 
+          {/* Templates Section */}
+          <div>
+            <h2 className="text-sm font-medium text-gray-900 dark:text-white mb-2">Templates</h2>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const template = `<h1>Weekly Update</h1>
+
+<p>Church Family,</p>
+
+<p>Here are some things to keep in mind this week:</p>
+
+<h2>Birthdays and Anniversaries:</h2>
+
+<p>&nbsp;</p>
+
+<h2>Announcements:</h2>
+
+<p>&nbsp;</p>`;
+                  setContent(template);
+                  setType('Weekly');
+                }}
+                className="inline-flex items-center px-3 py-2 border border-gray-300 dark:border-white/20 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 dark:text-white bg-white dark:bg-white/5 hover:bg-gray-50 dark:hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"
+              >
+                Weekly Announcement
+              </button>
+            </div>
+          </div>
+
           <div className="flex justify-end gap-4">
             <button
               type="button"
