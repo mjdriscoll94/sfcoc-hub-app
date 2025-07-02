@@ -125,6 +125,9 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       Color,
     ],
     content: typeof content === 'object' ? content : (content || '<p></p>'),
+    autofocus: false,
+    editable: true,
+    injectCSS: false,
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       console.log('Editor content:', editor.getJSON());
@@ -163,45 +166,25 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       console.log('Setting editor content');
       if (typeof content === 'object' && content.type === 'doc') {
         console.log('Setting JSON content:', content);
-        editor.commands.setContent(content);
+        editor.chain().setContent(content).run();
       } else if (typeof content === 'string') {
         try {
           // Try to parse as JSON first
           const jsonContent = JSON.parse(content);
           if (jsonContent.type === 'doc') {
             console.log('Setting parsed JSON content:', jsonContent);
-            editor.commands.setContent(jsonContent);
+            editor.chain().setContent(jsonContent).run();
           } else {
             console.log('Setting string content as HTML');
-            editor.commands.setContent(content);
+            editor.chain().setContent(content).run();
           }
         } catch (e) {
           console.log('Setting string content as HTML (parse failed)');
-          editor.commands.setContent(content);
+          editor.chain().setContent(content).run();
         }
-      }
-      // Only focus at the end when the content is initially empty
-      if (!editor.getText().trim()) {
-        editor.commands.focus('end');
       }
     }
   }, [content, editor]);
-
-  // Remove the autofocus on empty paragraphs
-  useEffect(() => {
-    if (editor) {
-      const handleUpdate = () => {
-        const isEmpty = editor.isEmpty;
-        if (isEmpty) {
-          editor.commands.focus();
-        }
-      };
-      editor.on('update', handleUpdate);
-      return () => {
-        editor.off('update', handleUpdate);
-      };
-    }
-  }, [editor]);
 
   if (!editor) {
     return null;
