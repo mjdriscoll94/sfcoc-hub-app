@@ -124,7 +124,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       TextStyle,
       Color,
     ],
-    content: typeof content === 'object' ? content : (content || '<p></p>'),
+    content: '',
     autofocus: false,
     editable: true,
     injectCSS: false,
@@ -150,38 +150,30 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         .replace(/<u([^>]*)>/g, '<u class="dark:text-white"$1>');
       onChange(cleanHtml);
     },
-    parseOptions: {
-      preserveWhitespace: true,
-    },
-    editorProps: {
-      attributes: {
-        class: 'prose dark:prose-invert max-w-none focus:outline-none dark:prose-p:text-white dark:prose-headings:text-white dark:prose-strong:text-white dark:prose-em:text-white dark:prose-ul:text-white dark:prose-ol:text-white dark:prose-li:text-white',
-      },
-    },
   });
 
   useEffect(() => {
-    console.log('useEffect triggered with content:', content);
     if (editor && content) {
-      console.log('Setting editor content');
+      const currentPos = editor.state.selection.$anchor.pos;
+      
       if (typeof content === 'object' && content.type === 'doc') {
-        console.log('Setting JSON content:', content);
-        editor.chain().setContent(content).run();
+        editor.commands.setContent(content, false);
       } else if (typeof content === 'string') {
         try {
-          // Try to parse as JSON first
           const jsonContent = JSON.parse(content);
           if (jsonContent.type === 'doc') {
-            console.log('Setting parsed JSON content:', jsonContent);
-            editor.chain().setContent(jsonContent).run();
+            editor.commands.setContent(jsonContent, false);
           } else {
-            console.log('Setting string content as HTML');
-            editor.chain().setContent(content).run();
+            editor.commands.setContent(content, false);
           }
         } catch (e) {
-          console.log('Setting string content as HTML (parse failed)');
-          editor.chain().setContent(content).run();
+          editor.commands.setContent(content, false);
         }
+      }
+
+      // Restore cursor position if it was within bounds
+      if (currentPos > 0 && currentPos <= editor.state.doc.content.size) {
+        editor.commands.setTextSelection(currentPos);
       }
     }
   }, [content, editor]);

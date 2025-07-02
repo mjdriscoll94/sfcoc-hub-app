@@ -224,7 +224,6 @@ export default function NewAnnouncementPage() {
               <button
                 type="button"
                 onClick={() => {
-                  console.log('Template button clicked');
                   const template = {
                     type: 'doc',
                     content: [
@@ -261,12 +260,12 @@ export default function NewAnnouncementPage() {
                       }
                     ]
                   };
-                  console.log('Template object:', template);
                   
-                  // Set type and content directly
-                  setType('Weekly');
+                  // Set content first, then type
                   setContent(template);
-                  console.log('Content set to:', template);
+                  requestAnimationFrame(() => {
+                    setType('Weekly');
+                  });
                 }}
                 className="px-3 py-1 text-sm bg-gray-100 dark:bg-white/10 hover:bg-gray-200 dark:hover:bg-white/20 rounded-md text-gray-900 dark:text-white"
               >
