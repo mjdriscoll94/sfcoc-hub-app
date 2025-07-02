@@ -63,24 +63,21 @@ export default function SermonsPage() {
   const groupedVideos = groupVideosByMonth(videos);
   const monthKeys = Object.keys(groupedVideos).sort().reverse();
 
-  // Initialize expanded state for the current month if no search term
-  useState(() => {
-    if (!searchTerm && monthKeys.length > 0) {
-      setExpandedMonths(new Set([monthKeys[0]]));
-    }
-  });
-
-  // Auto-expand all months when searching
+  // Combined effect for managing expanded months
   useEffect(() => {
+    if (monthKeys.length === 0) return;
+
     if (searchTerm) {
+      // When searching, expand all months
       setExpandedMonths(new Set(monthKeys));
-    } else if (monthKeys.length > 0) {
+    } else {
+      // When not searching, only expand the most recent month
       setExpandedMonths(new Set([monthKeys[0]]));
     }
   }, [searchTerm, monthKeys]);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-white">Sermons & Classes</h1>
       </div>
