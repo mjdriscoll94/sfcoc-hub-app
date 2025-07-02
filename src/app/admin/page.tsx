@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
@@ -12,6 +12,7 @@ import { PlusIcon } from '@heroicons/react/24/outline';
 export default function AdminDashboard() {
   const { userProfile } = useAuth();
   const router = useRouter();
+  const [buildInfo, setBuildInfo] = useState<{ status: string; createdAt: string } | null>(null);
 
   useEffect(() => {
     if (!userProfile?.isAdmin) {
@@ -20,12 +21,28 @@ export default function AdminDashboard() {
     }
   }, [userProfile, router]);
 
+  useEffect(() => {
+    const fetchBuildInfo = async () => {
+      try {
+        const response = await fetch('/api/build-status');
+        if (response.ok) {
+          const data = await response.json();
+          setBuildInfo(data);
+        }
+      } catch (error) {
+        console.error('Error fetching build info:', error);
+      }
+    };
+
+    fetchBuildInfo();
+  }, []);
+
   if (!userProfile?.isAdmin) {
     return null;
   }
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8">
       <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-white dark:text-white">Admin Dashboard</h1>
@@ -85,7 +102,7 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 gap-8">
           {/* Prayer Request Approval Queue */}
           <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 sm:text-left text-center">
               Prayer Request Approval Queue
             </h2>
             <PrayerRequestApprovalQueue />
@@ -93,12 +110,19 @@ export default function AdminDashboard() {
 
           {/* Pending User Accounts */}
           <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 sm:text-left text-center">
               Pending User Accounts
             </h2>
             <PendingUserQueue />
           </div>
         </div>
+
+        {/* Build Information */}
+        {buildInfo && (
+          <div className="text-center text-sm text-gray-500 dark:text-white/40">
+            SFCOC Hub v1.0.0 • Built {new Date(buildInfo.createdAt).toLocaleDateString()}
+          </div>
+        )}
       </div>
     </div>
   );
