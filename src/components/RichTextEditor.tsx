@@ -15,6 +15,7 @@ import {
   QueueListIcon,
   LinkIcon,
 } from '@heroicons/react/24/outline';
+import { useEffect } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -146,6 +147,12 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       },
     },
   });
+
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
 
   if (!editor) {
     return null;
