@@ -57,10 +57,10 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
               leaveTo="opacity-0 translate-y-4 sm:translate-y-0 sm:scale-95"
             >
               <Dialog.Panel className="relative transform overflow-hidden rounded-lg bg-white dark:bg-white/10 backdrop-blur-md w-full max-w-2xl px-4 pb-4 pt-5 text-left shadow-xl transition-all sm:p-6">
-                <div className="absolute right-0 top-0 pr-4 pt-4">
+                <div className="absolute right-0 top-0 pr-4 pt-4 z-10">
                   <button
                     type="button"
-                    className="rounded-md text-gray-400 dark:text-white/40 hover:text-gray-500 dark:hover:text-white/60 focus:outline-none"
+                    className="rounded-md text-gray-400 dark:text-white/40 hover:text-gray-500 dark:hover:text-white/60 focus:outline-none bg-white/10 backdrop-blur-sm p-1"
                     onClick={onClose}
                   >
                     <span className="sr-only">Close</span>
