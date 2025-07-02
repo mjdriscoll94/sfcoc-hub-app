@@ -124,7 +124,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
       TextStyle,
       Color,
     ],
-    content: '',
+    content: typeof content === 'object' ? content : (content || '<p></p>'),
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
       console.log('Editor content:', editor.getJSON());
