@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 import { Fragment } from 'react';
-import { Dialog, Transition, Disclosure } from '@headlessui/react';
+import { Dialog, Transition, Disclosure, Menu } from '@headlessui/react';
 import { Bars3Icon, XMarkIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 type SubItem = {
@@ -25,7 +25,6 @@ type NavItem = {
 
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -79,7 +78,6 @@ const Navigation = () => {
     const handleClickOutside = (event: MouseEvent) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setOpenDropdown(null);
-        setIsUserMenuOpen(false);
       }
     };
 
@@ -334,18 +332,23 @@ const Navigation = () => {
           {/* Right side - User menu */}
           <div className="flex items-center">
             {user ? (
-              <div className="relative">
-                <button
-                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-                  className="max-w-xs bg-[#D6805F] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#171717] focus:ring-white"
-                >
+              <Menu as="div" className="relative">
+                <Menu.Button className="max-w-xs bg-[#D6805F] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#171717] focus:ring-white">
                   <span className="sr-only">Open user menu</span>
                   <div className="h-8 w-8 rounded-full bg-[#D6805F] flex items-center justify-center text-white">
                     {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
                   </div>
-                </button>
-                {isUserMenuOpen && (
-                  <div className="absolute z-50 top-full right-0 pt-2 w-48">
+                </Menu.Button>
+                <Transition
+                  as={Fragment}
+                  enter="transition ease-out duration-100"
+                  enterFrom="transform opacity-0 scale-95"
+                  enterTo="transform opacity-100 scale-100"
+                  leave="transition ease-in duration-75"
+                  leaveFrom="transform opacity-100 scale-100"
+                  leaveTo="transform opacity-0 scale-95"
+                >
+                  <Menu.Items className="absolute z-50 top-full right-0 pt-2 w-48">
                     <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5 divide-y divide-white/10">
                       <div className="py-1">
                         <div className="px-4 py-2 text-sm text-white">
@@ -353,37 +356,47 @@ const Navigation = () => {
                         </div>
                       </div>
                       <div className="py-1">
-                        <Link
-                          href="/settings"
-                          className="block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5"
-                          onClick={() => setIsUserMenuOpen(false)}
-                        >
-                          Settings
-                        </Link>
-                        <button
-                          className={`block w-full text-left px-4 py-2 text-sm text-white hover:bg-white/5 cursor-pointer ${isSigningOut ? 'opacity-50' : ''}`}
-                          onClick={async () => {
-                            if (isSigningOut) return;
-                            
-                            setIsSigningOut(true);
-                            try {
-                              console.log('Navigation: Sign out button clicked');
-                              await signOut();
-                              setIsUserMenuOpen(false);
-                            } catch (error) {
-                              console.error('Navigation: Error during sign out:', error);
-                              setIsSigningOut(false);
-                            }
-                          }}
-                          disabled={isSigningOut}
-                        >
-                          {isSigningOut ? 'Signing out...' : 'Sign out'}
-                        </button>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <Link
+                              href="/settings"
+                              className={`block w-full text-left px-4 py-2 text-sm text-white ${
+                                active ? 'bg-white/5' : ''
+                              }`}
+                            >
+                              Settings
+                            </Link>
+                          )}
+                        </Menu.Item>
+                        <Menu.Item>
+                          {({ active }) => (
+                            <button
+                              className={`block w-full text-left px-4 py-2 text-sm text-white ${
+                                active ? 'bg-white/5' : ''
+                              } ${isSigningOut ? 'opacity-50' : ''}`}
+                              onClick={async () => {
+                                if (isSigningOut) return;
+                                
+                                setIsSigningOut(true);
+                                try {
+                                  console.log('Navigation: Sign out button clicked');
+                                  await signOut();
+                                } catch (error) {
+                                  console.error('Navigation: Error during sign out:', error);
+                                  setIsSigningOut(false);
+                                }
+                              }}
+                              disabled={isSigningOut}
+                            >
+                              {isSigningOut ? 'Signing out...' : 'Sign out'}
+                            </button>
+                          )}
+                        </Menu.Item>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
+                  </Menu.Items>
+                </Transition>
+              </Menu>
             ) : (
               <Link
                 href="/auth/signin"
