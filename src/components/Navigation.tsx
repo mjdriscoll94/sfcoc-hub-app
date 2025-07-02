@@ -417,24 +417,37 @@ const Navigation = () => {
                     {item.items?.map((subItem) => {
                       console.log('Rendering mobile dropdown item:', subItem.name);
                       return (
-                        <Link
+                        <div
                           key={subItem.name}
-                          href={subItem.href}
                           className={`${
                             pathname === subItem.href
                               ? 'text-[#D6805F] bg-white/5'
                               : 'text-white hover:bg-white/5'
-                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
+                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block cursor-pointer`}
+                          role="button"
+                          tabIndex={0}
                           onClick={() => {
-                            console.log('Mobile dropdown item clicked:', subItem.name);
-                            console.log('Closing menus...');
+                            console.log('Click on mobile item:', subItem.name);
                             setIsOpen(false);
                             setOpenDropdown(null);
+                            router.push(subItem.href);
+                          }}
+                          onTouchStart={(e) => {
+                            console.log('Touch start on mobile item:', subItem.name);
+                            e.preventDefault();
+                          }}
+                          onTouchEnd={(e) => {
+                            console.log('Touch end on mobile item:', subItem.name);
+                            e.preventDefault();
+                            setIsOpen(false);
+                            setOpenDropdown(null);
+                            console.log('Navigating to:', subItem.href);
+                            router.push(subItem.href);
                           }}
                         >
                           {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
                           {subItem.name}
-                        </Link>
+                        </div>
                       );
                     })}
                   </div>
