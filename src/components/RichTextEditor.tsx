@@ -30,7 +30,13 @@ const editorStyles = `
   }
 
   .dark .ProseMirror {
-    color: white;
+    color: white !important;
+    background-color: transparent !important;
+  }
+
+  .dark .ProseMirror[contenteditable="true"] {
+    color: white !important;
+    caret-color: white;
   }
 
   .ProseMirror p.is-editor-empty:first-child::before {
@@ -53,7 +59,7 @@ const editorStyles = `
   }
 
   .dark .ProseMirror h1 {
-    color: white;
+    color: white !important;
   }
 
   .ProseMirror h2 {
@@ -64,7 +70,7 @@ const editorStyles = `
   }
 
   .dark .ProseMirror h2 {
-    color: white;
+    color: white !important;
   }
 
   .ProseMirror p {
@@ -73,7 +79,7 @@ const editorStyles = `
   }
 
   .dark .ProseMirror p {
-    color: white;
+    color: white !important;
   }
 
   .ProseMirror ul {
@@ -84,7 +90,7 @@ const editorStyles = `
   }
 
   .dark .ProseMirror ul {
-    color: white;
+    color: white !important;
   }
 
   .ProseMirror ol {
@@ -95,7 +101,7 @@ const editorStyles = `
   }
 
   .dark .ProseMirror ol {
-    color: white;
+    color: white !important;
   }
 
   .ProseMirror a {
@@ -106,6 +112,10 @@ const editorStyles = `
   .dark .ProseMirror * {
     color: white !important;
   }
+
+  .dark .ProseMirror *::selection {
+    background-color: rgba(255, 255, 255, 0.2) !important;
+  }
 `;
 
 export default function RichTextEditor({ content, onChange }: RichTextEditorProps) {
@@ -115,7 +125,11 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         heading: {
           levels: [1, 2],
         },
-        paragraph: {},
+        paragraph: {
+          HTMLAttributes: {
+            class: 'text-gray-900 dark:text-white',
+          },
+        },
         bold: {},
         italic: {},
         bulletList: {},
