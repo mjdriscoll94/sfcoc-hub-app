@@ -154,12 +154,31 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
         // Try to parse as JSON first
         const jsonContent = JSON.parse(content);
         editor.commands.setContent(jsonContent);
+        // Set cursor to the end of the last paragraph
+        editor.commands.focus('end');
       } catch (e) {
         // If not valid JSON, treat as HTML
         editor.commands.setContent(content);
+        editor.commands.focus('end');
       }
     }
   }, [content, editor]);
+
+  // Add autofocus to empty paragraphs
+  useEffect(() => {
+    if (editor) {
+      const handleUpdate = () => {
+        const isEmpty = editor.isEmpty;
+        if (isEmpty) {
+          editor.commands.focus();
+        }
+      };
+      editor.on('update', handleUpdate);
+      return () => {
+        editor.off('update', handleUpdate);
+      };
+    }
+  }, [editor]);
 
   if (!editor) {
     return null;

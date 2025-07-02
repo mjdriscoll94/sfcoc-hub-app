@@ -231,7 +231,8 @@ export default function NewAnnouncementPage() {
                         content: [{ type: 'text', text: 'Birthdays and Anniversaries:' }]
                       },
                       {
-                        type: 'paragraph'
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: '' }]
                       },
                       {
                         type: 'heading',
@@ -239,10 +240,12 @@ export default function NewAnnouncementPage() {
                         content: [{ type: 'text', text: 'Announcements:' }]
                       },
                       {
-                        type: 'paragraph'
+                        type: 'paragraph',
+                        content: [{ type: 'text', text: '' }]
                       }
                     ]
                   };
+                  // Set content and type in a single update
                   setContent(JSON.stringify(template));
                   setType('Weekly');
                 }}
