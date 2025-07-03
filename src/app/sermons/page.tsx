@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSermons } from '@/hooks/useSermons';
 
 interface GroupedSermons {
@@ -15,7 +15,8 @@ export default function SermonsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
 
-  const filteredVideos = videos.filter(video =>
+  // Simple search without affecting video list structure
+  const filteredVideos = searchTerm.trim() === '' ? videos : videos.filter(video =>
     video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
     video.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -69,12 +70,12 @@ export default function SermonsPage() {
   const groupedVideos = groupVideosByMonth(filteredVideos);
   const monthKeys = Object.keys(groupedVideos).sort().reverse();
 
-  // Initialize expanded state for the current month if no search term
-  useState(() => {
-    if (!searchTerm && monthKeys.length > 0) {
+  // Initialize expanded state for the current month
+  useEffect(() => {
+    if (monthKeys.length > 0) {
       setExpandedMonths(new Set([monthKeys[0]]));
     }
-  });
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -204,7 +205,10 @@ export default function SermonsPage() {
             <div className="bg-white/5 rounded-lg">
               <div className="p-4 border-b border-white/10">
                 <h3 className="text-lg font-medium text-white">
-                  Sermons
+                  {searchTerm ? 'Search Results' : 'Sermons'}
+                  {searchTerm && filteredVideos.length === 0 && (
+                    <span className="block text-sm text-white/60 mt-1">No results found</span>
+                  )}
                 </h3>
               </div>
               <div className="divide-y divide-white/10 max-h-[600px] overflow-y-auto">
@@ -253,14 +257,8 @@ export default function SermonsPage() {
                                 <h4 className="text-sm font-medium text-white truncate">
                                   {video.title}
                                 </h4>
-                                <p className="text-sm text-white/60 mt-1">
-                                  {new Date(video.publishedAt).toLocaleDateString('en-US', {
-                                    month: 'short',
-                                    day: 'numeric'
-                                  })}
-                                </p>
-                                <p className="text-sm text-white/60">
-                                  {formatViewCount(video.viewCount)}
+                                <p className="mt-1 text-sm text-white/60">
+                                  {formatDate(video.publishedAt)}
                                 </p>
                               </div>
                             </div>
@@ -270,12 +268,6 @@ export default function SermonsPage() {
                     )}
                   </div>
                 ))}
-
-                {monthKeys.length === 0 && (
-                  <div className="p-4 text-center text-white/60">
-                    No sermons found
-                  </div>
-                )}
               </div>
             </div>
           </div>
