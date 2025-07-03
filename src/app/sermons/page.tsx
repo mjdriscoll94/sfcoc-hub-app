@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useSermons } from '@/hooks/useSermons';
 
 interface GroupedSermons {
@@ -11,14 +11,8 @@ interface GroupedSermons {
 }
 
 export default function SermonsPage() {
-  const { videos, loading, error, selectedVideo, selectVideo } = useSermons();
-  const [searchTerm, setSearchTerm] = useState('');
+  const { videos, loading, error, selectedVideo, selectVideo, searchTerm, setSearchTerm } = useSermons();
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
-
-  const filteredVideos = videos.filter(video =>
-    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
 
   const groupVideosByMonth = (videos: any[]): GroupedSermons => {
     return videos.reduce((groups: GroupedSermons, video) => {
@@ -66,15 +60,24 @@ export default function SermonsPage() {
     return `${num} views`;
   };
 
-  const groupedVideos = groupVideosByMonth(filteredVideos);
+  const groupedVideos = groupVideosByMonth(videos);
   const monthKeys = Object.keys(groupedVideos).sort().reverse();
 
   // Initialize expanded state for the current month if no search term
-  useState(() => {
+  useEffect(() => {
     if (!searchTerm && monthKeys.length > 0) {
       setExpandedMonths(new Set([monthKeys[0]]));
     }
-  });
+  }, [monthKeys, searchTerm]);
+
+  // Auto-expand all months when searching
+  useEffect(() => {
+    if (searchTerm) {
+      setExpandedMonths(new Set(monthKeys));
+    } else if (monthKeys.length > 0) {
+      setExpandedMonths(new Set([monthKeys[0]]));
+    }
+  }, [searchTerm, monthKeys]);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -204,7 +207,12 @@ export default function SermonsPage() {
             <div className="bg-white/5 rounded-lg">
               <div className="p-4 border-b border-white/10">
                 <h3 className="text-lg font-medium text-white">
-                  Sermons
+                  {searchTerm ? 'Search Results' : 'Sermons'}
+                  {searchTerm && videos.length === 0 && (
+                    <span className="block text-sm text-white/60 mt-1">
+                      No results found
+                    </span>
+                  )}
                 </h3>
               </div>
               <div className="divide-y divide-white/10 max-h-[600px] overflow-y-auto">
@@ -270,12 +278,6 @@ export default function SermonsPage() {
                     )}
                   </div>
                 ))}
-
-                {monthKeys.length === 0 && (
-                  <div className="p-4 text-center text-white/60">
-                    No sermons found
-                  </div>
-                )}
               </div>
             </div>
           </div>
