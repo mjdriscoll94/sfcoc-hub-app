@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSermons } from '@/hooks/useSermons';
+import Image from 'next/image';
 
 interface GroupedSermons {
   [key: string]: {
@@ -21,7 +22,7 @@ export default function SermonsPage() {
     video.description.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const groupVideosByMonth = (videos: any[]): GroupedSermons => {
+  const groupVideosByMonth = useCallback((videos: any[]): GroupedSermons => {
     return videos.reduce((groups: GroupedSermons, video) => {
       const date = new Date(video.publishedAt);
       const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -37,27 +38,29 @@ export default function SermonsPage() {
       groups[monthKey].videos.push(video);
       return groups;
     }, {});
-  };
+  }, []);
 
-  const toggleMonth = (monthKey: string) => {
-    const newExpandedMonths = new Set(expandedMonths);
-    if (newExpandedMonths.has(monthKey)) {
-      newExpandedMonths.delete(monthKey);
-    } else {
-      newExpandedMonths.add(monthKey);
-    }
-    setExpandedMonths(newExpandedMonths);
-  };
+  const toggleMonth = useCallback((monthKey: string) => {
+    setExpandedMonths(prev => {
+      const newExpandedMonths = new Set(prev);
+      if (newExpandedMonths.has(monthKey)) {
+        newExpandedMonths.delete(monthKey);
+      } else {
+        newExpandedMonths.add(monthKey);
+      }
+      return newExpandedMonths;
+    });
+  }, []);
 
-  const formatDate = (dateString: string) => {
+  const formatDate = useCallback((dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       month: 'long',
       day: 'numeric',
       year: 'numeric'
     });
-  };
+  }, []);
 
-  const formatViewCount = (count: string) => {
+  const formatViewCount = useCallback((count: string) => {
     const num = parseInt(count);
     if (num >= 1000000) {
       return `${(num / 1000000).toFixed(1)}M views`;
@@ -65,7 +68,7 @@ export default function SermonsPage() {
       return `${(num / 1000).toFixed(1)}K views`;
     }
     return `${num} views`;
-  };
+  }, []);
 
   const groupedVideos = groupVideosByMonth(filteredVideos);
   const monthKeys = Object.keys(groupedVideos).sort().reverse();
@@ -75,6 +78,18 @@ export default function SermonsPage() {
     if (monthKeys.length > 0) {
       setExpandedMonths(new Set([monthKeys[0]]));
     }
+  }, [monthKeys]);
+
+  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchTerm(e.target.value);
+  }, []);
+
+  const handleVideoSelect = useCallback((video: any) => {
+    selectVideo(video);
+  }, [selectVideo]);
+
+  const handleRetry = useCallback(() => {
+    window.location.reload();
   }, []);
 
   return (
@@ -90,7 +105,7 @@ export default function SermonsPage() {
             <input
               type="text"
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={handleSearch}
               placeholder="Search sermons..."
               className="w-full px-4 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-coral focus:border-transparent"
             />
@@ -138,7 +153,7 @@ export default function SermonsPage() {
           <p className="mt-2 text-sm text-white/60">{error}</p>
           <div className="mt-6">
             <button
-              onClick={() => window.location.reload()}
+              onClick={handleRetry}
               className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-coral hover:bg-coral/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"
             >
               Try Again
@@ -240,17 +255,20 @@ export default function SermonsPage() {
                         {groupedVideos[monthKey].videos.map((video) => (
                           <button
                             key={video.id}
-                            onClick={() => selectVideo(video)}
+                            onClick={() => handleVideoSelect(video)}
                             className={`w-full text-left p-4 hover:bg-white/10 transition-colors ${
                               selectedVideo?.id === video.id ? 'bg-white/10' : ''
                             }`}
                           >
                             <div className="flex space-x-4">
                               <div className="flex-shrink-0">
-                                <img
+                                <Image
                                   src={video.thumbnailUrl}
                                   alt={video.title}
-                                  className="w-32 h-18 object-cover rounded"
+                                  width={128}
+                                  height={72}
+                                  className="object-cover rounded"
+                                  unoptimized
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
