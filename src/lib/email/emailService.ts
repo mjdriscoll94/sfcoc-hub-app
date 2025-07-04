@@ -333,6 +333,7 @@ export async function sendBatchedPrayerPraiseEmail() {
 
     // Get subscribers
     const subscribers = await getEmailSubscribers();
+    let emailsSent = false;
     
     // Send prayer requests if any exist
     if (prayerRequests.length > 0) {
@@ -371,6 +372,16 @@ export async function sendBatchedPrayerPraiseEmail() {
         `;
 
         await sendEmail('prayer', 'New Prayer Requests', htmlContent, prayerEmails);
+        emailsSent = true;
+        
+        // Mark prayer requests as sent
+        const batch = [];
+        for (const item of prayerRequests) {
+          batch.push(updateDoc(doc(db, 'prayerPraise', item.id), { isSent: true }));
+        }
+        await Promise.all(batch);
+      } else {
+        console.log('No subscribers found for prayer requests');
       }
     }
 
@@ -411,15 +422,23 @@ export async function sendBatchedPrayerPraiseEmail() {
         `;
 
         await sendEmail('praise', 'New Praise Reports', htmlContent, praiseEmails);
+        emailsSent = true;
+        
+        // Mark praise reports as sent
+        const batch = [];
+        for (const item of praiseReports) {
+          batch.push(updateDoc(doc(db, 'prayerPraise', item.id), { isSent: true }));
+        }
+        await Promise.all(batch);
+      } else {
+        console.log('No subscribers found for praise reports');
       }
     }
 
-    // Mark all items as sent
-    const batch = [];
-    for (const item of [...prayerRequests, ...praiseReports]) {
-      batch.push(updateDoc(doc(db, 'prayerPraise', item.id), { isSent: true }));
+    if (!emailsSent) {
+      console.log('No emails were sent - either no items to send or no subscribers');
+      return;
     }
-    await Promise.all(batch);
 
     console.log('Successfully sent batched emails:', {
       prayerRequests: prayerRequests.length,
