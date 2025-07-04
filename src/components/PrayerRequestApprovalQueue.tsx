@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { usePrayerPraise, PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import { CheckIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
+import { sendUrgentPrayerRequestEmail, getEmailSubscribers } from '@/lib/email/emailService';
 
 interface EditingItem {
   id: string;
   title: string;
   description: string;
-  priority: 'Urgent' | 'Batched' | '';
+  priority: 'Urgent' | 'Batched' | undefined;
 }
 
 export default function PrayerRequestApprovalQueue() {
@@ -19,18 +20,47 @@ export default function PrayerRequestApprovalQueue() {
 
   const handleApprove = async (id: string) => {
     try {
-      if (editingItem?.id === id && !editingItem.priority) {
+      const item = items.find(i => i.id === id);
+      if (!item) return;
+
+      // For praise reports, automatically set priority to Batched
+      const priority = item.type === 'praise' ? 'Batched' : editingItem?.priority;
+
+      // For prayer requests, ensure priority is selected
+      if (item.type === 'prayer' && !priority) {
         throw new Error('Please select a priority before approving');
       }
-      await updateApprovalStatus(id, 'approved');
-      if (editingItem?.id === id) {
-        await updatePrayerRequest(id, {
+
+      // Update the item with priority
+      await updatePrayerRequest(id, {
+        ...(editingItem?.id === id ? {
           title: editingItem.title,
           description: editingItem.description,
-          priority: editingItem.priority as 'Urgent' | 'Batched'
-        });
-        setEditingItem(null);
+        } : {}),
+        priority: priority as 'Urgent' | 'Batched'
+      });
+
+      // Approve the request
+      await updateApprovalStatus(id, 'approved');
+
+      // If it's an urgent prayer request, send email notification
+      if (item.type === 'prayer' && priority === 'Urgent') {
+        try {
+          const subscribers = await getEmailSubscribers();
+          await sendUrgentPrayerRequestEmail(subscribers, {
+            title: editingItem?.id === id ? editingItem.title : item.title,
+            description: editingItem?.id === id ? editingItem.description : item.description,
+            author: item.author,
+            isAnonymous: item.isAnonymous,
+            type: item.type
+          });
+        } catch (error) {
+          console.error('Failed to send urgent prayer request email:', error);
+          // Don't throw error here as the approval was successful
+        }
       }
+
+      setEditingItem(null);
     } catch (error) {
       console.error('Failed to approve request:', error);
     }
@@ -52,7 +82,7 @@ export default function PrayerRequestApprovalQueue() {
       id: item.id,
       title: item.title,
       description: item.description,
-      priority: item.priority || ''
+      priority: item.priority || undefined
     });
   };
 
@@ -112,16 +142,18 @@ export default function PrayerRequestApprovalQueue() {
                       onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
                       className="w-full px-3 py-2 bg-white/10 rounded-md text-white min-h-[100px]"
                     />
-                    <select
-                      value={editingItem.priority}
-                      onChange={(e) => setEditingItem({ ...editingItem, priority: e.target.value as 'Urgent' | 'Batched' | '' })}
-                      className="w-full px-3 py-2 bg-white/10 rounded-md text-white"
-                      required
-                    >
-                      <option value="">Select Priority</option>
-                      <option value="Urgent">Urgent</option>
-                      <option value="Batched">Batched</option>
-                    </select>
+                    {item.type === 'prayer' && (
+                      <select
+                        value={editingItem.priority || ''}
+                        onChange={(e) => setEditingItem({ ...editingItem, priority: e.target.value ? e.target.value as 'Urgent' | 'Batched' : undefined })}
+                        className="w-full px-3 py-2 bg-white/10 rounded-md text-white"
+                        required
+                      >
+                        <option value="">Select Priority</option>
+                        <option value="Urgent">Urgent</option>
+                        <option value="Batched">Batched</option>
+                      </select>
+                    )}
                   </div>
                 ) : (
                   <>

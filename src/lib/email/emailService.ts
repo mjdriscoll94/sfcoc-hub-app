@@ -1,4 +1,6 @@
 import { transporter } from './config';
+import { db } from '@/lib/firebase/config';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 
 export interface EmailSubscriber {
   email: string;
@@ -203,5 +205,70 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
   } catch (error) {
     console.error('Failed to send password reset email:', error);
     return { success: false, error };
+  }
+}
+
+export async function sendUrgentPrayerRequestEmail(subscribers: EmailSubscriber[], prayerRequest: { title: string; description: string; author: { name: string }; isAnonymous: boolean; type: 'prayer' | 'praise' }) {
+  const emails = subscribers
+    .filter(subscriber => subscriber.emailSubscriptions.announcements) // Using announcement subscription list for now
+    .map(subscriber => subscriber.email);
+
+  if (emails.length === 0) return;
+
+  const subject = prayerRequest.type === 'prayer' ? 'New Prayer Request' : 'New Praise Report';
+  
+  // Format the email content with HTML
+  const htmlContent = `
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="text-align: center; margin-bottom: 20px;">
+        <img src="https://res.cloudinary.com/dzjsztwqp/image/upload/v1751485185/SFCOC_Colored_lxaty4.png" 
+             alt="SFCOC Logo" 
+             style="width: 120px; height: auto;"
+             loading="eager"
+             decoding="async" />
+      </div>
+      <h1 style="color: #333;">${prayerRequest.title}</h1>
+      <div style="color: #666; line-height: 1.6;">
+        <p>${prayerRequest.description}</p>
+        <p style="font-style: italic; margin-top: 20px;">
+          Requested by: ${prayerRequest.isAnonymous ? 'Anonymous' : prayerRequest.author.name}
+        </p>
+      </div>
+      <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+      <p style="color: #999; font-size: 12px;">
+        You received this email because you're subscribed to SFCOC announcements. 
+        <a href="https://sfcoc.vercel.app/settings" style="color: #ff7c54;">Manage your email preferences</a>
+      </p>
+    </div>
+  `;
+
+  return sendEmail(prayerRequest.type, subject, htmlContent, emails);
+}
+
+export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
+  try {
+    const usersRef = collection(db, 'users');
+    const q = query(
+      usersRef,
+      where('emailSubscriptions.announcements', '==', true),
+      where('approvalStatus', '==', 'approved')
+    );
+    
+    const querySnapshot = await getDocs(q);
+    const subscribers: EmailSubscriber[] = [];
+    
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      subscribers.push({
+        email: data.email,
+        name: data.displayName,
+        emailSubscriptions: data.emailSubscriptions
+      });
+    });
+    
+    return subscribers;
+  } catch (error) {
+    console.error('Error fetching email subscribers:', error);
+    throw error;
   }
 } 
