@@ -37,7 +37,8 @@ export default function PrayerRequestApprovalQueue() {
           title: editingItem.title,
           description: editingItem.description,
         } : {}),
-        priority: priority as 'Urgent' | 'Batched'
+        priority: priority as 'Urgent' | 'Batched',
+        isSent: priority === 'Urgent' // Set isSent to true for urgent items since they're sent immediately
       });
 
       // Approve the request

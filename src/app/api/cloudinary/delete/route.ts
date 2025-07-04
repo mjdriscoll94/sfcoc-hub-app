@@ -40,14 +40,21 @@ export async function POST(request: Request) {
     cloudinary.config(config);
 
     try {
-      // For raw files, we use the full public ID as is
+      // For raw files, we need to handle version numbers
+      const publicIdParts = publicId.split('/');
+      const versionMatch = publicIdParts[0].match(/^v\d+$/);
+      
+      // If first part is a version number, remove it for the destroy call
+      const finalPublicId = versionMatch ? publicIdParts.slice(1).join('/') : publicId;
+      
       console.log('Delete request details:', {
-        publicId,
+        originalPublicId: publicId,
+        finalPublicId,
         resourceType: 'raw',
         type: 'upload'
       });
 
-      const result = await cloudinary.uploader.destroy(publicId, { 
+      const result = await cloudinary.uploader.destroy(finalPublicId, { 
         resource_type: 'raw',
         type: 'upload',
         invalidate: true

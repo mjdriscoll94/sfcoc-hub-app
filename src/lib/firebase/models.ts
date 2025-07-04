@@ -14,6 +14,7 @@ export interface PrayerPraise {
   status: 'active' | 'archived';
   approvalStatus: 'pending' | 'approved' | 'rejected';
   priority?: 'Urgent' | 'Batched';
+  isSent?: boolean;
 }
 
 export interface Announcement {

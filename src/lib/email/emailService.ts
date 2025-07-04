@@ -1,6 +1,7 @@
 import { transporter } from './config';
 import { db } from '@/lib/firebase/config';
-import { collection, query, where, getDocs } from 'firebase/firestore';
+import { collection, query, where, getDocs, Timestamp, updateDoc, doc } from 'firebase/firestore';
+import { PrayerPraise } from '@/lib/firebase/models';
 
 export interface EmailSubscriber {
   email: string;
@@ -290,6 +291,142 @@ export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
     return subscribers;
   } catch (error) {
     console.error('Error fetching email subscribers:', error);
+    throw error;
+  }
+}
+
+export async function sendBatchedPrayerPraiseEmail() {
+  try {
+    // Get all unsent batched items
+    const prayerPraiseRef = collection(db, 'prayerPraise');
+    const twoHoursAgo = new Date();
+    twoHoursAgo.setHours(twoHoursAgo.getHours() - 2);
+    
+    const q = query(
+      prayerPraiseRef,
+      where('approvalStatus', '==', 'approved'),
+      where('status', '==', 'active'),
+      where('priority', '==', 'Batched'),
+      where('isSent', '==', false),
+      where('dateCreated', '<=', Timestamp.fromDate(twoHoursAgo))
+    );
+
+    const querySnapshot = await getDocs(q);
+    const prayerRequests: PrayerPraise[] = [];
+    const praiseReports: PrayerPraise[] = [];
+
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as PrayerPraise;
+      data.id = doc.id;
+      if (data.type === 'prayer') {
+        prayerRequests.push(data);
+      } else {
+        praiseReports.push(data);
+      }
+    });
+
+    // If no items to send, exit early
+    if (prayerRequests.length === 0 && praiseReports.length === 0) {
+      console.log('No batched items to send');
+      return;
+    }
+
+    // Get subscribers
+    const subscribers = await getEmailSubscribers();
+    
+    // Send prayer requests if any exist
+    if (prayerRequests.length > 0) {
+      const prayerEmails = subscribers
+        .filter(subscriber => subscriber.emailSubscriptions.prayerRequests)
+        .map(subscriber => subscriber.email);
+
+      if (prayerEmails.length > 0) {
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <img src="https://res.cloudinary.com/dzjsztwqp/image/upload/v1751485185/SFCOC_Colored_lxaty4.png" 
+                   alt="SFCOC Logo" 
+                   style="width: 120px; height: auto;"
+                   loading="eager"
+                   decoding="async" />
+            </div>
+            <h1 style="color: #333;">New Prayer Requests</h1>
+            <div style="color: #666; line-height: 1.6;">
+              ${prayerRequests.map(request => `
+                <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+                  <h2 style="color: #333; margin-top: 0;">${request.title}</h2>
+                  <p>${request.description}</p>
+                  <p style="font-style: italic; margin-top: 10px; color: #888;">
+                    Requested by: ${request.isAnonymous ? 'Anonymous' : request.author.name}
+                  </p>
+                </div>
+              `).join('')}
+            </div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px;">
+              You received this email because you're subscribed to SFCOC prayer requests. 
+              <a href="https://sfcoc.vercel.app/settings" style="color: #ff7c54;">Manage your email preferences</a>
+            </p>
+          </div>
+        `;
+
+        await sendEmail('prayer', 'New Prayer Requests', htmlContent, prayerEmails);
+      }
+    }
+
+    // Send praise reports if any exist
+    if (praiseReports.length > 0) {
+      const praiseEmails = subscribers
+        .filter(subscriber => subscriber.emailSubscriptions.praiseReports)
+        .map(subscriber => subscriber.email);
+
+      if (praiseEmails.length > 0) {
+        const htmlContent = `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <div style="text-align: center; margin-bottom: 20px;">
+              <img src="https://res.cloudinary.com/dzjsztwqp/image/upload/v1751485185/SFCOC_Colored_lxaty4.png" 
+                   alt="SFCOC Logo" 
+                   style="width: 120px; height: auto;"
+                   loading="eager"
+                   decoding="async" />
+            </div>
+            <h1 style="color: #333;">New Praise Reports</h1>
+            <div style="color: #666; line-height: 1.6;">
+              ${praiseReports.map(report => `
+                <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #eee; border-radius: 8px;">
+                  <h2 style="color: #333; margin-top: 0;">${report.title}</h2>
+                  <p>${report.description}</p>
+                  <p style="font-style: italic; margin-top: 10px; color: #888;">
+                    Shared by: ${report.isAnonymous ? 'Anonymous' : report.author.name}
+                  </p>
+                </div>
+              `).join('')}
+            </div>
+            <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+            <p style="color: #999; font-size: 12px;">
+              You received this email because you're subscribed to SFCOC praise reports. 
+              <a href="https://sfcoc.vercel.app/settings" style="color: #ff7c54;">Manage your email preferences</a>
+            </p>
+          </div>
+        `;
+
+        await sendEmail('praise', 'New Praise Reports', htmlContent, praiseEmails);
+      }
+    }
+
+    // Mark all items as sent
+    const batch = [];
+    for (const item of [...prayerRequests, ...praiseReports]) {
+      batch.push(updateDoc(doc(db, 'prayerPraise', item.id), { isSent: true }));
+    }
+    await Promise.all(batch);
+
+    console.log('Successfully sent batched emails:', {
+      prayerRequests: prayerRequests.length,
+      praiseReports: praiseReports.length
+    });
+  } catch (error) {
+    console.error('Error sending batched emails:', error);
     throw error;
   }
 } 

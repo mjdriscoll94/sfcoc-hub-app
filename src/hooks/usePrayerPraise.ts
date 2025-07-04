@@ -40,6 +40,7 @@ interface UpdatePrayerRequestData {
   title?: string;
   description?: string;
   priority?: 'Urgent' | 'Batched';
+  isSent?: boolean;
 }
 
 export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: boolean = false) {

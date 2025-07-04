@@ -162,14 +162,16 @@ export default function LessonNotesManagement() {
       const urlParts = cleanUrl.split('/');
       console.log('URL Parts:', urlParts);
       
-      // For raw files, we need to find the 'files' folder
-      const filesIndex = urlParts.findIndex(part => part === 'files');
-      if (filesIndex === -1) {
-        throw new Error('Invalid file URL structure - missing files folder');
+      // Find the 'raw' and 'upload' indices
+      const rawIndex = urlParts.findIndex(part => part === 'raw');
+      const uploadIndex = urlParts.findIndex(part => part === 'upload');
+      
+      if (rawIndex === -1 || uploadIndex === -1) {
+        throw new Error('Invalid file URL structure - missing raw/upload path');
       }
       
-      // Get everything after 'files' folder
-      const relevantParts = urlParts.slice(filesIndex);
+      // Get everything after 'upload'
+      const relevantParts = urlParts.slice(uploadIndex + 1);
       console.log('Relevant Parts:', relevantParts);
 
       // Join the parts to form the public ID
