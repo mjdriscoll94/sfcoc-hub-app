@@ -9,6 +9,8 @@ export interface EmailSubscriber {
     announcements: boolean;
     events: boolean;
     newsletter: boolean;
+    prayerRequests?: boolean;
+    praiseReports?: boolean;
   };
 }
 
@@ -210,10 +212,21 @@ export async function sendPasswordResetEmail(email: string, resetLink: string) {
 
 export async function sendUrgentPrayerRequestEmail(subscribers: EmailSubscriber[], prayerRequest: { title: string; description: string; author: { name: string }; isAnonymous: boolean; type: 'prayer' | 'praise' }) {
   const emails = subscribers
-    .filter(subscriber => subscriber.emailSubscriptions.announcements) // Using announcement subscription list for now
+    .filter(subscriber => {
+      // For prayer requests, check prayerRequests subscription
+      // For praise reports, check praiseReports subscription
+      if (prayerRequest.type === 'prayer') {
+        return subscriber.emailSubscriptions.prayerRequests;
+      } else {
+        return subscriber.emailSubscriptions.praiseReports;
+      }
+    })
     .map(subscriber => subscriber.email);
 
-  if (emails.length === 0) return;
+  if (emails.length === 0) {
+    console.log('No subscribers found for', prayerRequest.type);
+    return;
+  }
 
   const subject = prayerRequest.type === 'prayer' ? 'New Prayer Request' : 'New Praise Report';
   
@@ -236,7 +249,7 @@ export async function sendUrgentPrayerRequestEmail(subscribers: EmailSubscriber[
       </div>
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
       <p style="color: #999; font-size: 12px;">
-        You received this email because you're subscribed to SFCOC announcements. 
+        You received this email because you're subscribed to SFCOC ${prayerRequest.type === 'prayer' ? 'prayer requests' : 'praise reports'}. 
         <a href="https://sfcoc.vercel.app/settings" style="color: #ff7c54;">Manage your email preferences</a>
       </p>
     </div>
@@ -250,7 +263,6 @@ export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
     const usersRef = collection(db, 'users');
     const q = query(
       usersRef,
-      where('emailSubscriptions.announcements', '==', true),
       where('approvalStatus', '==', 'approved')
     );
     
@@ -259,10 +271,19 @@ export async function getEmailSubscribers(): Promise<EmailSubscriber[]> {
     
     querySnapshot.forEach((doc) => {
       const data = doc.data();
+      // Get notification preferences from localStorage
+      const notificationPreferences = typeof window !== 'undefined' 
+        ? JSON.parse(localStorage.getItem('notificationPreferences') || '{}')
+        : {};
+      
       subscribers.push({
         email: data.email,
         name: data.displayName,
-        emailSubscriptions: data.emailSubscriptions
+        emailSubscriptions: {
+          ...data.emailSubscriptions,
+          prayerRequests: notificationPreferences.prayerRequests || false,
+          praiseReports: notificationPreferences.praiseReports || false
+        }
       });
     });
     
