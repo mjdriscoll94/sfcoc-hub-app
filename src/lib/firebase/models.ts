@@ -10,7 +10,10 @@ export interface PrayerPraise {
   dateCreated: Date;
   prayerCount: number;
   isAnonymous: boolean;
+  isAdminOnly: boolean;
   status: 'active' | 'archived';
+  approvalStatus: 'pending' | 'approved' | 'rejected';
+  priority?: 'Urgent' | 'Batched';
 }
 
 export interface Announcement {

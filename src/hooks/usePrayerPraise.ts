@@ -33,6 +33,13 @@ export interface PrayerPraiseItem {
   isAdminOnly: boolean;
   status: 'active' | 'archived';
   approvalStatus: 'pending' | 'approved' | 'rejected';
+  priority?: 'Urgent' | 'Batched';
+}
+
+interface UpdatePrayerRequestData {
+  title?: string;
+  description?: string;
+  priority?: 'Urgent' | 'Batched';
 }
 
 export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: boolean = false) {
@@ -140,12 +147,24 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
     }
   };
 
+  // Function to update prayer request details
+  const updatePrayerRequest = async (id: string, data: UpdatePrayerRequestData) => {
+    try {
+      const docRef = doc(db, 'prayerPraise', id);
+      await updateDoc(docRef, data as { [x: string]: any });
+    } catch (error) {
+      console.error('Error updating prayer request:', error);
+      throw new Error('Failed to update prayer request');
+    }
+  };
+
   return {
     items,
     loading,
     error,
     isIndexBuilding,
     incrementPrayerCount,
-    updateApprovalStatus
+    updateApprovalStatus,
+    updatePrayerRequest
   };
 } 
