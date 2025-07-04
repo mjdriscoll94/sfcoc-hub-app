@@ -15,10 +15,12 @@ export default function SettingsPage() {
   const [localSubscriptions, setLocalSubscriptions] = useState({
     announcements: true,
     events: true,
-    newsletter: true
+    newsletter: true,
+    prayerRequests: false,
+    praiseReports: false
   });
 
-  // Initialize local state from userProfile
+  // Initialize local state from userProfile and localStorage
   useEffect(() => {
     if (!user) {
       console.log('Settings: No user found, redirecting to signin');
@@ -26,9 +28,27 @@ export default function SettingsPage() {
       return;
     }
 
+    // Load notification preferences from localStorage
+    const storedPreferences = localStorage.getItem('notificationPreferences');
+    if (storedPreferences) {
+      const preferences = JSON.parse(storedPreferences);
+      setLocalSubscriptions(prev => ({
+        ...prev,
+        prayerRequests: preferences.prayerRequests || false,
+        praiseReports: preferences.praiseReports || false
+      }));
+    }
+
     if (userProfile?.emailSubscriptions) {
       console.log('Settings: Updating local subscriptions from profile:', userProfile.emailSubscriptions);
-      setLocalSubscriptions(userProfile.emailSubscriptions);
+      setLocalSubscriptions(prev => ({
+        ...prev,
+        announcements: userProfile.emailSubscriptions.announcements || prev.announcements,
+        events: userProfile.emailSubscriptions.events || prev.events,
+        newsletter: userProfile.emailSubscriptions.newsletter || prev.newsletter,
+        prayerRequests: prev.prayerRequests,
+        praiseReports: prev.praiseReports
+      }));
     }
   }, [userProfile, user, router]);
 
@@ -49,6 +69,15 @@ export default function SettingsPage() {
       };
 
       setLocalSubscriptions(newSubscriptions);
+
+      // Update localStorage for notification preferences
+      if (type === 'prayerRequests' || type === 'praiseReports') {
+        const storedPreferences = JSON.parse(localStorage.getItem('notificationPreferences') || '{}');
+        localStorage.setItem('notificationPreferences', JSON.stringify({
+          ...storedPreferences,
+          [type]: value
+        }));
+      }
 
       // Update Firestore
       const userRef = doc(db, 'users', user.uid);
@@ -127,6 +156,50 @@ export default function SettingsPage() {
                     id="announcements"
                     checked={localSubscriptions.announcements}
                     onChange={(e) => handleSubscriptionChange('announcements', e.target.checked)}
+                    disabled={isSaving}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <label htmlFor="prayerRequests" className="text-gray-900 dark:text-white font-medium">
+                    Prayer Requests
+                  </label>
+                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                    Receive notifications for new prayer requests
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="prayerRequests"
+                    checked={localSubscriptions.prayerRequests}
+                    onChange={(e) => handleSubscriptionChange('prayerRequests', e.target.checked)}
+                    disabled={isSaving}
+                    className="sr-only peer"
+                  />
+                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                </label>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div>
+                  <label htmlFor="praiseReports" className="text-gray-900 dark:text-white font-medium">
+                    Praise Reports
+                  </label>
+                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                    Receive notifications for new praise reports
+                  </p>
+                </div>
+                <label className="relative inline-flex items-center cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id="praiseReports"
+                    checked={localSubscriptions.praiseReports}
+                    onChange={(e) => handleSubscriptionChange('praiseReports', e.target.checked)}
                     disabled={isSaving}
                     className="sr-only peer"
                   />

@@ -27,6 +27,7 @@ self.addEventListener('push', async (event) => {
       title: data.title,
       body: data.body?.substring(0, 50) + (data.body?.length > 50 ? '...' : ''),
       url: data.url,
+      type: data.type,
       hasData: !!data.data
     });
 
@@ -36,14 +37,37 @@ self.addEventListener('push', async (event) => {
       return;
     }
 
+    // Set notification options based on type
+    let icon = '/icons/icon-512x512.png';
+    let tag = 'announcement';
+    let badge = '/icons/icon-96x96.png';
+    let vibrate = [100, 50, 100];
+
+    switch (data.type) {
+      case 'prayer-request':
+        icon = '/icons/prayer-icon-512x512.png';
+        tag = 'prayer-request';
+        vibrate = [100, 50, 100, 50, 100]; // Distinct vibration pattern
+        break;
+      case 'praise-report':
+        icon = '/icons/praise-icon-512x512.png';
+        tag = 'praise-report';
+        vibrate = [100, 50, 100, 50, 100, 50, 100]; // Distinct vibration pattern
+        break;
+      default:
+        // Use default values for announcements
+        break;
+    }
+
     const options = {
       body: data.body || '',
-      icon: '/icons/icon-512x512.png',
-      badge: '/icons/icon-96x96.png',
-      vibrate: [100, 50, 100],
+      icon,
+      badge,
+      vibrate,
       data: {
         dateOfArrival: Date.now(),
         url: data.url || '/',
+        type: data.type,
         ...data.data
       },
       actions: data.actions || [],
@@ -51,13 +75,14 @@ self.addEventListener('push', async (event) => {
       requireInteraction: true,
       // Renotify even if there's an existing notification
       renotify: true,
-      tag: 'announcement'
+      tag
     };
 
     console.log('[Service Worker] Showing notification with options:', {
       title: data.title,
       body: options.body?.substring(0, 50) + (options.body?.length > 50 ? '...' : ''),
       url: options.data.url,
+      type: options.data.type,
       requireInteraction: options.requireInteraction,
       renotify: options.renotify
     });
@@ -88,12 +113,26 @@ self.addEventListener('notificationclick', (event) => {
   console.log('[Service Worker] Notification click received:', {
     title: event.notification.title,
     url: event.notification.data?.url,
+    type: event.notification.data?.type,
     timestamp: new Date().toISOString()
   });
 
   event.notification.close();
 
-  const urlToOpen = event.notification.data?.url || '/';
+  // Determine the URL to open based on notification type
+  let urlToOpen = event.notification.data?.url || '/';
+  if (!urlToOpen.startsWith('/')) {
+    switch (event.notification.data?.type) {
+      case 'prayer-request':
+        urlToOpen = '/prayer-board';
+        break;
+      case 'praise-report':
+        urlToOpen = '/prayer-board';
+        break;
+      default:
+        urlToOpen = '/';
+    }
+  }
   
   event.waitUntil(
     clients.matchAll({

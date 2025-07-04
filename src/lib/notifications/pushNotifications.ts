@@ -191,7 +191,18 @@ export async function subscribeToNotifications(updateUserProfile: (updates: any)
     // Send subscription to backend
     console.log('Sending subscription to server...');
     try {
+      // Get user's notification preferences from localStorage
+      const userPreferences = JSON.parse(localStorage.getItem('notificationPreferences') || '{}');
       const topics = ['announcements'];
+      
+      // Add prayer and praise topics based on user preferences
+      if (userPreferences.prayerRequests) {
+        topics.push('prayer-requests');
+      }
+      if (userPreferences.praiseReports) {
+        topics.push('praise-reports');
+      }
+      
       console.log('Subscribing to topics:', topics);
       
       const response = await fetch('/api/notifications/subscribe', {
@@ -214,18 +225,20 @@ export async function subscribeToNotifications(updateUserProfile: (updates: any)
       console.log('Server subscription response:', result);
       
       // Double check that the subscription was saved
-      const storedSubscription = await fetch('/api/notifications/check-subscription', {
-        method: 'POST',
-        body: JSON.stringify({
-          subscription,
-          topic: 'announcements'
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      }).then(res => res.json());
-      
-      console.log('Subscription verification:', storedSubscription);
+      for (const topic of topics) {
+        const storedSubscription = await fetch('/api/notifications/check-subscription', {
+          method: 'POST',
+          body: JSON.stringify({
+            subscription,
+            topic
+          }),
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }).then(res => res.json());
+        
+        console.log(`Subscription verification for ${topic}:`, storedSubscription);
+      }
     } catch (error) {
       console.error('Server subscription failed:', error);
       // If server subscription fails, unsubscribe locally to maintain consistency
