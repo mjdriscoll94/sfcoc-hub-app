@@ -4,6 +4,7 @@ import './globals.css';
 import Navigation from '@/components/Navigation';
 import { AuthProvider } from '@/lib/auth/AuthContext';
 import RouteGuard from '@/components/RouteGuard';
+import FaviconDevRefresh from '@/components/FaviconDevRefresh';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -13,12 +14,7 @@ export const metadata: Metadata = {
 };
 
 // Force favicon refresh in development
-if (process.env.NODE_ENV === 'development') {
-  const link = document.querySelector("link[rel*='icon']") as HTMLLinkElement;
-  if (link) {
-    link.href = '/favicon.ico?v=' + Date.now();
-  }
-}
+// (Moved to a client component to avoid SSR errors)
 
 export default function RootLayout({
   children,
@@ -28,6 +24,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} bg-white dark:bg-[#171717] text-base min-h-screen`}>
+        <FaviconDevRefresh />
         <AuthProvider>
           <RouteGuard>
             <div className="relative">
