@@ -16,7 +16,7 @@ export function useSermons() {
         setError(null);
         const sermons = await fetchSermons();
         setVideos(sermons);
-        if (sermons.length > 0 && !selectedVideo) {
+        if (sermons.length > 0) {
           setSelectedVideo(sermons[0]);
         }
       } catch (error) {
@@ -28,7 +28,7 @@ export function useSermons() {
     }
 
     loadSermons();
-  }, [selectedVideo]);
+  }, []);
 
   const selectVideo = (video: YouTubeVideo) => {
     setSelectedVideo(video);
