@@ -112,10 +112,10 @@ export default function DirectoryPage() {
 
   if (!canAccessDirectory) {
     return (
-      <div className="min-h-screen bg-gray-50 dark:bg-[#171717] py-12">
+      <div className="min-h-screen bg-bg py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <p className="text-center text-gray-500 dark:text-white/60">
+          <div className="bg-card rounded-lg p-6 border border-sage/20">
+            <p className="text-center text-text/60">
               You do not have permission to access the directory. Please contact an administrator.
             </p>
           </div>
@@ -135,12 +135,12 @@ export default function DirectoryPage() {
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center">
           <BackButton className="mr-4" />
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Church Directory</h1>
+          <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Church Directory</h1>
         </div>
         {canAccessDirectory && (
           <Link
             href="/directory/submit"
-            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#D6805F] hover:bg-[#c0734f] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F]"
+            className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-on-primary bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide"
           >
             Add Entry
             <Plus className="ml-2 h-5 w-5" aria-hidden="true" />
@@ -156,23 +156,23 @@ export default function DirectoryPage() {
             placeholder="Search directory..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full px-4 py-2 pl-10 rounded-lg border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 text-gray-900 dark:text-white focus:ring-[#D6805F] focus:border-[#D6805F]"
+            className="w-full px-4 py-2 pl-10 rounded-lg border border-sage/20 bg-card text-text focus:ring-primary focus:border-primary"
           />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-gray-400 dark:text-white/40" />
+          <Search className="absolute left-3 top-2.5 h-5 w-5 text-text/40" />
         </div>
       </div>
 
       {loading ? (
         <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       ) : error ? (
-        <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-lg p-6">
-          <p className="text-center text-red-700 dark:text-red-300">{error}</p>
+        <div className="bg-error/10 border border-error/20 rounded-lg p-6">
+          <p className="text-center text-error">{error}</p>
         </div>
       ) : displayMembers.length === 0 ? (
-        <div className="bg-white dark:bg-white/5 rounded-lg p-6 text-center">
-          <p className="text-gray-500 dark:text-white/60">No directory entries found.</p>
+        <div className="bg-card rounded-lg p-6 text-center border border-sage/20">
+          <p className="text-text/60">No directory entries found.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -180,7 +180,7 @@ export default function DirectoryPage() {
             <div
               key={member.id}
               onClick={() => openModal(member)}
-              className="bg-white dark:bg-white/5 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-white/10 cursor-pointer hover:shadow-md transition-shadow"
+              className="bg-card rounded-lg shadow-sm overflow-hidden border border-sage/20 cursor-pointer hover:shadow-md transition-shadow"
             >
               {/* Mobile Layout (flex row) */}
               <div className="flex md:block">
@@ -195,8 +195,8 @@ export default function DirectoryPage() {
                         className="object-cover"
                       />
                     ) : (
-                      <div className="w-full h-full bg-gray-100 dark:bg-white/5 flex items-center justify-center">
-                        <User className="w-12 h-12 text-gray-400 dark:text-white/40" />
+                      <div className="w-full h-full bg-muted flex items-center justify-center">
+                        <User className="w-12 h-12 text-text/40" />
                       </div>
                     )}
                   </div>
@@ -204,24 +204,24 @@ export default function DirectoryPage() {
 
                 {/* Content Container */}
                 <div className="w-2/3 md:w-full p-4 md:p-6">
-                  <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                  <h3 className="text-lg font-medium text-text">
                     {member.firstName} {member.lastName}
                   </h3>
                   <div className="mt-2 space-y-2">
                     {member.email && (
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
+                      <div className="flex items-center text-sm text-text/60">
                         <Mail className="h-4 w-4 mr-2" />
                         <span className="truncate">{member.email}</span>
                       </div>
                     )}
                     {member.phoneNumber && (
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
+                      <div className="flex items-center text-sm text-text/60">
                         <Phone className="h-4 w-4 mr-2" />
                         <span>{member.phoneNumber}</span>
                       </div>
                     )}
                     {member.address && (
-                      <div className="flex items-center text-sm text-gray-500 dark:text-gray-300">
+                      <div className="flex items-center text-sm text-text/60">
                         <MapPin className="h-4 w-4 mr-2" />
                         <span className="truncate">{member.address}</span>
                       </div>

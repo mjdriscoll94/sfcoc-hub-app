@@ -131,16 +131,16 @@ export default function AnnouncementsPage() {
   const getTypeColor = (type: string) => {
     switch (type) {
       case 'Weekly':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300';
+        return 'bg-info/20 text-info';
       case 'KFC':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
+        return 'bg-error/20 text-error';
       case 'Youth':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+        return 'bg-success/20 text-success';
       case 'Young Adult':
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/50 dark:text-purple-300';
+        return 'bg-secondary/20 text-secondary';
       case 'General':
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300';
+        return 'bg-muted text-text';
     }
   };
 
@@ -149,17 +149,17 @@ export default function AnnouncementsPage() {
       <div className="space-y-8">
         {/* Notification Support Message */}
         {!notificationSupport.supported && notificationSupport.shouldPromptPWA && (
-          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-            <p>Please use this app from your home screen to enable notifications.</p>
+          <div className="p-4 bg-warning/10 border border-warning/20 rounded-lg">
+            <p className="text-warning">Please use this app from your home screen to enable notifications.</p>
           </div>
         )}
 
         {/* Announcements Header */}
         <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Announcements</h2>
+          <h2 className="text-2xl font-bold text-text uppercase tracking-wide">Announcements</h2>
           <div className="flex items-center space-x-4">
             {error && (
-              <p className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/50 px-3 py-1 rounded-md">
+              <p className="text-sm text-error bg-error/10 px-3 py-1 rounded-md">
                 {error}
               </p>
             )}
@@ -170,11 +170,11 @@ export default function AnnouncementsPage() {
                 disabled={isSubscribing}
                 type="button"
                 title={userProfile.notificationsEnabled ? "Unsubscribe from notifications" : "Subscribe to notifications"}
-                className={`inline-flex items-center gap-1 px-3 py-2 rounded-md transition-colors ${
+                className={`inline-flex items-center gap-1 px-3 py-2 rounded-md transition-colors uppercase tracking-wide ${
                   userProfile.notificationsEnabled
-                    ? 'bg-red-500 hover:bg-red-600 active:bg-red-700'
-                    : 'bg-coral hover:bg-coral/90 active:bg-coral/80'
-                } text-white touch-manipulation`}
+                    ? 'bg-error hover:opacity-90 active:opacity-80'
+                    : 'bg-primary hover:opacity-90 active:opacity-80'
+                } text-on-primary touch-manipulation`}
               >
                 {isSubscribing ? (
                   <svg
@@ -221,12 +221,12 @@ export default function AnnouncementsPage() {
             <button
               key={type}
               onClick={() => setSelectedType(type)}
-              className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors ${
+                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors uppercase tracking-wide ${
                 selectedType === type
                   ? type === 'All'
-                    ? 'bg-gray-200 dark:bg-white/20 text-gray-900 dark:text-white'
+                    ? 'bg-primary text-on-primary'
                     : getTypeColor(type)
-                  : 'bg-gray-100 dark:bg-white/5 text-gray-600 dark:text-white/60 hover:bg-gray-200 dark:hover:bg-white/10'
+                  : 'bg-muted text-text/60 hover:bg-sage/5'
               }`}
             >
               {type}
@@ -242,14 +242,14 @@ export default function AnnouncementsPage() {
               <div
                 key={announcement.id}
                 id={announcement.id}
-                className="bg-white dark:bg-white/5 rounded-lg shadow-sm overflow-hidden border border-gray-200 dark:border-white/10"
+                className="bg-card rounded-lg shadow-sm overflow-hidden border border-sage/20"
               >
                 <button
                   onClick={() => toggleExpand(announcement.id)}
-                  className="w-full text-left p-6 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-coral"
+                  className="w-full text-left p-6 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
                 >
                   <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-medium text-text">
                       {announcement.title}
                     </h3>
                     <div className="flex items-center space-x-3">
@@ -261,20 +261,20 @@ export default function AnnouncementsPage() {
                         {announcement.type}
                       </span>
                       {isExpanded ? (
-                        <ChevronUpIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <ChevronUpIcon className="h-5 w-5 text-text/40" />
                       ) : (
-                        <ChevronDownIcon className="h-5 w-5 text-gray-400 dark:text-gray-500" />
+                        <ChevronDownIcon className="h-5 w-5 text-text/40" />
                       )}
                     </div>
                   </div>
-                  <div className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                  <div className="mt-1 text-sm text-text/60">
                     Posted by {announcement.createdBy.displayName} •{' '}
                     {announcement.createdAt?.toDate().toLocaleDateString()}
                   </div>
                 </button>
                 {isExpanded && (
                   <div className="px-6 pb-6">
-                    <div className="pt-4 border-t border-gray-200 dark:border-white/10">
+                    <div className="pt-4 border-t border-sage/20">
                       <RichTextContent content={announcement.content} />
                     </div>
                   </div>
@@ -283,7 +283,7 @@ export default function AnnouncementsPage() {
             );
           })}
           {filteredAnnouncements.length === 0 && (
-            <p className="text-gray-500 dark:text-gray-400 text-center py-8">
+            <p className="text-text/50 text-center py-8">
               {selectedType === 'All' 
                 ? 'No announcements yet.'
                 : `No ${selectedType} announcements available.`}

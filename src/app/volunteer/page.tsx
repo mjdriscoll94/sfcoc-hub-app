@@ -54,20 +54,20 @@ export default function VolunteerPage() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'open':
-        return 'bg-green-100 dark:bg-green-900/50 text-green-800 dark:text-green-200 border border-green-200 dark:border-green-500/50';
+        return 'bg-success/20 text-success border border-success/20';
       case 'closed':
-        return 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-800 dark:text-yellow-200 border border-yellow-200 dark:border-yellow-500/50';
+        return 'bg-warning/20 text-warning border border-warning/20';
       case 'cancelled':
-        return 'bg-red-100 dark:bg-red-900/50 text-red-800 dark:text-red-200 border border-red-200 dark:border-red-500/50';
+        return 'bg-error/20 text-error border border-error/20';
       default:
-        return 'bg-gray-100 dark:bg-gray-900/50 text-gray-800 dark:text-gray-200 border border-gray-200 dark:border-gray-500/50';
+        return 'bg-muted text-text border border-border';
     }
   };
 
   const getProgressColor = (percentage: number) => {
-    if (percentage >= 90) return 'bg-red-500';
-    if (percentage >= 70) return 'bg-yellow-500';
-    return 'bg-[#85AAA0]';
+    if (percentage >= 90) return 'bg-error';
+    if (percentage >= 70) return 'bg-warning';
+    return 'bg-secondary';
   };
 
   const formatDateTime = (date: Date) => {
@@ -81,30 +81,30 @@ export default function VolunteerPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Volunteer Opportunities</h1>
+        <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Volunteer Opportunities</h1>
       </div>
 
       {signUpError && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 rounded-lg">
-          <p className="text-red-700 dark:text-red-200">{signUpError}</p>
+        <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
+          <p className="text-error">{signUpError}</p>
         </div>
       )}
 
       {/* Loading State */}
       {loading && (
         <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#ff7c54]"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
       )}
 
       {/* Index Building State */}
       {isIndexBuilding && (
-        <div className="text-center p-8 bg-blue-50 dark:bg-blue-900/50 rounded-lg border border-blue-200 dark:border-blue-500/50">
+        <div className="text-center p-8 bg-info/10 border border-info/20 rounded-lg">
           <div className="animate-pulse mb-4">
-            <div className="h-8 w-8 mx-auto rounded-full bg-blue-200 dark:bg-blue-700"></div>
+            <div className="h-8 w-8 mx-auto rounded-full bg-info/20"></div>
           </div>
-          <h3 className="text-lg font-medium text-blue-900 dark:text-blue-100 mb-2">Optimizing Database</h3>
-          <p className="text-blue-700 dark:text-blue-200">
+          <h3 className="text-lg font-medium text-info mb-2 uppercase tracking-wide">Optimizing Database</h3>
+          <p className="text-info/80">
             We're optimizing the database for faster queries. This may take a few minutes.
             Please refresh the page shortly.
           </p>
@@ -113,7 +113,7 @@ export default function VolunteerPage() {
 
       {/* Error State */}
       {error && !isIndexBuilding && (
-        <div className="text-center p-4 text-red-600 dark:text-red-400">
+        <div className="text-center p-4 text-error">
           <p>{error}</p>
         </div>
       )}
@@ -126,9 +126,9 @@ export default function VolunteerPage() {
             const spotsLeft = opportunity.maxVolunteers - opportunity.currentVolunteers;
             
             return (
-              <div key={opportunity.id} className="bg-white dark:bg-white/5 rounded-lg shadow border border-gray-200 dark:border-white/10">
+              <div key={opportunity.id} className="bg-card rounded-lg shadow border border-sage/20">
                 <div 
-                  className="p-6 cursor-pointer hover:bg-gray-50 dark:hover:bg-white/[0.02] transition-colors duration-150"
+                  className="p-6 cursor-pointer hover:bg-sage/5 transition-colors duration-150"
                   onClick={() => toggleExpand(opportunity.id)}
                 >
                   <div className="flex justify-between items-start">
@@ -137,26 +137,26 @@ export default function VolunteerPage() {
                         <span className={`text-xs font-medium px-2 py-1 rounded ${getStatusColor(opportunity.status)}`}>
                           {opportunity.status.charAt(0).toUpperCase() + opportunity.status.slice(1)}
                         </span>
-                        <span className="text-sm text-gray-600 dark:text-gray-300">
+                        <span className="text-sm text-text/60">
                           {formatDateTime(opportunity.dateTime)}
                         </span>
                       </div>
-                      <h3 className="text-lg font-medium text-gray-900 dark:text-white">{opportunity.title}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-300 mt-1">
+                      <h3 className="text-lg font-medium text-text">{opportunity.title}</h3>
+                      <p className="text-sm text-text/60 mt-1">
                         Location: {opportunity.location}
                       </p>
 
                       {/* Availability Info - Always visible */}
                       <div className="mt-3">
                         <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                          <span className="text-sm font-medium text-text">
                             {spotsLeft === 0 ? 'Full' : `${spotsLeft} spot${spotsLeft === 1 ? '' : 's'} left`}
                           </span>
-                          <span className="text-sm text-gray-600 dark:text-gray-400">
+                          <span className="text-sm text-text/60">
                             {opportunity.currentVolunteers} of {opportunity.maxVolunteers}
                           </span>
                         </div>
-                        <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                        <div className="w-full bg-muted rounded-full h-2">
                           <div
                             className={`${getProgressColor(percentage)} h-2 rounded-full transition-all duration-300`}
                             style={{ width: `${percentage}%` }}
@@ -165,7 +165,7 @@ export default function VolunteerPage() {
                       </div>
                     </div>
                     <button
-                      className="ml-4 p-1 rounded-full hover:bg-gray-100 dark:hover:bg-white/10 text-gray-500 dark:text-gray-400"
+                      className="ml-4 p-1 rounded-full hover:bg-sage/5 text-text/40"
                       aria-label={expandedItems.has(opportunity.id) ? "Collapse" : "Expand"}
                     >
                       <svg
@@ -187,13 +187,13 @@ export default function VolunteerPage() {
                   </div>
                   
                   {expandedItems.has(opportunity.id) && (
-                    <div className="mt-4 pt-4 border-t border-gray-200 dark:border-white/10">
-                      <div className="prose prose-sm max-w-none text-gray-700 dark:text-gray-300">
+                    <div className="mt-4 pt-4 border-t border-sage/20">
+                      <div className="prose prose-sm max-w-none text-text/80">
                         <p>{opportunity.description}</p>
 
                         <div className="mt-4">
-                          <h4 className="font-medium text-gray-900 dark:text-white">Contact Information:</h4>
-                          <p className="mt-1 text-gray-700 dark:text-gray-300">
+                          <h4 className="font-medium text-text uppercase tracking-wide">Contact Information:</h4>
+                          <p className="mt-1 text-text/80">
                             Email: {opportunity.contactEmail}
                             {opportunity.contactPhone && (
                               <>
@@ -206,10 +206,10 @@ export default function VolunteerPage() {
 
                         {opportunity.volunteers?.length > 0 && (
                           <div className="mt-4">
-                            <h4 className="font-medium text-gray-900 dark:text-white">Current Volunteers:</h4>
+                            <h4 className="font-medium text-text uppercase tracking-wide">Current Volunteers:</h4>
                             <ul className="mt-2">
                               {opportunity.volunteers.map((volunteer) => (
-                                <li key={volunteer.id} className="text-gray-700 dark:text-gray-300">{volunteer.name}</li>
+                                <li key={volunteer.id} className="text-text/80">{volunteer.name}</li>
                               ))}
                             </ul>
                           </div>
@@ -224,14 +224,14 @@ export default function VolunteerPage() {
                                 e.stopPropagation();
                                 handleSignUp(opportunity.id);
                               }}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#ff7c54] hover:bg-[#e66e4a] active:bg-[#cc6242] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff7c54] disabled:opacity-50 disabled:cursor-not-allowed"
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-on-primary bg-primary hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
                             >
                               Sign Up
                             </button>
                           ) : (
                             <Link 
                               href="/auth/signin" 
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#ff7c54] hover:bg-[#e66e4a] active:bg-[#cc6242] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#ff7c54]"
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-on-primary bg-primary hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide"
                               onClick={(e) => e.stopPropagation()}
                             >
                               Sign in to Volunteer
@@ -247,7 +247,7 @@ export default function VolunteerPage() {
           })}
 
           {opportunities.length === 0 && (
-            <div className="text-center p-8 text-gray-500 dark:text-gray-400">
+            <div className="text-center p-8 text-text/50">
               No volunteer opportunities available at this time.
             </div>
           )}

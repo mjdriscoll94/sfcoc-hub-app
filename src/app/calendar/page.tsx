@@ -15,17 +15,17 @@ export default function CalendarPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#1A1A1A] py-8">
+    <div className="min-h-screen bg-bg py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-white">Church Calendar</h1>
-          <p className="mt-2 text-white/60">View and stay updated with church events and activities</p>
+          <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Church Calendar</h1>
+          <p className="mt-2 text-text/60">View and stay updated with church events and activities</p>
         </div>
 
-        <div className="bg-white/5 rounded-lg overflow-hidden">
+        <div className="bg-card rounded-lg overflow-hidden border border-sage/20">
           {isLoading && (
             <div className="flex justify-center items-center min-h-[600px]">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
           )}
           

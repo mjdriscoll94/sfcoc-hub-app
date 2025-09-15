@@ -55,7 +55,7 @@ export default function SignInPage() {
             height={80}
             className="mb-6 dark:opacity-100 opacity-80"
           />
-          <h2 className="text-center text-3xl font-bold text-white">
+          <h2 className="text-center text-3xl font-bold text-text uppercase tracking-wide">
             Sign in to your account
           </h2>
         </div>
@@ -73,7 +73,7 @@ export default function SignInPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-white/20 placeholder-gray-500 dark:placeholder-white/50 text-gray-900 dark:text-white bg-white dark:bg-white/10 rounded-t-md focus:outline-none focus:ring-[#D6805F] focus:border-[#D6805F] focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-sage/20 placeholder-text/50 text-text bg-card rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Email address"
               />
             </div>
@@ -89,17 +89,17 @@ export default function SignInPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 dark:border-white/20 placeholder-gray-500 dark:placeholder-white/50 text-gray-900 dark:text-white bg-white dark:bg-white/10 rounded-b-md focus:outline-none focus:ring-[#D6805F] focus:border-[#D6805F] focus:z-10 sm:text-sm"
+                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-sage/20 placeholder-text/50 text-text bg-card rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
                 placeholder="Password"
               />
             </div>
           </div>
 
           {error && (
-            <div className="rounded-md bg-red-50 dark:bg-red-900/50 p-4 border border-red-200 dark:border-red-500/50">
+            <div className="rounded-md bg-error/10 p-4 border border-error/20">
               <div className="flex">
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800 dark:text-red-200">
+                  <h3 className="text-sm font-medium text-error">
                     {error}
                   </h3>
                 </div>
@@ -111,7 +111,7 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-[#D6805F] hover:bg-[#D6805F]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F] ${
+              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-on-primary bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide ${
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -122,7 +122,7 @@ export default function SignInPage() {
           <div className="text-center">
             <Link
               href="/auth/signup"
-              className="font-medium text-[#D6805F] hover:text-[#D6805F]/90"
+              className="font-medium text-primary hover:opacity-80"
             >
               Don&apos;t have an account? Sign up
             </Link>
