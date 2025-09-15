@@ -54,6 +54,7 @@ export interface Teacher {
   firstName: string;
   lastName: string;
   email: string;
+  phoneNumber?: string;
   gender: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
   createdAt: Date;
   updatedAt: Date;

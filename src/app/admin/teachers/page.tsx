@@ -427,6 +427,9 @@ export default function TeacherManagement() {
                   Email
                 </th>
                 <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                  Phone
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
                   Gender
                 </th>
                 <th className="px-4 py-2 text-center text-sm font-medium text-gray-900 dark:text-white">
@@ -444,6 +447,9 @@ export default function TeacherManagement() {
                     {teacher.email}
                   </td>
                   <td className="px-4 py-2 text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
+                    {teacher.phoneNumber || 'Not provided'}
+                  </td>
+                  <td className="px-4 py-2 text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
                     {teacher.gender}
                   </td>
                   <td className="px-4 py-2 text-center">
@@ -458,7 +464,7 @@ export default function TeacherManagement() {
               ))}
               {teachers.length === 0 && (
                 <tr>
-                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
                     No teachers found. Add your first teacher to get started.
                   </td>
                 </tr>

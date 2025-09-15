@@ -17,6 +17,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
     firstName: teacher?.firstName || '',
     lastName: teacher?.lastName || '',
     email: teacher?.email || '',
+    phoneNumber: teacher?.phoneNumber || '',
     gender: teacher?.gender || 'Prefer not to say' as Teacher['gender']
   });
   const [loading, setLoading] = useState(false);
@@ -45,6 +46,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
         firstName: formData.firstName.trim(),
         lastName: formData.lastName.trim(),
         email: formData.email.trim().toLowerCase(),
+        phoneNumber: formData.phoneNumber.trim() || undefined,
         gender: formData.gender,
         updatedAt: new Date(),
         isActive: true
@@ -127,6 +129,21 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
           required
           className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D6805F] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           placeholder="Enter email address"
+        />
+      </div>
+
+      <div>
+        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          Phone Number
+        </label>
+        <input
+          type="tel"
+          id="phoneNumber"
+          name="phoneNumber"
+          value={formData.phoneNumber}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D6805F] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          placeholder="Enter phone number (optional)"
         />
       </div>
 
