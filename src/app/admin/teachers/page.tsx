@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy } from 'firebase/firestore';
+import { collection, doc, getDocs, addDoc, updateDoc, deleteDoc, query, orderBy, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
-import { TeacherAssignment, TeachingSchedule, Quarter, ClassType, AgeGroup } from '@/types';
+import { TeacherAssignment, TeachingSchedule, Quarter, ClassType, AgeGroup, Teacher } from '@/types';
 import { ROLE_PERMISSIONS } from '@/types/roles';
+import TeacherForm from '@/components/TeacherForm';
 
 const QUARTERS: Quarter[] = ['Fall', 'Winter', 'Spring', 'Summer'];
 const SUNDAY_CLASSES: AgeGroup[] = ['Cradle Roll', 'Toddlers', 'Elementary A', 'Elementary B', 'Middle School', 'High School'];
@@ -15,17 +16,21 @@ const DECORATOR_CLASSES: AgeGroup[] = ['Decorators'];
 export default function TeacherManagement() {
   const { userProfile } = useAuth();
   const [teachingSchedule, setTeachingSchedule] = useState<TeachingSchedule | null>(null);
+  const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingCell, setEditingCell] = useState<{ classType: ClassType; ageGroup: AgeGroup; quarter: Quarter } | null>(null);
-  const [newTeacherName, setNewTeacherName] = useState('');
+  const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [isHelper, setIsHelper] = useState(false);
   const [isSecondChoice, setIsSecondChoice] = useState(false);
   const [notes, setNotes] = useState('');
+  const [showTeacherForm, setShowTeacherForm] = useState(false);
+  const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
 
   const canEdit = userProfile && (userProfile.isAdmin || ROLE_PERMISSIONS[userProfile.role].canAssignServiceRoles);
 
   useEffect(() => {
     loadTeachingSchedule();
+    loadTeachers();
   }, []);
 
   const loadTeachingSchedule = async () => {
@@ -63,6 +68,25 @@ export default function TeacherManagement() {
     }
   };
 
+  const loadTeachers = async () => {
+    try {
+      const teachersRef = collection(db, 'teachers');
+      const q = query(teachersRef, where('isActive', '==', true), orderBy('lastName'));
+      const querySnapshot = await getDocs(q);
+      
+      const teachersData = querySnapshot.docs.map(doc => ({
+        ...doc.data(),
+        id: doc.id,
+        createdAt: doc.data().createdAt.toDate(),
+        updatedAt: doc.data().updatedAt.toDate()
+      })) as Teacher[];
+      
+      setTeachers(teachersData);
+    } catch (error) {
+      console.error('Error loading teachers:', error);
+    }
+  };
+
   const getAssignment = (classType: ClassType, ageGroup: AgeGroup, quarter: Quarter): TeacherAssignment | null => {
     if (!teachingSchedule) return null;
     return teachingSchedule.assignments.find(
@@ -78,21 +102,52 @@ export default function TeacherManagement() {
     
     const assignment = getAssignment(classType, ageGroup, quarter);
     setEditingCell({ classType, ageGroup, quarter });
-    setNewTeacherName(assignment?.teacherName || '');
+    
+    // Find teacher by name if assignment exists
+    const teacher = assignment ? teachers.find(t => `${t.firstName} ${t.lastName}` === assignment.teacherName) : null;
+    setSelectedTeacherId(teacher?.id || '');
     setIsHelper(assignment?.isHelper || false);
     setIsSecondChoice(assignment?.isSecondChoice || false);
     setNotes(assignment?.notes || '');
+  };
+
+  const handleTeacherSave = (teacher: Teacher) => {
+    setTeachers(prev => {
+      const existingIndex = prev.findIndex(t => t.id === teacher.id);
+      if (existingIndex >= 0) {
+        const updated = [...prev];
+        updated[existingIndex] = teacher;
+        return updated;
+      } else {
+        return [...prev, teacher];
+      }
+    });
+    setShowTeacherForm(false);
+    setEditingTeacher(null);
+  };
+
+  const handleTeacherCancel = () => {
+    setShowTeacherForm(false);
+    setEditingTeacher(null);
+  };
+
+  const handleEditTeacher = (teacher: Teacher) => {
+    setEditingTeacher(teacher);
+    setShowTeacherForm(true);
   };
 
   const handleSaveAssignment = async () => {
     if (!editingCell || !teachingSchedule || !userProfile) return;
 
     try {
+      const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
+      const teacherName = selectedTeacher ? `${selectedTeacher.firstName} ${selectedTeacher.lastName}` : '';
+
       const assignmentData = {
         classType: editingCell.classType,
         ageGroup: editingCell.ageGroup,
         quarter: editingCell.quarter,
-        teacherName: newTeacherName.trim(),
+        teacherName: teacherName,
         isHelper,
         isSecondChoice,
         notes: notes.trim(),
@@ -101,7 +156,7 @@ export default function TeacherManagement() {
         updatedAt: new Date()
       };
 
-      if (newTeacherName.trim()) {
+      if (selectedTeacherId) {
         // Update or create assignment
         const existingAssignment = getAssignment(editingCell.classType, editingCell.ageGroup, editingCell.quarter);
         
@@ -176,7 +231,7 @@ export default function TeacherManagement() {
 
   const handleCancelEdit = () => {
     setEditingCell(null);
-    setNewTeacherName('');
+    setSelectedTeacherId('');
     setIsHelper(false);
     setIsSecondChoice(false);
     setNotes('');
@@ -221,14 +276,19 @@ export default function TeacherManagement() {
                     <td key={quarter} className="px-4 py-2 text-center border-r border-gray-300 dark:border-gray-600 min-w-[120px]">
                       {isEditing ? (
                         <div className="space-y-2">
-                          <input
-                            type="text"
-                            value={newTeacherName}
-                            onChange={(e) => setNewTeacherName(e.target.value)}
-                            placeholder="Teacher name"
+                          <select
+                            value={selectedTeacherId}
+                            onChange={(e) => setSelectedTeacherId(e.target.value)}
                             className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                             autoFocus
-                          />
+                          >
+                            <option value="">Select a teacher</option>
+                            {teachers.map(teacher => (
+                              <option key={teacher.id} value={teacher.id}>
+                                {teacher.firstName} {teacher.lastName}
+                              </option>
+                            ))}
+                          </select>
                           <div className="flex flex-col space-y-1">
                             <label className="flex items-center text-xs">
                               <input
@@ -328,6 +388,84 @@ export default function TeacherManagement() {
         <p className="text-gray-600 dark:text-gray-400">
           Manage quarterly teaching assignments for Sunday classes, Wednesday classes, and decorators.
         </p>
+      </div>
+
+      {/* Teacher Management Section */}
+      <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+        <div className="flex justify-between items-center mb-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Teacher Management</h2>
+          <button
+            onClick={() => setShowTeacherForm(true)}
+            className="px-4 py-2 bg-[#D6805F] text-white rounded-md hover:bg-[#c57355] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F]"
+          >
+            Add New Teacher
+          </button>
+        </div>
+
+        {showTeacherForm && (
+          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+              {editingTeacher ? 'Edit Teacher' : 'Add New Teacher'}
+            </h3>
+            <TeacherForm
+              teacher={editingTeacher}
+              onSave={handleTeacherSave}
+              onCancel={handleTeacherCancel}
+              isEditing={!!editingTeacher}
+            />
+          </div>
+        )}
+
+        <div className="overflow-x-auto">
+          <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
+            <thead>
+              <tr className="bg-gray-50 dark:bg-gray-700">
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                  Name
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                  Email
+                </th>
+                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                  Gender
+                </th>
+                <th className="px-4 py-2 text-center text-sm font-medium text-gray-900 dark:text-white">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {teachers.map(teacher => (
+                <tr key={teacher.id} className="border-t border-gray-300 dark:border-gray-600">
+                  <td className="px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                    {teacher.firstName} {teacher.lastName}
+                  </td>
+                  <td className="px-4 py-2 text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
+                    {teacher.email}
+                  </td>
+                  <td className="px-4 py-2 text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
+                    {teacher.gender}
+                  </td>
+                  <td className="px-4 py-2 text-center">
+                    <button
+                      onClick={() => handleEditTeacher(teacher)}
+                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                    >
+                      Edit
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {teachers.length === 0 && (
+                <tr>
+                  <td colSpan={4} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                    No teachers found. Add your first teacher to get started.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <div className="mb-6">

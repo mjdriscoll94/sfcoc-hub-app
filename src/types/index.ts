@@ -47,4 +47,16 @@ export interface TeachingSchedule {
   assignments: TeacherAssignment[];
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface Teacher {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  gender: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  isActive: boolean;
 } 
