@@ -178,7 +178,7 @@ const Navigation = () => {
         },
         {
           name: 'Directory',
-          href: '/directory',
+          href: 'https://members.instantchurchdirectory.com/families/7aa8b3f0-5f58-4ef4-a314-9ab636f24cf4',
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
@@ -308,21 +308,40 @@ const Navigation = () => {
                       >
                         <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5">
                           <div className="py-1">
-                            {item.items?.map((subItem) => (
-                              <Link
-                                key={subItem.name}
-                                href={subItem.href}
-                                className={`${
-                                  pathname === subItem.href
-                                    ? 'text-[#D6805F] bg-white/5'
-                                    : 'text-white hover:bg-white/5'
-                                } flex items-center px-4 py-2 text-sm`}
-                                onClick={() => handleDropdownClick(item.name)}
-                              >
-                                {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                                {subItem.name}
-                              </Link>
-                            ))}
+                            {item.items?.map((subItem) => {
+                              const isExternal = subItem.href?.startsWith('http');
+                              return isExternal ? (
+                                <a
+                                  key={subItem.name}
+                                  href={subItem.href}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className={`${
+                                    pathname === subItem.href
+                                      ? 'text-[#D6805F] bg-white/5'
+                                      : 'text-white hover:bg-white/5'
+                                  } flex items-center px-4 py-2 text-sm`}
+                                  onClick={() => handleDropdownClick(item.name)}
+                                >
+                                  {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                                  {subItem.name}
+                                </a>
+                              ) : (
+                                <Link
+                                  key={subItem.name}
+                                  href={subItem.href}
+                                  className={`${
+                                    pathname === subItem.href
+                                      ? 'text-[#D6805F] bg-white/5'
+                                      : 'text-white hover:bg-white/5'
+                                  } flex items-center px-4 py-2 text-sm`}
+                                  onClick={() => handleDropdownClick(item.name)}
+                                >
+                                  {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                                  {subItem.name}
+                                </Link>
+                              );
+                            })}
                           </div>
                         </div>
                       </div>
@@ -455,24 +474,46 @@ const Navigation = () => {
                       />
                     </Disclosure.Button>
                     <Disclosure.Panel className="bg-[#1f1f1f]">
-                      {item.items?.map((subItem) => (
-                        <Link
-                          key={subItem.name}
-                          href={subItem.href}
-                          className={`${
-                            pathname === subItem.href
-                              ? 'text-[#D6805F] bg-white/5'
-                              : 'text-white hover:bg-white/5'
-                          } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
-                          onClick={() => {
-                            console.log('Mobile link clicked:', subItem.name);
-                            setIsOpen(false);
-                          }}
-                        >
-                          {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                          {subItem.name}
-                        </Link>
-                      ))}
+                      {item.items?.map((subItem) => {
+                        const isExternal = subItem.href?.startsWith('http');
+                        return isExternal ? (
+                          <a
+                            key={subItem.name}
+                            href={subItem.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className={`${
+                              pathname === subItem.href
+                                ? 'text-[#D6805F] bg-white/5'
+                                : 'text-white hover:bg-white/5'
+                            } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
+                            onClick={() => {
+                              console.log('Mobile link clicked:', subItem.name);
+                              setIsOpen(false);
+                            }}
+                          >
+                            {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                            {subItem.name}
+                          </a>
+                        ) : (
+                          <Link
+                            key={subItem.name}
+                            href={subItem.href}
+                            className={`${
+                              pathname === subItem.href
+                                ? 'text-[#D6805F] bg-white/5'
+                                : 'text-white hover:bg-white/5'
+                            } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
+                            onClick={() => {
+                              console.log('Mobile link clicked:', subItem.name);
+                              setIsOpen(false);
+                            }}
+                          >
+                            {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                            {subItem.name}
+                          </Link>
+                        );
+                      })}
                     </Disclosure.Panel>
                   </>
                 )}
