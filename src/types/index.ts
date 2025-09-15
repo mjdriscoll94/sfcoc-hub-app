@@ -21,4 +21,30 @@ export interface UserProfile {
     events: boolean;
     newsletter: boolean;
   };
+}
+
+export type Quarter = 'Fall' | 'Winter' | 'Spring' | 'Summer';
+export type ClassType = 'Sunday' | 'Wednesday' | 'Decorators';
+export type AgeGroup = 'Cradle Roll' | 'Toddlers' | 'Elementary A' | 'Elementary B' | 'Middle School' | 'High School' | 'Decorators';
+
+export interface TeacherAssignment {
+  id: string;
+  classType: ClassType;
+  ageGroup: AgeGroup;
+  quarter: Quarter;
+  teacherName: string;
+  isHelper?: boolean;
+  isSecondChoice?: boolean;
+  notes?: string;
+  assignedBy: string;
+  assignedAt: Date;
+  updatedAt: Date;
+}
+
+export interface TeachingSchedule {
+  id: string;
+  schoolYear: string; // e.g., "2025-2026"
+  assignments: TeacherAssignment[];
+  createdAt: Date;
+  updatedAt: Date;
 } 
