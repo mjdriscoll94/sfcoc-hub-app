@@ -13,13 +13,13 @@
   /* Light theme semantic tokens - matching website aesthetic */
   --bg: #FFFFFF;
   --card: #F5F5F5;
-  --text: #1A1A1A;
+  --text: #0F0F0F;
   --muted: #E5E5E5;
   --border: #D0D0D0;
   --primary: #E88B5F;
-  --on-primary: #1A1A1A;
+  --on-primary: #0F0F0F;
   --secondary: #70A8A0;
-  --on-secondary: #1A1A1A;
+  --on-secondary: #0F0F0F;
   --accent: #2F3E46;
   --on-accent: #FFFFFF;
   --success: #2BA36A;
@@ -41,9 +41,9 @@
   --muted: #404040;
   --border: #555555;
   --primary: #E88B5F; /* Keep the same coral for brand consistency */
-  --on-primary: #1A1A1A;
+  --on-primary: #0F0F0F;
   --secondary: #70A8A0; /* Keep the same sage for brand consistency */
-  --on-secondary: #1A1A1A;
+  --on-secondary: #0F0F0F;
   --accent: #FFFFFF;
   --on-accent: #1A1A1A;
   --success: #4DD798;
@@ -65,9 +65,9 @@
     --muted: #404040;
     --border: #555555;
     --primary: #E88B5F;
-    --on-primary: #1A1A1A;
+    --on-primary: #0F0F0F;
     --secondary: #70A8A0;
-    --on-secondary: #1A1A1A;
+    --on-secondary: #0F0F0F;
     --accent: #FFFFFF;
     --on-accent: #1A1A1A;
     --success: #4DD798;
