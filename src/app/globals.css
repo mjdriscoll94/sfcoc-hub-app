@@ -1,23 +1,27 @@
 @import "tailwindcss";
 
-/* Light theme (default) */
+/* Light theme (default) - matching website design */
 :root {
-  /* Brand anchors */
-  --coral: #FF6F61;
-  --sage: #9CAF88;
+  /* Brand colors from your website */
+  --coral: #E88B5F;
+  --sage: #70A8A0;
   --charcoal: #2F3E46;
   --white: #FFFFFF;
+  --dark-gray: #1A1A1A;
+  --light-gray: #F5F5F5;
 
-  /* Light theme semantic tokens */
-  --bg: #FCFCFD;
-  --card: #FFFFFF;
-  --text: #1D252B;
-  --muted: #F2F4F5;
-  --border: #C9D1D9;
-  --primary: #C73A2A;
-  --on-primary: #FFFFFF;
-  --secondary: #9CAF88;
-  --on-secondary: #0E1A14;
+  /* Light theme semantic tokens - matching website aesthetic */
+  --bg: #FFFFFF;
+  --card: #F5F5F5;
+  --text: #1A1A1A;
+  --muted: #E5E5E5;
+  --border: #D0D0D0;
+  --primary: #E88B5F;
+  --on-primary: #1A1A1A;
+  --secondary: #70A8A0;
+  --on-secondary: #1A1A1A;
+  --accent: #2F3E46;
+  --on-accent: #FFFFFF;
   --success: #2BA36A;
   --warning: #B98009;
   --error: #D14343;
@@ -25,49 +29,53 @@
 
   /* Focus and hover states */
   --focus-ring: 0 0 0 2px var(--primary);
-  --hover-overlay: rgba(0, 0, 0, 0.05);
-  --hover-overlay-dark: rgba(255, 255, 255, 0.1);
+  --hover-overlay: rgba(232, 139, 95, 0.1);
+  --hover-overlay-dark: rgba(0, 0, 0, 0.1);
 }
 
-/* Dark theme */
+/* Dark theme - matching website's dark aesthetic */
 [data-theme="dark"] {
-  --bg: #0F1417;
-  --card: #1B2328;
-  --text: #E6EDF3;
-  --muted: #10161A;
-  --border: #3C4A52;
-  --primary: #FF8A7B; /* coral lightened for dark bg */
-  --on-primary: #2B0D0A;
-  --secondary: #B6C9A5; /* sage lightened */
-  --on-secondary: #132016;
+  --bg: #1A1A1A;
+  --card: #2F2F2F;
+  --text: #FFFFFF;
+  --muted: #404040;
+  --border: #555555;
+  --primary: #E88B5F; /* Keep the same coral for brand consistency */
+  --on-primary: #1A1A1A;
+  --secondary: #70A8A0; /* Keep the same sage for brand consistency */
+  --on-secondary: #1A1A1A;
+  --accent: #FFFFFF;
+  --on-accent: #1A1A1A;
   --success: #4DD798;
   --warning: #E3B341;
   --error: #FF6B6B;
   --info: #67A6FF;
 
   /* Dark theme hover states */
-  --hover-overlay: rgba(255, 255, 255, 0.1);
-  --hover-overlay-dark: rgba(0, 0, 0, 0.2);
+  --hover-overlay: rgba(232, 139, 95, 0.2);
+  --hover-overlay-dark: rgba(0, 0, 0, 0.3);
 }
 
-/* System theme fallback */
+/* System theme fallback - matching website's dark aesthetic */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme]) {
-    --bg: #0F1417;
-    --card: #1B2328;
-    --text: #E6EDF3;
-    --muted: #10161A;
-    --border: #3C4A52;
-    --primary: #FF8A7B;
-    --on-primary: #2B0D0A;
-    --secondary: #B6C9A5;
-    --on-secondary: #132016;
+    --bg: #1A1A1A;
+    --card: #2F2F2F;
+    --text: #FFFFFF;
+    --muted: #404040;
+    --border: #555555;
+    --primary: #E88B5F;
+    --on-primary: #1A1A1A;
+    --secondary: #70A8A0;
+    --on-secondary: #1A1A1A;
+    --accent: #FFFFFF;
+    --on-accent: #1A1A1A;
     --success: #4DD798;
     --warning: #E3B341;
     --error: #FF6B6B;
     --info: #67A6FF;
-    --hover-overlay: rgba(255, 255, 255, 0.1);
-    --hover-overlay-dark: rgba(0, 0, 0, 0.2);
+    --hover-overlay: rgba(232, 139, 95, 0.2);
+    --hover-overlay-dark: rgba(0, 0, 0, 0.3);
   }
 }
 

@@ -80,8 +80,8 @@ export default function AppearanceSettings() {
     <div className="min-h-screen bg-bg text-text">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text mb-2">Appearance</h1>
-          <p className="text-text/70">
+          <h1 className="text-3xl font-bold text-text mb-2 uppercase tracking-wide">Appearance</h1>
+          <p className="text-text/70 uppercase tracking-wide">
             Customize how the app looks and feels. Your preferences are saved to your profile.
           </p>
         </div>

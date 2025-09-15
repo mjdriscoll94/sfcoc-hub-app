@@ -20,16 +20,20 @@ const config: Config = {
         'on-primary': 'var(--on-primary)',
         secondary: 'var(--secondary)',
         'on-secondary': 'var(--on-secondary)',
+        accent: 'var(--accent)',
+        'on-accent': 'var(--on-accent)',
         success: 'var(--success)',
         warning: 'var(--warning)',
         error: 'var(--error)',
         info: 'var(--info)',
         
-        // Brand anchors (for reference, prefer semantic tokens)
+        // Brand colors from your website
         coral: 'var(--coral)',
         sage: 'var(--sage)',
         charcoal: 'var(--charcoal)',
         white: 'var(--white)',
+        'dark-gray': 'var(--dark-gray)',
+        'light-gray': 'var(--light-gray)',
       },
       fontFamily: {
         serif: ['Lora', 'serif'],

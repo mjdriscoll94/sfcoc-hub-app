@@ -160,16 +160,16 @@ export default function Home() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
           <div className="text-white max-w-2xl text-center">
-            <h1 className="text-3xl md:text-5xl font-bold mb-4">
+            <h1 className="text-3xl md:text-5xl font-bold mb-4 uppercase tracking-wide">
               Sioux Falls Church of Christ
             </h1>
-            <p className="text-xl md:text-2xl mb-8">
+            <p className="text-xl md:text-2xl mb-8 uppercase tracking-wide">
               One body. Many members. United and serving together.
             </p>
             <div className="flex justify-center">
               <Link
                 href="/calendar"
-                className="bg-primary text-on-primary px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity inline-flex items-center space-x-2 focus-ring"
+                className="bg-primary text-on-primary px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity inline-flex items-center space-x-2 focus-ring uppercase tracking-wide"
               >
                 <span>View Calendar</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -189,8 +189,8 @@ export default function Home() {
       <section className="py-16 bg-muted">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-text">Events</h2>
-            <p className="mt-4 text-lg text-text/70">Join us for our regular gatherings</p>
+            <h2 className="text-3xl font-bold text-text uppercase tracking-wide">Events</h2>
+            <p className="mt-4 text-lg text-text/70 uppercase tracking-wide">Join us for our regular gatherings</p>
           </div>
           
           <div className="space-y-6">
