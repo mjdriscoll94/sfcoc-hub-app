@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function SettingsPage() {
   const { userProfile, user } = useAuth();
@@ -110,43 +111,62 @@ export default function SettingsPage() {
   console.log('Current profile subscriptions:', userProfile.emailSubscriptions);
 
   return (
-    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Settings</h1>
-      </div>
-
-      {/* Role Information */}
-      <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10 mb-8">
-        <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Account Role</h2>
-        <div className="flex items-center space-x-4">
-          <div className={`px-3 py-1 rounded-full text-sm font-medium ${
-            userProfile.role === 'admin' ? 'bg-[#D6805F] text-white' :
-            userProfile.role === 'organizer' ? 'bg-[#85AAA0] text-white' :
-            'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/60'
-          }`}>
-            {userProfile.role ? userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1) : 'User'}
-          </div>
-          <p className="text-sm text-gray-500 dark:text-white/60">
-            {userProfile.role === 'admin' ? 'Full access to all features and administrative controls' :
-             userProfile.role === 'organizer' ? 'Can manage service roles and access member directory' :
-             userProfile.role === 'member' ? 'Can access member directory and participate in church activities' :
-             'Basic access to church information and features'}
-          </p>
+    <div className="min-h-screen bg-bg text-text">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-text">Settings</h1>
         </div>
-      </div>
 
-      <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-        <div className="space-y-6">
-          {/* Email Subscriptions */}
-          <div>
-            <h2 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Email Notifications</h2>
+        {/* Settings Navigation */}
+        <div className="mb-8">
+          <nav className="flex space-x-8">
+            <Link
+              href="/settings"
+              className="text-primary border-b-2 border-primary pb-2 font-medium"
+            >
+              Notifications
+            </Link>
+            <Link
+              href="/settings/appearance"
+              className="text-text/70 hover:text-text border-b-2 border-transparent pb-2 font-medium transition-colors"
+            >
+              Appearance
+            </Link>
+          </nav>
+        </div>
+
+        {/* Role Information */}
+        <div className="bg-card border border-border rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-medium text-text mb-4">Account Role</h2>
+          <div className="flex items-center space-x-4">
+            <div className={`px-3 py-1 rounded-full text-sm font-medium ${
+              userProfile.role === 'admin' ? 'bg-primary text-on-primary' :
+              userProfile.role === 'organizer' ? 'bg-secondary text-on-secondary' :
+              'bg-muted text-text/60'
+            }`}>
+              {userProfile.role ? userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1) : 'User'}
+            </div>
+            <p className="text-sm text-text/70">
+              {userProfile.role === 'admin' ? 'Full access to all features and administrative controls' :
+               userProfile.role === 'organizer' ? 'Can manage service roles and access member directory' :
+               userProfile.role === 'member' ? 'Can access member directory and participate in church activities' :
+               'Basic access to church information and features'}
+            </p>
+          </div>
+        </div>
+
+        <div className="bg-card border border-border rounded-lg p-6">
+          <div className="space-y-6">
+            {/* Email Subscriptions */}
+            <div>
+              <h2 className="text-lg font-medium text-text mb-4">Email Notifications</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <label htmlFor="announcements" className="text-gray-900 dark:text-white font-medium">
+                  <label htmlFor="announcements" className="text-text font-medium">
                     Announcements
                   </label>
-                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                  <p className="text-text/70 text-sm">
                     Receive emails about new church announcements
                   </p>
                 </div>
@@ -159,16 +179,16 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label htmlFor="prayerRequests" className="text-gray-900 dark:text-white font-medium">
+                  <label htmlFor="prayerRequests" className="text-text font-medium">
                     Prayer Requests
                   </label>
-                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                  <p className="text-text/70 text-sm">
                     Receive notifications for new prayer requests
                   </p>
                 </div>
@@ -181,16 +201,16 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label htmlFor="praiseReports" className="text-gray-900 dark:text-white font-medium">
+                  <label htmlFor="praiseReports" className="text-text font-medium">
                     Praise Reports
                   </label>
-                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                  <p className="text-text/70 text-sm">
                     Receive notifications for new praise reports
                   </p>
                 </div>
@@ -203,16 +223,16 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label htmlFor="events" className="text-gray-900 dark:text-white font-medium">
+                  <label htmlFor="events" className="text-text font-medium">
                     Events
                   </label>
-                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                  <p className="text-text/70 text-sm">
                     Receive emails about upcoming church events
                   </p>
                 </div>
@@ -225,16 +245,16 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
               </div>
 
               <div className="flex items-center justify-between">
                 <div>
-                  <label htmlFor="newsletter" className="text-gray-900 dark:text-white font-medium">
+                  <label htmlFor="newsletter" className="text-text font-medium">
                     Newsletter
                   </label>
-                  <p className="text-gray-500 dark:text-white/60 text-sm">
+                  <p className="text-text/70 text-sm">
                     Receive our weekly church newsletter
                   </p>
                 </div>
@@ -247,24 +267,25 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-gray-200 dark:bg-white/10 rounded-full peer-focus:ring-2 peer-focus:ring-[#ff7c54] peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-[#ff7c54] after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
                 </label>
               </div>
             </div>
           </div>
 
-          {/* Status Messages */}
-          {successMessage && (
-            <div className="p-4 bg-green-50 dark:bg-green-900/50 border border-green-200 dark:border-green-500/50 rounded-md">
-              <p className="text-green-800 dark:text-green-200">{successMessage}</p>
-            </div>
-          )}
+            {/* Status Messages */}
+            {successMessage && (
+              <div className="p-4 bg-success/10 border border-success/20 rounded-md">
+                <p className="text-success">{successMessage}</p>
+              </div>
+            )}
 
-          {error && (
-            <div className="p-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 rounded-md">
-              <p className="text-red-800 dark:text-red-200">{error}</p>
-            </div>
-          )}
+            {error && (
+              <div className="p-4 bg-error/10 border border-error/20 rounded-md">
+                <p className="text-error">{error}</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

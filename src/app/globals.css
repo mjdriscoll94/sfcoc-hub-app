@@ -1,26 +1,105 @@
 @import "tailwindcss";
 
+/* Light theme (default) */
 :root {
-  --background: #171717;
-  --foreground: #ededed;
+  /* Brand anchors */
+  --coral: #FF6F61;
+  --sage: #9CAF88;
+  --charcoal: #2F3E46;
+  --white: #FFFFFF;
+
+  /* Light theme semantic tokens */
+  --bg: #FCFCFD;
+  --card: #FFFFFF;
+  --text: #1D252B;
+  --muted: #F2F4F5;
+  --border: #C9D1D9;
+  --primary: #C73A2A;
+  --on-primary: #FFFFFF;
+  --secondary: #9CAF88;
+  --on-secondary: #0E1A14;
+  --success: #2BA36A;
+  --warning: #B98009;
+  --error: #D14343;
+  --info: #2D7FF9;
+
+  /* Focus and hover states */
+  --focus-ring: 0 0 0 2px var(--primary);
+  --hover-overlay: rgba(0, 0, 0, 0.05);
+  --hover-overlay-dark: rgba(255, 255, 255, 0.1);
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+/* Dark theme */
+[data-theme="dark"] {
+  --bg: #0F1417;
+  --card: #1B2328;
+  --text: #E6EDF3;
+  --muted: #10161A;
+  --border: #3C4A52;
+  --primary: #FF8A7B; /* coral lightened for dark bg */
+  --on-primary: #2B0D0A;
+  --secondary: #B6C9A5; /* sage lightened */
+  --on-secondary: #132016;
+  --success: #4DD798;
+  --warning: #E3B341;
+  --error: #FF6B6B;
+  --info: #67A6FF;
+
+  /* Dark theme hover states */
+  --hover-overlay: rgba(255, 255, 255, 0.1);
+  --hover-overlay-dark: rgba(0, 0, 0, 0.2);
 }
 
+/* System theme fallback */
 @media (prefers-color-scheme: dark) {
-  :root {
-    --background: #171717;
-    --foreground: #ededed;
+  :root:not([data-theme]) {
+    --bg: #0F1417;
+    --card: #1B2328;
+    --text: #E6EDF3;
+    --muted: #10161A;
+    --border: #3C4A52;
+    --primary: #FF8A7B;
+    --on-primary: #2B0D0A;
+    --secondary: #B6C9A5;
+    --on-secondary: #132016;
+    --success: #4DD798;
+    --warning: #E3B341;
+    --error: #FF6B6B;
+    --info: #67A6FF;
+    --hover-overlay: rgba(255, 255, 255, 0.1);
+    --hover-overlay-dark: rgba(0, 0, 0, 0.2);
   }
 }
 
+/* Base styles */
 body {
-  background: var(--background);
-  color: var(--foreground);
+  background: var(--bg);
+  color: var(--text);
   font-family: Arial, Helvetica, sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+/* Focus utilities */
+.focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+}
+
+.focus-ring:focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Hover utilities */
+.hover-bg:hover {
+  background-color: var(--hover-overlay);
+}
+
+.hover-bg-dark:hover {
+  background-color: var(--hover-overlay-dark);
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }

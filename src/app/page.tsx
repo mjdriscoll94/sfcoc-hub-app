@@ -15,7 +15,7 @@ const eventCategories = [
         day: "Every Sunday",
         description: "Join us for worship, fellowship, and bible classes",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
         )
@@ -26,7 +26,7 @@ const eventCategories = [
         day: "Every Wednesday",
         description: "Deep dive into God's word",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         )
@@ -37,7 +37,7 @@ const eventCategories = [
         day: "Last Sunday of each month",
         description: "Food and fellowship",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         )
@@ -48,7 +48,7 @@ const eventCategories = [
         day: "Each 5th Sunday of a month",
         description: "Worship and a shared meal with other congregations",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         )
@@ -64,7 +64,7 @@ const eventCategories = [
         day: "Every Thursday",
         description: "Bible study and discussion for men",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         )
@@ -75,7 +75,7 @@ const eventCategories = [
         day: "Last Saturday of each month",
         description: "Breakfast and fellowship for men",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         )
@@ -91,7 +91,7 @@ const eventCategories = [
         day: "Every Other Thursday",
         description: "Bible study and discussion for ladies",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         )
@@ -107,7 +107,7 @@ const eventCategories = [
         day: "Every Wednesday",
         description: "Bible Study classes for youth",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
           </svg>
         )
@@ -118,7 +118,7 @@ const eventCategories = [
         day: "One Saturday of each month",
         description: "Bible study and discussion for youth and young adults",
         icon: (
-          <svg className="w-6 h-6 text-[#D6805F]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <svg className="w-6 h-6 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         )
@@ -169,7 +169,7 @@ export default function Home() {
             <div className="flex justify-center">
               <Link
                 href="/calendar"
-                className="bg-[#D6805F] text-white px-6 py-3 rounded-lg font-medium hover:bg-[#c57355] transition-colors inline-flex items-center space-x-2"
+                className="bg-primary text-on-primary px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity inline-flex items-center space-x-2 focus-ring"
               >
                 <span>View Calendar</span>
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -186,28 +186,28 @@ export default function Home() {
       <BuildStatus />
 
       {/* Regular Events Section */}
-      <section className="py-16 bg-[#1A1A1A] dark:bg-[#1A1A1A]">
+      <section className="py-16 bg-muted">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white">Events</h2>
-            <p className="mt-4 text-lg text-white/60">Join us for our regular gatherings</p>
+            <h2 className="text-3xl font-bold text-text">Events</h2>
+            <p className="mt-4 text-lg text-text/70">Join us for our regular gatherings</p>
           </div>
           
           <div className="space-y-6">
             {eventCategories.map((category, categoryIndex) => (
               <div 
                 key={categoryIndex} 
-                className="bg-white dark:bg-white/5 rounded-lg border-2 border-gray-300 dark:border-white/10 overflow-hidden shadow-sm"
+                className="bg-card rounded-lg border-2 border-border overflow-hidden shadow-sm"
               >
                 <button
                   onClick={() => toggleCategory(categoryIndex)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-white/5 transition-colors"
+                  className="w-full px-6 py-4 flex items-center justify-between text-left hover-bg transition-colors focus-ring"
                 >
-                  <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                  <h3 className="text-xl font-semibold text-text">
                     {category.title}
                   </h3>
                   <svg
-                    className={`w-5 h-5 text-gray-900 dark:text-white transform transition-transform ${
+                    className={`w-5 h-5 text-text transform transition-transform ${
                       expandedCategories.has(categoryIndex) ? 'rotate-180' : ''
                     }`}
                     fill="none"
@@ -234,18 +234,18 @@ export default function Home() {
                     {category.events.map((event, eventIndex) => (
                       <div
                         key={eventIndex}
-                        className="bg-white dark:bg-white/5 rounded-lg p-4 border-2 border-gray-300 dark:border-white/10 hover:border-[#D6805F] transition-colors flex items-start space-x-4 shadow-sm"
+                        className="bg-card rounded-lg p-4 border-2 border-border hover:border-primary transition-colors flex items-start space-x-4 shadow-sm focus-ring"
                       >
                         <div className="flex-shrink-0">
-                          <div className="p-2 bg-[#D6805F]/20 dark:bg-[#D6805F]/10 rounded-full">
+                          <div className="p-2 bg-primary/20 rounded-full">
                             {event.icon}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-lg font-semibold text-gray-900 dark:text-white mb-1">{event.name}</h4>
-                          <p className="text-[#D6805F] font-medium text-sm mb-1">{event.time}</p>
-                          <p className="text-gray-600 dark:text-white/60 text-sm mb-1">{event.day}</p>
-                          <p className="text-gray-700 dark:text-white/80 text-sm leading-snug">{event.description}</p>
+                          <h4 className="text-lg font-semibold text-text mb-1">{event.name}</h4>
+                          <p className="text-primary font-medium text-sm mb-1">{event.time}</p>
+                          <p className="text-text/60 text-sm mb-1">{event.day}</p>
+                          <p className="text-text/80 text-sm leading-snug">{event.description}</p>
                         </div>
                       </div>
                     ))}
@@ -258,7 +258,7 @@ export default function Home() {
           <div className="text-center mt-12">
             <Link
               href="/calendar"
-              className="inline-flex items-center text-[#D6805F] hover:text-[#c57355] transition-colors"
+              className="inline-flex items-center text-primary hover:opacity-80 transition-opacity focus-ring"
             >
               <span>View Full Calendar</span>
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

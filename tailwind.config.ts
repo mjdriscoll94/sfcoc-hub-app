@@ -6,57 +6,34 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: 'class',
+  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        primary: {
-          50: '#fdf2f2',
-          100: '#fde8e8',
-          200: '#fbd5d5',
-          300: '#f8b4b4',
-          400: '#f98080',
-          500: '#f05252',
-          600: '#e02424',
-          700: '#c81e1e',
-          800: '#9b1c1c',
-          900: '#771d1d',
-        },
-        sage: {
-          50: '#f7f9f7',
-          100: '#e6ede6',
-          200: '#ccd9cc',
-          300: '#a8bfa8',
-          400: '#7f9d7f',
-          500: '#5f7f5f',
-          600: '#4c664c',
-          700: '#3d523d',
-          800: '#314031',
-          900: '#2a362a',
-        },
-        charcoal: {
-          50: '#f8f9fa',
-          100: '#eceef1',
-          200: '#d4d9df',
-          300: '#b0b9c2',
-          400: '#8593a2',
-          500: '#667585',
-          600: '#525d6b',
-          700: '#434b57',
-          800: '#393f48',
-          900: '#32363d',
-        },
-        coral: '#FF6B6B',
+        // Semantic design tokens mapped to CSS variables
+        bg: 'var(--bg)',
+        card: 'var(--card)',
+        text: 'var(--text)',
+        muted: 'var(--muted)',
+        border: 'var(--border)',
+        primary: 'var(--primary)',
+        'on-primary': 'var(--on-primary)',
+        secondary: 'var(--secondary)',
+        'on-secondary': 'var(--on-secondary)',
+        success: 'var(--success)',
+        warning: 'var(--warning)',
+        error: 'var(--error)',
+        info: 'var(--info)',
+        
+        // Brand anchors (for reference, prefer semantic tokens)
+        coral: 'var(--coral)',
+        sage: 'var(--sage)',
+        charcoal: 'var(--charcoal)',
+        white: 'var(--white)',
       },
       fontFamily: {
         serif: ['Lora', 'serif'],
         sans: ['Inter', 'sans-serif'],
-      },
-      backgroundColor: {
-        base: '#171717',
-      },
-      textColor: {
-        base: '#ededed',
       },
       typography: {
         DEFAULT: {
@@ -69,7 +46,7 @@ const config: Config = {
               marginBottom: '1rem',
             },
             a: {
-              color: '#FF6B6B',
+              color: 'var(--primary)',
               textDecoration: 'none',
               '&:hover': {
                 textDecoration: 'underline',
