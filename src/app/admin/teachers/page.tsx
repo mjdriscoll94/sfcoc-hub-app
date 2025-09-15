@@ -70,20 +70,32 @@ export default function TeacherManagement() {
 
   const loadTeachers = async () => {
     try {
+      console.log('Loading teachers from Firestore...');
       const teachersRef = collection(db, 'teachers');
       const q = query(teachersRef, where('isActive', '==', true), orderBy('lastName'));
       const querySnapshot = await getDocs(q);
       
-      const teachersData = querySnapshot.docs.map(doc => ({
-        ...doc.data(),
-        id: doc.id,
-        createdAt: doc.data().createdAt.toDate(),
-        updatedAt: doc.data().updatedAt.toDate()
-      })) as Teacher[];
+      console.log('Found', querySnapshot.docs.length, 'teachers');
       
+      const teachersData = querySnapshot.docs.map(doc => {
+        const data = doc.data();
+        console.log('Teacher data:', { id: doc.id, ...data });
+        return {
+          ...data,
+          id: doc.id,
+          createdAt: data.createdAt.toDate(),
+          updatedAt: data.updatedAt.toDate()
+        };
+      }) as Teacher[];
+      
+      console.log('Processed teachers:', teachersData);
       setTeachers(teachersData);
     } catch (error) {
       console.error('Error loading teachers:', error);
+      // Show user-friendly error message
+      if (error instanceof Error && error.message.includes('Firebase')) {
+        console.error('Firebase configuration error. Please check your environment variables.');
+      }
     }
   };
 

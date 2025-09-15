@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { collection, addDoc, updateDoc, doc, query, where, getDocs } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { Teacher } from '@/types';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 interface TeacherFormProps {
   teacher?: Teacher | null;
@@ -13,6 +14,7 @@ interface TeacherFormProps {
 }
 
 export default function TeacherForm({ teacher, onSave, onCancel, isEditing = false }: TeacherFormProps) {
+  const { userProfile } = useAuth();
   const [formData, setFormData] = useState({
     firstName: teacher?.firstName || '',
     lastName: teacher?.lastName || '',
@@ -25,6 +27,12 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!userProfile) {
+      setError('You must be logged in to save teachers.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
@@ -62,14 +70,24 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
         const newTeacher = {
           ...teacherData,
           createdAt: new Date(),
-          createdBy: 'system' // This would be replaced with actual user ID in real implementation
+          createdBy: userProfile.uid
         };
+        console.log('Creating new teacher with data:', newTeacher);
         const docRef = await addDoc(collection(db, 'teachers'), newTeacher);
+        console.log('Teacher created with ID:', docRef.id);
         onSave({ ...newTeacher, id: docRef.id });
       }
     } catch (err) {
       console.error('Error saving teacher:', err);
-      setError('Failed to save teacher. Please try again.');
+      
+      // Check if it's a Firebase configuration error
+      if (err instanceof Error && err.message.includes('Firebase')) {
+        setError('Firebase is not configured. Please check your environment variables.');
+      } else if (err instanceof Error && err.message.includes('permission')) {
+        setError('You do not have permission to save teachers. Please contact an administrator.');
+      } else {
+        setError('Failed to save teacher. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -84,7 +102,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
     <form onSubmit={handleSubmit} className="space-y-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="firstName" className="block text-sm font-medium text-text mb-1">
             First Name *
           </label>
           <input
@@ -94,13 +112,13 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
             value={formData.firstName}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D6805F] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-text focus-ring"
             placeholder="Enter first name"
           />
         </div>
 
         <div>
-          <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          <label htmlFor="lastName" className="block text-sm font-medium text-text mb-1">
             Last Name *
           </label>
           <input
@@ -110,14 +128,14 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
             value={formData.lastName}
             onChange={handleChange}
             required
-            className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D6805F] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-text focus-ring"
             placeholder="Enter last name"
           />
         </div>
       </div>
 
       <div>
-        <label htmlFor="email" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label htmlFor="email" className="block text-sm font-medium text-text mb-1">
           Email Address *
         </label>
         <input
@@ -127,13 +145,13 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
           value={formData.email}
           onChange={handleChange}
           required
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D6805F] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-text focus-ring"
           placeholder="Enter email address"
         />
       </div>
 
       <div>
-        <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label htmlFor="phoneNumber" className="block text-sm font-medium text-text mb-1">
           Phone Number
         </label>
         <input
@@ -142,13 +160,13 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
           name="phoneNumber"
           value={formData.phoneNumber}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D6805F] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-text focus-ring"
           placeholder="Enter phone number (optional)"
         />
       </div>
 
       <div>
-        <label htmlFor="gender" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+        <label htmlFor="gender" className="block text-sm font-medium text-text mb-1">
           Gender
         </label>
         <select
@@ -156,7 +174,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
           name="gender"
           value={formData.gender}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-[#D6805F] focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-text focus-ring"
         >
           <option value="Prefer not to say">Prefer not to say</option>
           <option value="Male">Male</option>
@@ -166,8 +184,8 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
       </div>
 
       {error && (
-        <div className="p-3 bg-red-100 dark:bg-red-900/20 border border-red-300 dark:border-red-600 rounded-md">
-          <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+        <div className="p-3 bg-error/10 border border-error/20 rounded-md">
+          <p className="text-sm text-error">{error}</p>
         </div>
       )}
 
@@ -175,14 +193,14 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-md hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F]"
+          className="px-4 py-2 text-sm font-medium text-text bg-card border border-border rounded-md hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus-ring"
         >
           Cancel
         </button>
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium text-white bg-[#D6805F] border border-transparent rounded-md hover:bg-[#c57355] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F] disabled:opacity-50 disabled:cursor-not-allowed"
+          className="px-4 py-2 text-sm font-medium text-on-primary bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
         >
           {loading ? 'Saving...' : (isEditing ? 'Update Teacher' : 'Add Teacher')}
         </button>
