@@ -88,8 +88,8 @@ export default function AppearanceSettings() {
 
         <div className="space-y-8">
           {/* Theme Selection */}
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-text mb-4">Theme</h2>
+          <div className="bg-card border border-sage/20 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-text mb-4 uppercase tracking-wide">Theme</h2>
             
             <div className="space-y-4">
               {themeOptions.map((option) => (
@@ -97,8 +97,8 @@ export default function AppearanceSettings() {
                   key={option.value}
                   className={`flex items-start space-x-3 p-4 rounded-lg border-2 cursor-pointer transition-all ${
                     selectedTheme === option.value
-                      ? 'border-primary bg-primary/5'
-                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                      ? 'border-primary bg-primary/10'
+                      : 'border-sage/30 hover:border-primary/50 hover:bg-sage/5'
                   }`}
                 >
                   <input
@@ -140,17 +140,17 @@ export default function AppearanceSettings() {
           </div>
 
           {/* Live Preview */}
-          <div className="bg-card border border-border rounded-lg p-6">
-            <h2 className="text-xl font-semibold text-text mb-4">Preview</h2>
-            <p className="text-text/70 mb-6">
+          <div className="bg-card border border-sage/20 rounded-lg p-6">
+            <h2 className="text-xl font-semibold text-text mb-4 uppercase tracking-wide">Preview</h2>
+            <p className="text-text/70 mb-6 uppercase tracking-wide">
               See how your theme choice looks with different UI elements.
             </p>
 
             <div className="space-y-4">
               {/* Card Preview */}
-              <div className="bg-muted border border-border rounded-lg p-4">
-                <h3 className="text-lg font-semibold text-text mb-2">Sample Card</h3>
-                <p className="text-text/70 mb-4">
+              <div className="bg-sage/5 border border-sage/20 rounded-lg p-4">
+                <h3 className="text-lg font-semibold text-text mb-2 uppercase tracking-wide">Sample Card</h3>
+                <p className="text-text/70 mb-4 uppercase tracking-wide">
                   This is how cards and content areas will appear in your selected theme.
                 </p>
                 
@@ -183,9 +183,9 @@ export default function AppearanceSettings() {
           </div>
 
           {/* Accessibility Note */}
-          <div className="bg-muted border border-border rounded-lg p-4">
-            <h3 className="text-sm font-semibold text-text mb-2">Accessibility</h3>
-            <p className="text-sm text-text/70">
+          <div className="bg-sage/5 border border-sage/20 rounded-lg p-4">
+            <h3 className="text-sm font-semibold text-text mb-2 uppercase tracking-wide">Accessibility</h3>
+            <p className="text-sm text-text/70 uppercase tracking-wide">
               All themes are designed to meet WCAG AA contrast requirements. 
               Text and interactive elements maintain proper contrast ratios for readability.
             </p>

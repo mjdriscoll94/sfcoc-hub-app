@@ -394,29 +394,29 @@ export default function TeacherManagement() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl font-bold text-text mb-2 uppercase tracking-wide">
           Sioux Falls Church of Christ Teacher's Calendar {teachingSchedule?.schoolYear}
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-text/70 uppercase tracking-wide">
           Manage quarterly teaching assignments for Sunday classes, Wednesday classes, and decorators.
         </p>
       </div>
 
       {/* Teacher Management Section */}
-      <div className="mb-8 bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+      <div className="mb-8 bg-card rounded-lg shadow-sm border border-sage/20 p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-gray-900 dark:text-white">Teacher Management</h2>
+          <h2 className="text-xl font-semibold text-text uppercase tracking-wide">Teacher Management</h2>
           <button
             onClick={() => setShowTeacherForm(true)}
-            className="px-4 py-2 bg-[#D6805F] text-white rounded-md hover:bg-[#c57355] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F]"
+            className="px-4 py-2 bg-primary text-on-primary rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus-ring uppercase tracking-wide"
           >
             Add New Teacher
           </button>
         </div>
 
         {showTeacherForm && (
-          <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">
+          <div className="mb-6 p-4 bg-sage/5 rounded-lg border border-sage/20">
+            <h3 className="text-lg font-medium text-text mb-4 uppercase tracking-wide">
               {editingTeacher ? 'Edit Teacher' : 'Add New Teacher'}
             </h3>
             <TeacherForm
@@ -429,45 +429,45 @@ export default function TeacherManagement() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
+          <table className="min-w-full bg-card border border-sage/20">
             <thead>
-              <tr className="bg-gray-50 dark:bg-gray-700">
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+              <tr className="bg-sage/10">
+                <th className="px-4 py-2 text-left text-sm font-medium text-text border-r border-sage/20 uppercase tracking-wide">
                   Name
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                <th className="px-4 py-2 text-left text-sm font-medium text-text border-r border-sage/20 uppercase tracking-wide">
                   Email
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                <th className="px-4 py-2 text-left text-sm font-medium text-text border-r border-sage/20 uppercase tracking-wide">
                   Phone
                 </th>
-                <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                <th className="px-4 py-2 text-left text-sm font-medium text-text border-r border-sage/20 uppercase tracking-wide">
                   Gender
                 </th>
-                <th className="px-4 py-2 text-center text-sm font-medium text-gray-900 dark:text-white">
+                <th className="px-4 py-2 text-center text-sm font-medium text-text uppercase tracking-wide">
                   Actions
                 </th>
               </tr>
             </thead>
             <tbody>
               {teachers.map(teacher => (
-                <tr key={teacher.id} className="border-t border-gray-300 dark:border-gray-600">
-                  <td className="px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                <tr key={teacher.id} className="border-t border-sage/20 hover:bg-sage/5">
+                  <td className="px-4 py-2 font-medium text-text border-r border-sage/20">
                     {teacher.firstName} {teacher.lastName}
                   </td>
-                  <td className="px-4 py-2 text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
+                  <td className="px-4 py-2 text-text/70 border-r border-sage/20">
                     {teacher.email}
                   </td>
-                  <td className="px-4 py-2 text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
+                  <td className="px-4 py-2 text-text/70 border-r border-sage/20">
                     {teacher.phoneNumber || 'Not provided'}
                   </td>
-                  <td className="px-4 py-2 text-gray-600 dark:text-gray-300 border-r border-gray-300 dark:border-gray-600">
+                  <td className="px-4 py-2 text-text/70 border-r border-sage/20">
                     {teacher.gender}
                   </td>
                   <td className="px-4 py-2 text-center">
                     <button
                       onClick={() => handleEditTeacher(teacher)}
-                      className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                      className="px-3 py-1 text-sm bg-primary text-on-primary rounded hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus-ring uppercase tracking-wide"
                     >
                       Edit
                     </button>
@@ -476,7 +476,7 @@ export default function TeacherManagement() {
               ))}
               {teachers.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                  <td colSpan={5} className="px-4 py-8 text-center text-text/50">
                     No teachers found. Add your first teacher to get started.
                   </td>
                 </tr>

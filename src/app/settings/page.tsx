@@ -122,13 +122,13 @@ export default function SettingsPage() {
           <nav className="flex space-x-8">
             <Link
               href="/settings"
-              className="text-primary border-b-2 border-primary pb-2 font-medium"
+              className="text-primary border-b-2 border-primary pb-2 font-medium uppercase tracking-wide"
             >
               Notifications
             </Link>
             <Link
               href="/settings/appearance"
-              className="text-text/70 hover:text-text border-b-2 border-transparent pb-2 font-medium transition-colors"
+              className="text-text/70 hover:text-primary border-b-2 border-transparent hover:border-sage/50 pb-2 font-medium transition-colors uppercase tracking-wide"
             >
               Appearance
             </Link>
@@ -136,8 +136,8 @@ export default function SettingsPage() {
         </div>
 
         {/* Role Information */}
-        <div className="bg-card border border-border rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-medium text-text mb-4">Account Role</h2>
+        <div className="bg-card border border-sage/20 rounded-lg p-6 mb-8">
+          <h2 className="text-lg font-medium text-text mb-4 uppercase tracking-wide">Account Role</h2>
           <div className="flex items-center space-x-4">
             <div className={`px-3 py-1 rounded-full text-sm font-medium ${
               userProfile.role === 'admin' ? 'bg-primary text-on-primary' :
@@ -155,11 +155,11 @@ export default function SettingsPage() {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-lg p-6">
+        <div className="bg-card border border-sage/20 rounded-lg p-6">
           <div className="space-y-6">
             {/* Email Subscriptions */}
             <div>
-              <h2 className="text-lg font-medium text-text mb-4">Email Notifications</h2>
+              <h2 className="text-lg font-medium text-text mb-4 uppercase tracking-wide">Email Notifications</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>

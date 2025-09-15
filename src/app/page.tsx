@@ -186,7 +186,7 @@ export default function Home() {
       <BuildStatus />
 
       {/* Regular Events Section */}
-      <section className="py-16 bg-muted">
+      <section className="py-16 bg-sage/10">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-text uppercase tracking-wide">Events</h2>
@@ -197,7 +197,7 @@ export default function Home() {
             {eventCategories.map((category, categoryIndex) => (
               <div 
                 key={categoryIndex} 
-                className="bg-card rounded-lg border-2 border-border overflow-hidden shadow-sm"
+                className="bg-card rounded-lg border-2 border-sage/20 overflow-hidden shadow-sm hover:border-primary/30 transition-colors"
               >
                 <button
                   onClick={() => toggleCategory(categoryIndex)}
@@ -234,7 +234,7 @@ export default function Home() {
                     {category.events.map((event, eventIndex) => (
                       <div
                         key={eventIndex}
-                        className="bg-card rounded-lg p-4 border-2 border-border hover:border-primary transition-colors flex items-start space-x-4 shadow-sm focus-ring"
+                        className="bg-card rounded-lg p-4 border-2 border-sage/20 hover:border-primary transition-colors flex items-start space-x-4 shadow-sm focus-ring"
                       >
                         <div className="flex-shrink-0">
                           <div className="p-2 bg-primary/20 rounded-full">
