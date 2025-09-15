@@ -78,8 +78,8 @@ export default function PrayerBoard() {
             onClick={() => setActiveFilter('all')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
               activeFilter === 'all'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-text hover:text-primary'
+                ? 'bg-coral text-white shadow-sm'
+                : 'text-text hover:text-coral'
             }`}
           >
             All
@@ -88,8 +88,8 @@ export default function PrayerBoard() {
             onClick={() => setActiveFilter('prayer')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
               activeFilter === 'prayer'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-text hover:text-primary'
+                ? 'bg-coral text-white shadow-sm'
+                : 'text-text hover:text-coral'
             }`}
           >
             Prayers
@@ -98,8 +98,8 @@ export default function PrayerBoard() {
             onClick={() => setActiveFilter('praise')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
               activeFilter === 'praise'
-                ? 'bg-primary text-on-primary shadow-sm'
-                : 'text-text hover:text-primary'
+                ? 'bg-sage text-white shadow-sm'
+                : 'text-text hover:text-sage'
             }`}
           >
             Praises
@@ -109,7 +109,7 @@ export default function PrayerBoard() {
         <div className="inline-flex rounded-lg p-1">
           <button
             onClick={() => setIsFormOpen(true)}
-            className="px-4 py-2 flex items-center justify-center rounded-md bg-primary text-on-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary transition-colors uppercase tracking-wide"
+            className="px-4 py-2 flex items-center justify-center rounded-md bg-coral text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral transition-colors uppercase tracking-wide"
             aria-label="Add prayer request"
           >
             <svg
@@ -174,8 +174,8 @@ export default function PrayerBoard() {
                     <div className="flex items-center justify-between">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide ${
                         request.type === 'prayer' 
-                          ? 'bg-primary text-on-primary' 
-                          : 'bg-secondary text-on-secondary'
+                          ? 'bg-coral text-white' 
+                          : 'bg-sage text-white'
                       }`}>
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
@@ -217,21 +217,21 @@ export default function PrayerBoard() {
                     }}
                     className={`flex items-center space-x-2 ${
                       request.type === 'prayer' 
-                        ? 'text-primary hover:opacity-80' 
-                        : 'text-secondary hover:opacity-80'
+                        ? 'text-coral hover:opacity-80' 
+                        : 'text-sage hover:opacity-80'
                     } group`}
                   >
                     <span className={`text-sm font-medium uppercase tracking-wide ${
                       request.type === 'prayer'
-                        ? 'text-primary'
-                        : 'text-secondary'
+                        ? 'text-coral'
+                        : 'text-sage'
                     } transition-colors`}>
                       {request.type === 'prayer' ? 'I prayed' : 'I gave thanks'}
                     </span>
                     <span className={`${
                       request.type === 'prayer'
-                        ? 'bg-primary text-on-primary'
-                        : 'bg-secondary text-on-secondary'
+                        ? 'bg-coral text-white'
+                        : 'bg-sage text-white'
                     } px-2 py-0.5 rounded-full text-sm transition-colors`}>
                       {request.prayerCount}
                     </span>
