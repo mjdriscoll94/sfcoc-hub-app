@@ -78,9 +78,12 @@ export default function PrayerBoard() {
             onClick={() => setActiveFilter('all')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
               activeFilter === 'all'
-                ? 'bg-coral text-white shadow-sm'
-                : 'text-text hover:text-coral'
+                ? 'text-white shadow-sm'
+                : 'text-text'
             }`}
+            style={{
+              backgroundColor: activeFilter === 'all' ? '#E88B5F' : 'transparent'
+            }}
           >
             All
           </button>
@@ -88,9 +91,12 @@ export default function PrayerBoard() {
             onClick={() => setActiveFilter('prayer')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
               activeFilter === 'prayer'
-                ? 'bg-coral text-white shadow-sm'
-                : 'text-text hover:text-coral'
+                ? 'text-white shadow-sm'
+                : 'text-text'
             }`}
+            style={{
+              backgroundColor: activeFilter === 'prayer' ? '#E88B5F' : 'transparent'
+            }}
           >
             Prayers
           </button>
@@ -98,9 +104,12 @@ export default function PrayerBoard() {
             onClick={() => setActiveFilter('praise')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
               activeFilter === 'praise'
-                ? 'bg-sage text-white shadow-sm'
-                : 'text-text hover:text-sage'
+                ? 'text-white shadow-sm'
+                : 'text-text'
             }`}
+            style={{
+              backgroundColor: activeFilter === 'praise' ? '#70A8A0' : 'transparent'
+            }}
           >
             Praises
           </button>
@@ -109,7 +118,10 @@ export default function PrayerBoard() {
         <div className="inline-flex rounded-lg p-1">
           <button
             onClick={() => setIsFormOpen(true)}
-            className="px-4 py-2 flex items-center justify-center rounded-md bg-coral text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral transition-colors uppercase tracking-wide"
+            className="px-4 py-2 flex items-center justify-center rounded-md text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors uppercase tracking-wide"
+            style={{
+              backgroundColor: '#E88B5F'
+            }}
             aria-label="Add prayer request"
           >
             <svg
@@ -174,9 +186,11 @@ export default function PrayerBoard() {
                     <div className="flex items-center justify-between">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide ${
                         request.type === 'prayer' 
-                          ? 'bg-coral text-white' 
-                          : 'bg-sage text-white'
-                      }`}>
+                          ? 'text-white' 
+                          : 'text-white'
+                      }`} style={{
+                        backgroundColor: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
+                      }}>
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
                       <span className="text-sm text-text/60">
@@ -215,24 +229,21 @@ export default function PrayerBoard() {
                       e.stopPropagation();
                       incrementPrayerCount(request.id);
                     }}
-                    className={`flex items-center space-x-2 ${
-                      request.type === 'prayer' 
-                        ? 'text-coral hover:opacity-80' 
-                        : 'text-sage hover:opacity-80'
-                    } group`}
+                    className={`flex items-center space-x-2 hover:opacity-80 group`}
+                    style={{
+                      color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
+                    }}
                   >
-                    <span className={`text-sm font-medium uppercase tracking-wide ${
-                      request.type === 'prayer'
-                        ? 'text-coral'
-                        : 'text-sage'
-                    } transition-colors`}>
+                    <span className={`text-sm font-medium uppercase tracking-wide transition-colors`}
+                          style={{
+                            color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
+                          }}>
                       {request.type === 'prayer' ? 'I prayed' : 'I gave thanks'}
                     </span>
-                    <span className={`${
-                      request.type === 'prayer'
-                        ? 'bg-coral text-white'
-                        : 'bg-sage text-white'
-                    } px-2 py-0.5 rounded-full text-sm transition-colors`}>
+                    <span className={`text-white px-2 py-0.5 rounded-full text-sm transition-colors`}
+                          style={{
+                            backgroundColor: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
+                          }}>
                       {request.prayerCount}
                     </span>
                   </button>
