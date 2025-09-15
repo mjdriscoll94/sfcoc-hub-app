@@ -174,8 +174,8 @@ export default function PrayerBoard() {
                     <div className="flex items-center justify-between">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium uppercase tracking-wide ${
                         request.type === 'prayer' 
-                          ? 'bg-primary/20 text-primary' 
-                          : 'bg-secondary/20 text-secondary'
+                          ? 'bg-primary text-on-primary' 
+                          : 'bg-secondary text-on-secondary'
                       }`}>
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
@@ -215,23 +215,23 @@ export default function PrayerBoard() {
                       e.stopPropagation();
                       incrementPrayerCount(request.id);
                     }}
-                    className={`flex items-center space-x-2 text-text/60 ${
+                    className={`flex items-center space-x-2 ${
                       request.type === 'prayer' 
-                        ? 'hover:text-primary' 
-                        : 'hover:text-secondary'
+                        ? 'text-primary hover:opacity-80' 
+                        : 'text-secondary hover:opacity-80'
                     } group`}
                   >
                     <span className={`text-sm font-medium uppercase tracking-wide ${
                       request.type === 'prayer'
-                        ? 'group-hover:text-primary'
-                        : 'group-hover:text-secondary'
+                        ? 'text-primary'
+                        : 'text-secondary'
                     } transition-colors`}>
                       {request.type === 'prayer' ? 'I prayed' : 'I gave thanks'}
                     </span>
                     <span className={`${
                       request.type === 'prayer'
-                        ? 'bg-primary/20 group-hover:bg-primary/20 text-primary'
-                        : 'bg-secondary/20 group-hover:bg-secondary/20 text-secondary'
+                        ? 'bg-primary text-on-primary'
+                        : 'bg-secondary text-on-secondary'
                     } px-2 py-0.5 rounded-full text-sm transition-colors`}>
                       {request.prayerCount}
                     </span>
