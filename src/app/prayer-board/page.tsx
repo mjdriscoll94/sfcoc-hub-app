@@ -193,7 +193,7 @@ export default function PrayerBoard() {
                       }}>
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
-                      <span className="text-sm text-text/60">
+                      <span className="text-sm text-text/80">
                         {request.dateCreated instanceof Date 
                           ? request.dateCreated.toLocaleDateString()
                           : new Date(request.dateCreated).toLocaleDateString()}
@@ -204,7 +204,7 @@ export default function PrayerBoard() {
                         {request.title}
                       </h3>
                       <svg
-                        className={`w-5 h-5 text-text/40 transition-transform ${
+                        className={`w-5 h-5 text-text/60 transition-transform ${
                           expandedCards.has(request.id) ? 'transform rotate-180' : ''
                         }`}
                         fill="none"
@@ -222,8 +222,8 @@ export default function PrayerBoard() {
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center text-sm text-gray-600 dark:text-white/60 mt-4">
-                  <span className="text-text/70">{request.isAnonymous ? 'Anonymous' : request.author.name}</span>
+                <div className="flex justify-between items-center text-sm mt-4">
+                  <span className="text-text font-medium">{request.isAnonymous ? 'Anonymous' : request.author.name}</span>
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
