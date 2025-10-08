@@ -280,7 +280,7 @@ const Navigation = () => {
   const activeNavItems = [...publicNavItems, ...(user ? [...protectedNavItems, ...adminNavItems] : [])];
 
   return (
-    <nav className="bg-[#171717]/50 backdrop-blur-sm border-b border-white/10 relative z-40">
+    <nav className="bg-primary relative z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -288,7 +288,7 @@ const Navigation = () => {
             <div className="flex items-center md:hidden">
               <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-[#D6805F] focus:outline-none"
+                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-black focus:outline-none"
               >
                 <span className="sr-only">Open main menu</span>
                 {isOpen ? (
@@ -315,8 +315,8 @@ const Navigation = () => {
                       onClick={() => handleDropdownClick(item.name)}
                       className={`${
                         item.items?.some(subItem => pathname === subItem.href)
-                          ? 'text-[#D6805F] border-[#D6805F]'
-                          : 'text-white hover:text-[#D6805F] border-transparent'
+                          ? 'text-white border-black'
+                          : 'text-white hover:text-white/80 border-transparent'
                       } inline-flex items-center h-16 px-1 border-b-2 text-sm font-medium`}
                     >
                       <span className="mr-2">{item.icon}</span>
@@ -335,7 +335,7 @@ const Navigation = () => {
                         data-dropdown={item.name}
                         className="absolute z-50 top-full pt-2 left-0 w-56"
                       >
-                        <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5">
+                        <div className="rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                           <div className="py-1">
                             {item.items?.map((subItem) => {
                               const isExternal = subItem.href?.startsWith('http');
@@ -347,8 +347,8 @@ const Navigation = () => {
                                   rel="noopener noreferrer"
                                   className={`${
                                     pathname === subItem.href
-                                      ? 'text-[#D6805F] bg-white/5'
-                                      : 'text-white hover:bg-white/5'
+                                      ? 'text-black bg-primary/10 font-semibold'
+                                      : 'text-black hover:bg-primary/10'
                                   } flex items-center px-4 py-2 text-sm`}
                                   onClick={() => handleDropdownClick(item.name)}
                                 >
@@ -361,8 +361,8 @@ const Navigation = () => {
                                   href={subItem.href}
                                   className={`${
                                     pathname === subItem.href
-                                      ? 'text-[#D6805F] bg-white/5'
-                                      : 'text-white hover:bg-white/5'
+                                      ? 'text-black bg-primary/10 font-semibold'
+                                      : 'text-black hover:bg-primary/10'
                                   } flex items-center px-4 py-2 text-sm`}
                                   onClick={() => handleDropdownClick(item.name)}
                                 >
@@ -382,8 +382,8 @@ const Navigation = () => {
                     href={item.href || '#'}
                     className={`${
                       pathname === item.href
-                        ? 'text-[#D6805F] border-[#D6805F]'
-                        : 'text-white hover:text-[#D6805F] border-transparent'
+                        ? 'text-white border-black'
+                        : 'text-white hover:text-white/80 border-transparent'
                     } inline-flex items-center h-16 px-1 border-b-2 text-sm font-medium`}
                   >
                     <span className="mr-2">{item.icon}</span>
@@ -400,9 +400,9 @@ const Navigation = () => {
               <Menu as="div" className="relative">
                 {({ open }) => (
                   <>
-                    <Menu.Button className="max-w-xs bg-[#D6805F] flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#171717] focus:ring-white">
+                    <Menu.Button className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-black">
                       <span className="sr-only">Open user menu</span>
-                      <div className="h-8 w-8 rounded-full bg-[#D6805F] flex items-center justify-center text-white">
+                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-black font-semibold">
                         {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
                       </div>
                     </Menu.Button>
@@ -417,9 +417,9 @@ const Navigation = () => {
                       leaveTo="transform opacity-0 scale-95"
                     >
                       <Menu.Items className="absolute z-50 top-full right-0 pt-2 w-48">
-                        <div className="rounded-md shadow-lg bg-[#1f1f1f] ring-1 ring-black ring-opacity-5 divide-y divide-white/10">
+                        <div className="rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200">
                           <div className="py-1">
-                            <div className="px-4 py-2 text-sm text-white">
+                            <div className="px-4 py-2 text-sm text-black font-semibold">
                               {userProfile?.displayName || user.email}
                             </div>
                           </div>
@@ -428,8 +428,8 @@ const Navigation = () => {
                               {({ active }) => (
                                 <Link
                                   href="/settings"
-                                  className={`block w-full text-left px-4 py-2 text-sm text-white ${
-                                    active ? 'bg-white/5' : ''
+                                  className={`block w-full text-left px-4 py-2 text-sm text-black ${
+                                    active ? 'bg-primary/10' : ''
                                   }`}
                                 >
                                   Settings
@@ -439,8 +439,8 @@ const Navigation = () => {
                             <Menu.Item>
                               {({ active }) => (
                                 <button
-                                  className={`block w-full text-left px-4 py-2 text-sm text-white ${
-                                    active ? 'bg-white/5' : ''
+                                  className={`block w-full text-left px-4 py-2 text-sm text-black ${
+                                    active ? 'bg-primary/10' : ''
                                   } ${isSigningOut ? 'opacity-50' : ''}`}
                                   onClick={async () => {
                                     if (isSigningOut) return;
@@ -470,7 +470,7 @@ const Navigation = () => {
             ) : (
               <Link
                 href="/auth/signin"
-                className="text-white hover:text-[#D6805F] text-sm font-medium"
+                className="text-white hover:text-white/80 text-sm font-medium"
               >
                 Sign in
               </Link>
@@ -480,7 +480,7 @@ const Navigation = () => {
       </div>
 
       {/* Mobile menu */}
-      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#171717]`}>
+      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-primary`}>
         <div className="pt-2 pb-3 space-y-1">
           {activeNavItems.map((item) => (
             item.dropdown ? (
@@ -490,8 +490,8 @@ const Navigation = () => {
                     <Disclosure.Button
                       className={`${
                         item.items?.some(subItem => pathname === subItem.href)
-                          ? 'text-[#D6805F] bg-white/5'
-                          : 'text-white hover:bg-white/5'
+                          ? 'text-white bg-black/10 font-semibold'
+                          : 'text-white hover:bg-black/5'
                       } w-full flex items-center px-4 py-2 text-sm font-medium`}
                     >
                       <span className="mr-2">{item.icon}</span>
@@ -502,7 +502,7 @@ const Navigation = () => {
                         } w-5 h-5 text-white`}
                       />
                     </Disclosure.Button>
-                    <Disclosure.Panel className="bg-[#1f1f1f]">
+                    <Disclosure.Panel className="bg-primary/90">
                       {item.items?.map((subItem) => {
                         const isExternal = subItem.href?.startsWith('http');
                         return isExternal ? (
@@ -513,8 +513,8 @@ const Navigation = () => {
                             rel="noopener noreferrer"
                             className={`${
                               pathname === subItem.href
-                                ? 'text-[#D6805F] bg-white/5'
-                                : 'text-white hover:bg-white/5'
+                                ? 'text-white bg-black/10 font-semibold'
+                                : 'text-white hover:bg-black/5'
                             } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
                             onClick={() => {
                               console.log('Mobile link clicked:', subItem.name);
@@ -530,8 +530,8 @@ const Navigation = () => {
                             href={subItem.href}
                             className={`${
                               pathname === subItem.href
-                                ? 'text-[#D6805F] bg-white/5'
-                                : 'text-white hover:bg-white/5'
+                                ? 'text-white bg-black/10 font-semibold'
+                                : 'text-white hover:bg-black/5'
                             } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
                             onClick={() => {
                               console.log('Mobile link clicked:', subItem.name);
@@ -553,8 +553,8 @@ const Navigation = () => {
                 href={item.href || '#'}
                 className={`${
                   pathname === item.href
-                    ? 'text-[#D6805F] bg-white/5'
-                    : 'text-white hover:bg-white/5'
+                    ? 'text-white bg-black/10 font-semibold'
+                    : 'text-white hover:bg-black/5'
                 } flex items-center px-4 py-2 text-sm font-medium w-full text-left block`}
                 onClick={() => {
                   console.log('Mobile nav item clicked:', item.name);
