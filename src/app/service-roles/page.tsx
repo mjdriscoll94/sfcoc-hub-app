@@ -332,15 +332,15 @@ export default function ServiceRolesPage() {
                 {week.isExpanded && (
                   <div className="mt-4">
                     <table className="min-w-full divide-y divide-border">
-                      <thead>
+                      <thead className="bg-gradient-to-r from-coral/5 to-sage/5">
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-charcoal uppercase tracking-wider">
                             Role
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-bold text-charcoal uppercase tracking-wider">
                             Assigned To
                           </th>
-                          <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
+                          <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-bold text-charcoal uppercase tracking-wider">
                             Status
                           </th>
                         </tr>
@@ -353,12 +353,12 @@ export default function ServiceRolesPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-charcoal">
                                 {role}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-text-light">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal">
                                 {canAssignRoles ? (
                                   <select
                                     value={week.pendingAssignments[role] || ''}
                                     onChange={(e) => handleAssignmentChange(weekIndex, role, e.target.value || null)}
-                                    className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md ${
+                                    className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base text-charcoal border-border focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md ${
                                       week.isEditing 
                                         ? 'bg-card' 
                                         : 'bg-bg-secondary cursor-not-allowed'
@@ -384,42 +384,42 @@ export default function ServiceRolesPage() {
                                   </select>
                                 ) : (
                                   <div className="sm:block">
-                                    <span className={`sm:inline ${assignment ? `sm:bg-transparent sm:text-text-light px-2 py-1 rounded-full text-sm ${getStatusStyles(assignment.status)}` : ''}`}>
+                                    <span className={`sm:inline ${assignment ? `sm:bg-transparent sm:text-charcoal px-2 py-1 rounded-full text-sm font-medium ${getStatusStyles(assignment.status)}` : 'text-charcoal font-medium'}`}>
                                       {getUserName(assignment?.userId || week.pendingAssignments[role] || '')}
                                     </span>
                                   </div>
                                 )}
                               </td>
-                              <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-text-light">
+                              <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-charcoal">
                                 {assignment ? (
                                   <div className="flex items-center">
                                     {assignment.status === 'accepted' && (
                                       <>
-                                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                                        <span className="text-green-500">Accepted</span>
+                                        <CheckCircle className="h-5 w-5 text-success mr-2" />
+                                        <span className="text-success font-semibold">Accepted</span>
                                       </>
                                     )}
                                     {assignment.status === 'declined' && (
                                       <>
-                                        <XCircle className="h-5 w-5 text-red-500 mr-2" />
-                                        <span className="text-red-500">Declined</span>
+                                        <XCircle className="h-5 w-5 text-error mr-2" />
+                                        <span className="text-error font-semibold">Declined</span>
                                       </>
                                     )}
                                     {assignment.status === 'awaiting_confirmation' && (
                                       <>
-                                        <Clock className="h-5 w-5 text-yellow-500 mr-2" />
-                                        <span className="text-yellow-500">Awaiting confirmation</span>
+                                        <Clock className="h-5 w-5 text-warning mr-2" />
+                                        <span className="text-warning font-semibold">Awaiting confirmation</span>
                                       </>
                                     )}
                                     {assignment.status === 'pending' && (
                                       <>
-                                        <Clock className="h-5 w-5 text-yellow-500 mr-2" />
-                                        <span className="text-yellow-500">Pending</span>
+                                        <Clock className="h-5 w-5 text-warning mr-2" />
+                                        <span className="text-warning font-semibold">Pending</span>
                                       </>
                                     )}
                                   </div>
                                 ) : (
-                                  <span>Not assigned</span>
+                                  <span className="text-text-muted">Not assigned</span>
                                 )}
                               </td>
                             </tr>
