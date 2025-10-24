@@ -422,13 +422,13 @@ export default function ServiceRolesPage() {
                           <>
                             <button
                               onClick={() => handleCancel(weekIndex)}
-                              className="px-4 py-2 border border-border text-sm font-medium rounded-md text-charcoal bg-card hover:bg-bg-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                              className="px-6 py-3 border-2 border-charcoal text-sm font-semibold rounded-lg text-charcoal bg-white hover:bg-gray-100 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={() => handleSave(weekIndex)}
-                              className="px-4 py-2 border border-transparent text-sm font-semibold rounded-md text-white bg-gradient-to-r from-coral to-coral-light hover:from-coral-dark hover:to-coral shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"
+                              className="px-6 py-3 border-2 border-[#E88B5F] text-sm font-bold rounded-lg text-white bg-[#E88B5F] hover:bg-[#D6714A] shadow-lg hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F]"
                             >
                               Save Changes
                             </button>
@@ -447,7 +447,7 @@ export default function ServiceRolesPage() {
                               };
                               setWeeks(updatedWeeks);
                             }}
-                            className="px-4 py-2 border border-transparent text-sm font-semibold rounded-md text-white bg-gradient-to-r from-coral to-coral-light hover:from-coral-dark hover:to-coral shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"
+                            className="px-6 py-3 border-2 border-[#E88B5F] text-sm font-bold rounded-lg text-white bg-[#E88B5F] hover:bg-[#D6714A] shadow-lg hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F]"
                           >
                             Edit Assignments
                           </button>
