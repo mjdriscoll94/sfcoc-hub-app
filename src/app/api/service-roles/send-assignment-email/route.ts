@@ -1,12 +1,13 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc } from 'firebase/firestore';
-import { sendEmail } from '@/lib/email/emailService';
+import { adminDb } from '@/lib/firebase/admin';
 import { format } from 'date-fns';
+import { transporter } from '@/lib/email/config';
 
 export async function POST(request: Request) {
   try {
     const { assignmentId, userId, role, date } = await request.json();
+
+    console.log('Received assignment email request:', { assignmentId, userId, role, date });
 
     if (!assignmentId || !userId || !role || !date) {
       return NextResponse.json(
@@ -15,9 +16,10 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get user details
-    const userDoc = await getDoc(doc(db, 'users', userId));
-    if (!userDoc.exists()) {
+    // Get user details using admin SDK
+    const userDoc = await adminDb.collection('users').doc(userId).get();
+    if (!userDoc.exists) {
+      console.error('User not found:', userId);
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
@@ -25,8 +27,8 @@ export async function POST(request: Request) {
     }
 
     const userData = userDoc.data();
-    const userEmail = userData.email;
-    const userName = userData.displayName || userEmail;
+    const userEmail = userData?.email;
+    const userName = userData?.displayName || userEmail;
 
     if (!userEmail) {
       return NextResponse.json(
@@ -179,8 +181,17 @@ export async function POST(request: Request) {
       </html>
     `;
 
-    // Send email
-    const result = await sendEmail('service-assignment', subject, content, [userEmail]);
+    // Send email directly using transporter
+    console.log('Sending email to:', userEmail);
+    const mailOptions = {
+      from: `SFCoC Service Roles <announcements@siouxfallschurchofchrist.org>`,
+      to: userEmail,
+      subject,
+      html: content,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+    console.log('Email sent successfully:', result.messageId);
 
     return NextResponse.json({ 
       success: true,

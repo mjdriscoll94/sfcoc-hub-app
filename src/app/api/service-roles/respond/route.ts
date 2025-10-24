@@ -1,10 +1,12 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/firebase/config';
-import { doc, getDoc, updateDoc, Timestamp } from 'firebase/firestore';
+import { adminDb } from '@/lib/firebase/admin';
+import admin from 'firebase-admin';
 
 export async function POST(request: Request) {
   try {
     const { assignmentId, action, userId } = await request.json();
+
+    console.log('Received respond request:', { assignmentId, action, userId });
 
     if (!assignmentId || !action || !userId) {
       return NextResponse.json(
@@ -20,11 +22,11 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get the assignment
-    const assignmentRef = doc(db, 'serviceAssignments', assignmentId);
-    const assignmentDoc = await getDoc(assignmentRef);
+    // Get the assignment using admin SDK
+    const assignmentDoc = await adminDb.collection('serviceAssignments').doc(assignmentId).get();
 
-    if (!assignmentDoc.exists()) {
+    if (!assignmentDoc.exists) {
+      console.error('Assignment not found:', assignmentId);
       return NextResponse.json(
         { error: 'Assignment not found' },
         { status: 404 }
@@ -34,7 +36,8 @@ export async function POST(request: Request) {
     const assignmentData = assignmentDoc.data();
 
     // Verify the user is the one assigned
-    if (assignmentData.userId !== userId) {
+    if (assignmentData?.userId !== userId) {
+      console.error('Unauthorized: user mismatch', { expected: assignmentData?.userId, actual: userId });
       return NextResponse.json(
         { error: 'Unauthorized: You can only respond to your own assignments' },
         { status: 403 }
@@ -42,19 +45,22 @@ export async function POST(request: Request) {
     }
 
     // Check if assignment has already been responded to
-    if (assignmentData.status === 'accepted' || assignmentData.status === 'declined') {
+    if (assignmentData?.status === 'accepted' || assignmentData?.status === 'declined') {
+      console.log('Assignment already responded to:', assignmentData?.status);
       return NextResponse.json(
         { error: 'This assignment has already been responded to' },
         { status: 400 }
       );
     }
 
-    // Update the assignment status
+    // Update the assignment status using admin SDK
     const newStatus = action === 'accept' ? 'accepted' : 'declined';
-    await updateDoc(assignmentRef, {
+    await adminDb.collection('serviceAssignments').doc(assignmentId).update({
       status: newStatus,
-      respondedAt: Timestamp.fromDate(new Date())
+      respondedAt: admin.firestore.Timestamp.now()
     });
+
+    console.log('Assignment updated successfully:', { assignmentId, newStatus });
 
     return NextResponse.json({ 
       success: true,
