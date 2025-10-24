@@ -195,6 +195,27 @@ export default function ServiceRolesPage() {
           };
 
           const docRef = await addDoc(collection(db, 'serviceAssignments'), newAssignment);
+          
+          // Send email notification to the assigned user
+          try {
+            await fetch('/api/service-roles/send-assignment-email', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                assignmentId: docRef.id,
+                userId,
+                role,
+                date: week.date.toISOString(),
+              }),
+            });
+            console.log(`Email sent for assignment: ${role} to user ${userId}`);
+          } catch (emailError) {
+            console.error('Failed to send assignment email:', emailError);
+            // Don't fail the whole operation if email fails
+          }
+          
           return {
             ...newAssignment,
             id: docRef.id,

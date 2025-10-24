@@ -15,7 +15,7 @@ export interface EmailSubscriber {
   };
 }
 
-async function sendEmail(type: string, subject: string, content: string, recipients: string[]) {
+export async function sendEmail(type: string, subject: string, content: string, recipients: string[]) {
   try {
     console.log('Sending email via API:', {
       type,
