@@ -354,26 +354,11 @@ export default function ServiceRolesPage() {
                                 {role}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal">
-                                {canAssignRoles ? (
+                                {canAssignRoles && week.isEditing ? (
                                   <select
                                     value={week.pendingAssignments[role] || ''}
                                     onChange={(e) => handleAssignmentChange(weekIndex, role, e.target.value || null)}
-                                    className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base text-charcoal border-border focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md ${
-                                      week.isEditing 
-                                        ? 'bg-card' 
-                                        : 'bg-bg-secondary cursor-not-allowed'
-                                    } ${
-                                      !week.isEditing && assignment && assignment.status && 'sm:hidden' // Hide colored select on desktop
-                                    } ${
-                                      !week.isEditing && assignment && assignment.status === 'accepted'
-                                        ? 'bg-success-bg text-success'
-                                        : !week.isEditing && assignment && assignment.status === 'declined'
-                                        ? 'bg-error-bg text-error'
-                                        : !week.isEditing && assignment && (assignment.status === 'pending' || assignment.status === 'awaiting_confirmation')
-                                        ? 'bg-warning-bg text-warning'
-                                        : ''
-                                    }`}
-                                    disabled={!week.isEditing}
+                                    className="mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base text-charcoal border-border bg-card focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
                                   >
                                     <option value="">Select a person</option>
                                     {users.map((user) => (
@@ -383,10 +368,14 @@ export default function ServiceRolesPage() {
                                     ))}
                                   </select>
                                 ) : (
-                                  <div className="sm:block">
-                                    <span className={`sm:inline ${assignment ? `sm:bg-transparent sm:text-charcoal px-2 py-1 rounded-full text-sm font-medium ${getStatusStyles(assignment.status)}` : 'text-charcoal font-medium'}`}>
-                                      {getUserName(assignment?.userId || week.pendingAssignments[role] || '')}
-                                    </span>
+                                  <div>
+                                    {assignment?.userId || week.pendingAssignments[role] ? (
+                                      <span className="text-charcoal font-semibold">
+                                        {getUserName(assignment?.userId || week.pendingAssignments[role] || '')}
+                                      </span>
+                                    ) : (
+                                      <span className="text-text-muted italic">Not assigned</span>
+                                    )}
                                   </div>
                                 )}
                               </td>
