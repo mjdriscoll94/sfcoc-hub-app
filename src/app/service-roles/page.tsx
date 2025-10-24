@@ -428,7 +428,7 @@ export default function ServiceRolesPage() {
                             </button>
                             <button
                               onClick={() => handleSave(weekIndex)}
-                              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-coral hover:bg-coral-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                              className="px-4 py-2 border border-transparent text-sm font-semibold rounded-md text-white bg-gradient-to-r from-coral to-coral-light hover:from-coral-dark hover:to-coral shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"
                             >
                               Save Changes
                             </button>
@@ -447,7 +447,7 @@ export default function ServiceRolesPage() {
                               };
                               setWeeks(updatedWeeks);
                             }}
-                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-coral hover:bg-coral-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+                            className="px-4 py-2 border border-transparent text-sm font-semibold rounded-md text-white bg-gradient-to-r from-coral to-coral-light hover:from-coral-dark hover:to-coral shadow-sm hover:shadow-md transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-coral"
                           >
                             Edit Assignments
                           </button>
