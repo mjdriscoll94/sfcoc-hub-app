@@ -186,28 +186,28 @@ export default function Home() {
       <BuildStatus />
 
       {/* Regular Events Section */}
-      <section className="py-16 bg-sage/10">
+      <section className="py-16 bg-gradient-to-b from-bg-secondary to-bg">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-text uppercase tracking-wide">Events</h2>
-            <p className="mt-4 text-lg text-text/70 uppercase tracking-wide">Join us for our regular gatherings</p>
+            <h2 className="text-3xl font-bold text-charcoal uppercase tracking-wide">Events</h2>
+            <p className="mt-4 text-lg text-text-light uppercase tracking-wide">Join us for our regular gatherings</p>
           </div>
           
           <div className="space-y-6">
             {eventCategories.map((category, categoryIndex) => (
               <div 
                 key={categoryIndex} 
-                className="bg-card rounded-lg border-2 border-sage/20 overflow-hidden shadow-sm hover:border-primary/30 transition-colors"
+                className="bg-card rounded-lg border border-border overflow-hidden shadow hover:shadow-md transition-all"
               >
                 <button
                   onClick={() => toggleCategory(categoryIndex)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left hover-bg transition-colors focus-ring"
+                  className="w-full px-6 py-4 flex items-center justify-between text-left bg-gradient-to-r from-coral/5 to-sage/5 hover:from-coral/10 hover:to-sage/10 transition-all focus-ring"
                 >
-                  <h3 className="text-xl font-semibold text-text">
+                  <h3 className="text-xl font-semibold text-charcoal">
                     {category.title}
                   </h3>
                   <svg
-                    className={`w-5 h-5 text-text transform transition-transform ${
+                    className={`w-5 h-5 text-coral transform transition-transform ${
                       expandedCategories.has(categoryIndex) ? 'rotate-180' : ''
                     }`}
                     fill="none"
@@ -230,22 +230,22 @@ export default function Home() {
                       : 'max-h-0 opacity-0 overflow-hidden'
                   }`}
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 pt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 pt-2 bg-gradient-to-b from-white to-bg">
                     {category.events.map((event, eventIndex) => (
                       <div
                         key={eventIndex}
-                        className="bg-card rounded-lg p-4 border-2 border-sage/20 hover:border-primary transition-colors flex items-start space-x-4 shadow-sm focus-ring"
+                        className="bg-card rounded-lg p-4 border border-border hover:border-coral hover:shadow-md transition-all flex items-start space-x-4 shadow-sm focus-ring"
                       >
                         <div className="flex-shrink-0">
-                          <div className="p-2 bg-primary/20 rounded-full">
+                          <div className="p-2 bg-gradient-to-br from-coral/20 to-sage/20 rounded-full">
                             {event.icon}
                           </div>
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h4 className="text-lg font-semibold text-text mb-1">{event.name}</h4>
-                          <p className="text-primary font-medium text-sm mb-1">{event.time}</p>
-                          <p className="text-text/60 text-sm mb-1">{event.day}</p>
-                          <p className="text-text/80 text-sm leading-snug">{event.description}</p>
+                          <h4 className="text-lg font-semibold text-charcoal mb-1">{event.name}</h4>
+                          <p className="text-coral font-semibold text-sm mb-1">{event.time}</p>
+                          <p className="text-sage font-medium text-sm mb-1">{event.day}</p>
+                          <p className="text-text-light text-sm leading-snug">{event.description}</p>
                         </div>
                       </div>
                     ))}
@@ -258,7 +258,7 @@ export default function Home() {
           <div className="text-center mt-12">
             <Link
               href="/calendar"
-              className="inline-flex items-center text-primary hover:opacity-80 transition-opacity focus-ring"
+              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-coral to-coral-light text-white font-semibold rounded-lg hover:shadow-lg hover:from-coral-dark hover:to-coral transition-all focus-ring"
             >
               <span>View Full Calendar</span>
               <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">

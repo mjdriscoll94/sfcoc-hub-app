@@ -6,59 +6,124 @@ const config: Config = {
     './src/components/**/*.{js,ts,jsx,tsx,mdx}',
     './src/app/**/*.{js,ts,jsx,tsx,mdx}',
   ],
-  darkMode: ['class', '[data-theme="dark"]'],
   theme: {
     extend: {
       colors: {
-        // Semantic design tokens mapped to CSS variables
+        // Background Colors
         bg: 'var(--bg)',
+        'bg-secondary': 'var(--bg-secondary)',
         card: 'var(--card)',
-        text: 'var(--text)',
-        muted: 'var(--muted)',
-        border: 'var(--border)',
-        primary: 'var(--primary)',
-        'on-primary': 'var(--on-primary)',
-        secondary: 'var(--secondary)',
-        'on-secondary': 'var(--on-secondary)',
-        accent: 'var(--accent)',
-        'on-accent': 'var(--on-accent)',
-        success: 'var(--success)',
-        warning: 'var(--warning)',
-        error: 'var(--error)',
-        info: 'var(--info)',
+        'card-hover': 'var(--card-hover)',
         
-        // Brand colors from your website
-        coral: 'var(--coral)',
-        sage: 'var(--sage)',
-        charcoal: 'var(--charcoal)',
-        white: 'var(--white)',
-        'dark-gray': 'var(--dark-gray)',
-        'light-gray': 'var(--light-gray)',
+        // Text Colors
+        text: 'var(--text)',
+        'text-light': 'var(--text-light)',
+        'text-muted': 'var(--text-muted)',
+        
+        // Brand Colors
+        coral: {
+          DEFAULT: 'var(--coral)',
+          light: 'var(--coral-light)',
+          dark: 'var(--coral-dark)',
+        },
+        sage: {
+          DEFAULT: 'var(--sage)',
+          light: 'var(--sage-light)',
+          dark: 'var(--sage-dark)',
+        },
+        charcoal: {
+          DEFAULT: 'var(--charcoal)',
+          light: 'var(--charcoal-light)',
+        },
+        
+        // Semantic Colors
+        primary: {
+          DEFAULT: 'var(--primary)',
+          hover: 'var(--primary-hover)',
+        },
+        'on-primary': 'var(--on-primary)',
+        
+        secondary: {
+          DEFAULT: 'var(--secondary)',
+          hover: 'var(--secondary-hover)',
+        },
+        'on-secondary': 'var(--on-secondary)',
+        
+        accent: {
+          DEFAULT: 'var(--accent)',
+          light: 'var(--accent-light)',
+        },
+        'on-accent': 'var(--on-accent)',
+        
+        // UI Colors
+        border: {
+          DEFAULT: 'var(--border)',
+          light: 'var(--border-light)',
+        },
+        divider: 'var(--divider)',
+        
+        // State Colors
+        success: {
+          DEFAULT: 'var(--success)',
+          bg: 'var(--success-bg)',
+        },
+        warning: {
+          DEFAULT: 'var(--warning)',
+          bg: 'var(--warning-bg)',
+        },
+        error: {
+          DEFAULT: 'var(--error)',
+          bg: 'var(--error-bg)',
+        },
+        info: {
+          DEFAULT: 'var(--info)',
+          bg: 'var(--info-bg)',
+        },
+      },
+      boxShadow: {
+        'sm': 'var(--shadow-sm)',
+        'DEFAULT': 'var(--shadow)',
+        'md': 'var(--shadow-md)',
+        'lg': 'var(--shadow-lg)',
       },
       fontFamily: {
         serif: ['Lora', 'serif'],
-        sans: ['Inter', 'sans-serif'],
+        sans: ['Inter', 'Arial', 'sans-serif'],
       },
       typography: {
         DEFAULT: {
           css: {
             maxWidth: 'none',
-            color: 'inherit',
+            color: 'var(--text)',
             p: {
-              color: 'inherit',
+              color: 'var(--text)',
               marginTop: '1rem',
               marginBottom: '1rem',
             },
             a: {
               color: 'var(--primary)',
               textDecoration: 'none',
+              fontWeight: '500',
               '&:hover': {
                 textDecoration: 'underline',
+                color: 'var(--primary-hover)',
               },
             },
             strong: {
-              color: 'inherit',
+              color: 'var(--text)',
               fontWeight: '700',
+            },
+            h1: {
+              color: 'var(--text)',
+            },
+            h2: {
+              color: 'var(--text)',
+            },
+            h3: {
+              color: 'var(--text)',
+            },
+            h4: {
+              color: 'var(--text)',
             },
             ul: {
               listStyleType: 'disc',
@@ -69,12 +134,12 @@ const config: Config = {
               paddingLeft: '1.5rem',
             },
             li: {
-              color: 'inherit',
+              color: 'var(--text)',
               marginTop: '0.25rem',
               marginBottom: '0.25rem',
             },
             'li::marker': {
-              color: 'inherit',
+              color: 'var(--primary)',
             },
           },
         },
@@ -87,4 +152,4 @@ const config: Config = {
   ],
 }
 
-export default config 
+export default config

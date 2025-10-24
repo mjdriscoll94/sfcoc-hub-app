@@ -1,18 +1,13 @@
 'use client';
 
-import { ThemeProvider as NextThemesProvider } from 'next-themes';
-import { type ThemeProviderProps } from 'next-themes/dist/types';
+import { type ReactNode } from 'react';
 
-export function ThemeProvider({ children, ...props }: ThemeProviderProps) {
-  return (
-    <NextThemesProvider
-      attribute="data-theme"
-      defaultTheme="system"
-      enableSystem
-      disableTransitionOnChange={false}
-      {...props}
-    >
-      {children}
-    </NextThemesProvider>
-  );
+interface ThemeProviderProps {
+  children: ReactNode;
+}
+
+// Simplified theme provider - no more light/dark mode switching
+// The app now uses a single, unified brand color scheme
+export function ThemeProvider({ children }: ThemeProviderProps) {
+  return <>{children}</>;
 }

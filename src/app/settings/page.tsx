@@ -126,12 +126,6 @@ export default function SettingsPage() {
             >
               Notifications
             </Link>
-            <Link
-              href="/settings/appearance"
-              className="text-text/70 hover:text-primary border-b-2 border-transparent hover:border-sage/50 pb-2 font-medium transition-colors uppercase tracking-wide"
-            >
-              Appearance
-            </Link>
           </nav>
         </div>
 
