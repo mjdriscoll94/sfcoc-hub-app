@@ -229,12 +229,12 @@ export default function DirectorySubmissionForm() {
             <button
               type="button"
               onClick={() => document.getElementById('photo')?.click()}
-              className="rounded-md bg-white dark:bg-white/5 px-2.5 py-1.5 text-sm font-semibold text-gray-900 dark:text-white shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-white/10 hover:bg-gray-50 dark:hover:bg-white/10"
+              className="rounded-md bg-card px-2.5 py-1.5 text-sm font-semibold text-charcoal shadow-sm ring-1 ring-inset ring-gray-300 dark:ring-white/10 hover:bg-gray-50 dark:hover:bg-white/10"
             >
               {photoPreview ? 'Change photo' : 'Upload photo'}
             </button>
           </div>
-          <p className="mt-2 text-sm text-gray-500 dark:text-white/60">
+          <p className="mt-2 text-sm text-text-light">
             JPG, PNG or GIF up to 5MB
           </p>
         </div>
@@ -250,7 +250,7 @@ export default function DirectorySubmissionForm() {
               required
               value={formData.firstName}
               onChange={(e) => setFormData(prev => ({ ...prev, firstName: e.target.value }))}
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
             />
           </div>
 
@@ -264,7 +264,7 @@ export default function DirectorySubmissionForm() {
               required
               value={formData.lastName}
               onChange={(e) => setFormData(prev => ({ ...prev, lastName: e.target.value }))}
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
             />
           </div>
 
@@ -278,7 +278,7 @@ export default function DirectorySubmissionForm() {
               required
               value={formData.email}
               onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))}
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
             />
           </div>
 
@@ -291,7 +291,7 @@ export default function DirectorySubmissionForm() {
               id="phoneNumber"
               value={formData.phoneNumber}
               onChange={(e) => setFormData(prev => ({ ...prev, phoneNumber: e.target.value }))}
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
             />
           </div>
 
@@ -304,7 +304,7 @@ export default function DirectorySubmissionForm() {
               id="address"
               value={formData.address}
               onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
             />
           </div>
 
@@ -317,23 +317,23 @@ export default function DirectorySubmissionForm() {
               id="anniversary"
               value={formData.anniversary}
               onChange={(e) => setFormData(prev => ({ ...prev, anniversary: e.target.value }))}
-              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+              className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
             />
           </div>
         </div>
 
-        <div className="border-t border-gray-200 dark:border-white/10 pt-6">
-          <h3 className="text-lg font-medium text-white dark:text-white mb-4">Family Members</h3>
+        <div className="border-t border-border pt-6">
+          <h3 className="text-lg font-medium text-charcoal mb-4">Family Members</h3>
           
           {formData.familyMembers.length > 0 && (
             <div className="mb-4 space-y-2">
               {formData.familyMembers.map((member, index) => (
                 <div key={index} className="flex items-center justify-between bg-gray-50 dark:bg-white/5 p-3 rounded-md">
                   <div>
-                    <span className="text-gray-900 dark:text-white">{member.firstName} {member.lastName}</span>
-                    <span className="text-gray-500 dark:text-white/60 ml-2">({member.relationship})</span>
+                    <span className="text-charcoal">{member.firstName} {member.lastName}</span>
+                    <span className="text-text-light ml-2">({member.relationship})</span>
                     {member.birthday && (
-                      <span className="text-gray-500 dark:text-white/60 ml-2">• Born: {new Date(member.birthday).toLocaleDateString()}</span>
+                      <span className="text-text-light ml-2">• Born: {new Date(member.birthday).toLocaleDateString()}</span>
                     )}
                   </div>
                   <button
@@ -358,7 +358,7 @@ export default function DirectorySubmissionForm() {
                 id="familyFirstName"
                 value={familyMember.firstName}
                 onChange={(e) => setFamilyMember(prev => ({ ...prev, firstName: e.target.value }))}
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
               />
             </div>
 
@@ -371,7 +371,7 @@ export default function DirectorySubmissionForm() {
                 id="familyLastName"
                 value={familyMember.lastName}
                 onChange={(e) => setFamilyMember(prev => ({ ...prev, lastName: e.target.value }))}
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal placeholder-gray-400 dark:placeholder-white/40 focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
               />
             </div>
 
@@ -383,7 +383,7 @@ export default function DirectorySubmissionForm() {
                 id="relationship"
                 value={familyMember.relationship}
                 onChange={(e) => setFamilyMember(prev => ({ ...prev, relationship: e.target.value }))}
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
               >
                 <option value="">Select...</option>
                 <option value="Spouse">Spouse</option>
@@ -402,7 +402,7 @@ export default function DirectorySubmissionForm() {
                 id="birthday"
                 value={familyMember.birthday}
                 onChange={(e) => setFamilyMember(prev => ({ ...prev, birthday: e.target.value }))}
-                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-white dark:bg-white/5 px-3 py-2 text-gray-900 dark:text-white focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
+                className="mt-1 block w-full rounded-md border border-gray-300 dark:border-white/10 bg-card px-3 py-2 text-charcoal focus:border-[#D6805F] focus:outline-none focus:ring-[#D6805F] sm:text-sm"
               />
             </div>
           </div>
@@ -411,7 +411,7 @@ export default function DirectorySubmissionForm() {
             type="button"
             onClick={addFamilyMember}
             disabled={!familyMember.firstName || !familyMember.lastName || !familyMember.relationship}
-            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-[#D6805F] bg-[#D6805F]/10 hover:bg-[#D6805F]/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="mt-4 inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-coral bg-[#D6805F]/10 hover:bg-[#D6805F]/20 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F] disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <Plus className="h-5 w-5 mr-2" />
             Add Family Member

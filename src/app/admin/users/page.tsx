@@ -247,7 +247,7 @@ export default function UserManagement() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
         <BackButton className="mr-4" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">User Management</h1>
+        <h1 className="text-3xl font-bold text-charcoal">User Management</h1>
       </div>
 
       {error && (
@@ -261,7 +261,7 @@ export default function UserManagement() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
         </div>
       ) : (
-        <div className="bg-white dark:bg-white/5 rounded-lg shadow overflow-hidden">
+        <div className="bg-card rounded-lg shadow overflow-hidden">
           {/* Desktop view */}
           <div className="hidden sm:block">
             <table className="min-w-full divide-y divide-gray-200 dark:divide-white/10">
@@ -293,7 +293,7 @@ export default function UserManagement() {
                           {user.displayName?.[0] || user.email?.[0] || '?'}
                         </div>
                         <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900 dark:text-white">
+                          <div className="text-sm font-medium text-charcoal">
                             {user.displayName || 'No display name'}
                           </div>
                           <div className="text-sm text-gray-500 dark:text-gray-400">
@@ -303,7 +303,7 @@ export default function UserManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm text-gray-900 dark:text-white">{user.email}</div>
+                      <div className="text-sm text-charcoal">{user.email}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeColor(user.approvalStatus)}`}>
@@ -361,7 +361,7 @@ export default function UserManagement() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <div>
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
+                        <div className="text-sm font-medium text-charcoal">
                           {user.displayName || 'No display name'}
                         </div>
                         <div className="text-xs text-gray-500 dark:text-gray-400">

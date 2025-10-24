@@ -191,7 +191,7 @@ export default function DirectoryAdminPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
         <BackButton className="mr-4" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Directory Management</h1>
+        <h1 className="text-3xl font-bold text-charcoal">Directory Management</h1>
       </div>
 
       {error && (
@@ -202,21 +202,21 @@ export default function DirectoryAdminPage() {
 
       {/* Pending Submissions Section */}
       <div className="mb-12">
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Pending Submissions</h2>
+        <h2 className="text-2xl font-semibold text-charcoal mb-6">Pending Submissions</h2>
         {loading ? (
           <div className="flex justify-center items-center min-h-[200px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
           </div>
         ) : submissions.length === 0 ? (
-          <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <p className="text-center text-gray-500 dark:text-white/60">No pending submissions</p>
+          <div className="bg-card rounded-lg p-6 border border-border">
+            <p className="text-center text-text-light">No pending submissions</p>
           </div>
         ) : (
           <div className="space-y-6">
             {submissions.map((submission) => (
               <div
                 key={submission.id}
-                className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden"
+                className="bg-card rounded-lg shadow-sm border border-border overflow-hidden"
               >
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-4">
@@ -237,10 +237,10 @@ export default function DirectoryAdminPage() {
                         </div>
                       )}
                       <div>
-                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                        <h2 className="text-xl font-semibold text-charcoal">
                           {submission.lastName}
                         </h2>
-                        <p className="text-sm text-gray-500 dark:text-white/60">
+                        <p className="text-sm text-text-light">
                           Submitted {submission.submittedAt.toLocaleDateString()}
                         </p>
                       </div>
@@ -267,37 +267,37 @@ export default function DirectoryAdminPage() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-white/60 mb-2">Contact Information</h3>
+                      <h3 className="text-sm font-medium text-text-light mb-2">Contact Information</h3>
                       <div className="space-y-2">
-                        <p className="text-sm text-gray-900 dark:text-white">{submission.email}</p>
-                        <p className="text-sm text-gray-900 dark:text-white">{submission.phoneNumber}</p>
-                        <p className="text-sm text-gray-900 dark:text-white">{submission.address}</p>
+                        <p className="text-sm text-charcoal">{submission.email}</p>
+                        <p className="text-sm text-charcoal">{submission.phoneNumber}</p>
+                        <p className="text-sm text-charcoal">{submission.address}</p>
                       </div>
                     </div>
 
                     <div>
-                      <h3 className="text-sm font-medium text-gray-500 dark:text-white/60 mb-2">Family Members</h3>
+                      <h3 className="text-sm font-medium text-text-light mb-2">Family Members</h3>
                       <div className="space-y-2">
                         <div className="flex items-center">
                           <User className="h-5 w-5 text-gray-400 dark:text-white/40 mr-2" />
-                          <span className="text-sm text-gray-900 dark:text-white">
+                          <span className="text-sm text-charcoal">
                             {submission.firstName} {submission.lastName}
                           </span>
-                          <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
+                          <span className="text-sm text-text-light ml-2">
                             (Primary Contact)
                           </span>
                         </div>
                         {submission.familyMembers.map((member, index) => (
                           <div key={index} className="flex items-center">
                             <User className="h-5 w-5 text-gray-400 dark:text-white/40 mr-2" />
-                            <span className="text-sm text-gray-900 dark:text-white">
+                            <span className="text-sm text-charcoal">
                               {member.firstName} {member.lastName}
                             </span>
-                            <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
+                            <span className="text-sm text-text-light ml-2">
                               ({member.relationship})
                             </span>
                             {member.birthday && (
-                              <span className="text-sm text-gray-500 dark:text-white/60 ml-2">
+                              <span className="text-sm text-text-light ml-2">
                                 • Born: {new Date(member.birthday).toLocaleDateString()}
                               </span>
                             )}
@@ -315,21 +315,21 @@ export default function DirectoryAdminPage() {
 
       {/* Directory Members Section */}
       <div>
-        <h2 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">Directory Members</h2>
+        <h2 className="text-2xl font-semibold text-charcoal mb-6">Directory Members</h2>
         {loading ? (
           <div className="flex justify-center items-center min-h-[200px]">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
           </div>
         ) : members.length === 0 ? (
-          <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <p className="text-center text-gray-500 dark:text-white/60">No directory members</p>
+          <div className="bg-card rounded-lg p-6 border border-border">
+            <p className="text-center text-text-light">No directory members</p>
           </div>
         ) : (
           <div className="space-y-4">
             {members.map((member) => (
               <div
                 key={member.id}
-                className="bg-white dark:bg-white/5 rounded-lg shadow-sm border border-gray-200 dark:border-white/10 overflow-hidden p-6"
+                className="bg-card rounded-lg shadow-sm border border-border overflow-hidden p-6"
               >
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-4">
@@ -349,10 +349,10 @@ export default function DirectoryAdminPage() {
                       </div>
                     )}
                     <div>
-                      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+                      <h3 className="text-xl font-semibold text-charcoal">
                         {member.lastName}
                       </h3>
-                      <p className="text-sm text-gray-500 dark:text-white/60">
+                      <p className="text-sm text-text-light">
                         Added {member.addedAt.toLocaleDateString()}
                       </p>
                     </div>

@@ -297,7 +297,7 @@ export default function ServiceRolesPage() {
         ) : (
           <div className="space-y-6">
             {weeks.map((week, weekIndex) => (
-              <div key={week.date.toISOString()} className="bg-white dark:bg-white/5 rounded-lg border border-gray-200 dark:border-white/10 overflow-hidden">
+              <div key={week.date.toISOString()} className="bg-card rounded-lg border border-border overflow-hidden">
                 <button
                   onClick={() => toggleWeek(weekIndex)}
                   className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-white/5"
@@ -308,12 +308,12 @@ export default function ServiceRolesPage() {
                     ) : (
                       <ChevronRight className="w-5 h-5 text-gray-400 dark:text-white/60" />
                     )}
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-medium text-charcoal">
                       {format(week.date, 'MMMM d, yyyy')}
                     </h3>
                   </div>
                   {week.isEditing && (
-                    <span className="text-sm text-[#D6805F]">Unsaved changes</span>
+                    <span className="text-sm text-coral">Unsaved changes</span>
                   )}
                 </button>
 
@@ -338,7 +338,7 @@ export default function ServiceRolesPage() {
                           const assignment = week.assignments.find(a => a.role === role);
                           return (
                             <tr key={role}>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900 dark:text-white">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-charcoal">
                                 {role}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
@@ -348,7 +348,7 @@ export default function ServiceRolesPage() {
                                     onChange={(e) => handleAssignmentChange(weekIndex, role, e.target.value || null)}
                                     className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-white/10 focus:outline-none focus:ring-[#D6805F] focus:border-[#D6805F] sm:text-sm rounded-md ${
                                       week.isEditing 
-                                        ? 'bg-white dark:bg-white/5' 
+                                        ? 'bg-card' 
                                         : 'bg-gray-50 dark:bg-white/5 cursor-not-allowed'
                                     } ${
                                       !week.isEditing && assignment && assignment.status && 'sm:hidden' // Hide colored select on desktop

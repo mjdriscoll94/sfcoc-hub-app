@@ -83,7 +83,7 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
                         </div>
                       ) : null}
                       <div>
-                        <Dialog.Title as="h3" className="text-2xl font-semibold text-gray-900 dark:text-white">
+                        <Dialog.Title as="h3" className="text-2xl font-semibold text-charcoal">
                           {member.lastName}
                         </Dialog.Title>
                       </div>
@@ -91,12 +91,12 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
 
                     <div className="mt-6 space-y-6">
                       <div>
-                        <h4 className="text-lg font-medium text-gray-900 dark:text-white">Contact Information</h4>
+                        <h4 className="text-lg font-medium text-charcoal">Contact Information</h4>
                         <div className="mt-4 space-y-3">
                           {member.email && (
                             <div className="flex items-center text-gray-500 dark:text-gray-300">
                               <Mail className="h-5 w-5 mr-3 flex-shrink-0" />
-                              <a href={`mailto:${member.email}`} className="hover:text-[#D6805F] break-all">
+                              <a href={`mailto:${member.email}`} className="hover:text-coral break-all">
                                 {member.email}
                               </a>
                             </div>
@@ -104,7 +104,7 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
                           {member.phoneNumber && (
                             <div className="flex items-center text-gray-500 dark:text-gray-300">
                               <Phone className="h-5 w-5 mr-3 flex-shrink-0" />
-                              <a href={`tel:${member.phoneNumber}`} className="hover:text-[#D6805F]">
+                              <a href={`tel:${member.phoneNumber}`} className="hover:text-coral">
                                 {member.phoneNumber}
                               </a>
                             </div>
@@ -119,11 +119,11 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
                       </div>
 
                       <div>
-                        <h4 className="text-lg font-medium text-gray-900 dark:text-white">Family Members</h4>
+                        <h4 className="text-lg font-medium text-charcoal">Family Members</h4>
                         <div className="mt-4 space-y-3">
                           <div className="flex items-start">
                             <User className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
-                            <span className="text-gray-900 dark:text-white">
+                            <span className="text-charcoal">
                               {member.firstName} {member.lastName}
                             </span>
                           </div>
@@ -131,7 +131,7 @@ export default function DirectoryModal({ member, isOpen, onClose }: DirectoryMod
                             <div key={index} className="flex items-start">
                               <User className="h-5 w-5 text-gray-400 dark:text-gray-500 mr-3 mt-0.5 flex-shrink-0" />
                               <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
-                                <span className="text-gray-900 dark:text-white">
+                                <span className="text-charcoal">
                                   {familyMember.firstName} {familyMember.lastName}
                                 </span>
                                 <div className="flex items-center gap-2 text-sm">

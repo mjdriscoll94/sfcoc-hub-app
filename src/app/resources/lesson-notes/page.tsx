@@ -8,7 +8,7 @@ export default function LessonNotesPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-[#D6805F] text-center sm:text-left">Lesson Notes</h1>
+      <h1 className="text-3xl font-bold mb-6 text-coral text-center sm:text-left">Lesson Notes</h1>
       
       {loading && (
         <div className="flex justify-center items-center py-12">
@@ -35,15 +35,15 @@ export default function LessonNotesPage() {
           {notes.map((note) => (
             <div
               key={note.id}
-              className="bg-white dark:bg-white/5 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200 border border-gray-200 dark:border-white/10"
+              className="bg-card rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow duration-200 border border-border"
             >
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-3">
                   <div className="flex-shrink-0">
-                    <FileText className="h-6 w-6 text-[#D6805F]" />
+                    <FileText className="h-6 w-6 text-coral" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 dark:text-white">
+                    <h3 className="text-lg font-medium text-charcoal">
                       {note.title}
                     </h3>
                     <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">

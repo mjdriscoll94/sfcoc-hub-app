@@ -251,16 +251,16 @@ export default function TeacherManagement() {
 
   const renderClassTable = (classType: ClassType, classes: AgeGroup[], title: string) => (
     <div className="mb-8">
-      <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-4">{title}</h3>
+      <h3 className="text-xl font-bold text-charcoal mb-4">{title}</h3>
       <div className="overflow-x-auto">
         <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
           <thead>
             <tr className="bg-gray-50 dark:bg-gray-700">
-              <th className="px-4 py-2 text-left text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+              <th className="px-4 py-2 text-left text-sm font-medium text-charcoal border-r border-gray-300 dark:border-gray-600">
                 {classType === 'Decorators' ? 'Sunday' : 'Class'}
               </th>
               {QUARTERS.map(quarter => (
-                <th key={quarter} className="px-4 py-2 text-center text-sm font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                <th key={quarter} className="px-4 py-2 text-center text-sm font-medium text-charcoal border-r border-gray-300 dark:border-gray-600">
                   {quarter}
                   <br />
                   <span className="text-xs text-gray-500">
@@ -275,7 +275,7 @@ export default function TeacherManagement() {
           <tbody>
             {classes.map(ageGroup => (
               <tr key={ageGroup} className="border-t border-gray-300 dark:border-gray-600">
-                <td className="px-4 py-2 font-medium text-gray-900 dark:text-white border-r border-gray-300 dark:border-gray-600">
+                <td className="px-4 py-2 font-medium text-charcoal border-r border-gray-300 dark:border-gray-600">
                   {ageGroup}
                 </td>
                 {QUARTERS.map(quarter => {
@@ -291,7 +291,7 @@ export default function TeacherManagement() {
                           <select
                             value={selectedTeacherId}
                             onChange={(e) => setSelectedTeacherId(e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-charcoal"
                             autoFocus
                           >
                             <option value="">Select a teacher</option>
@@ -345,7 +345,7 @@ export default function TeacherManagement() {
                         >
                           {assignment ? (
                             <div className="text-sm">
-                              <div className="font-medium text-gray-900 dark:text-white">
+                              <div className="font-medium text-charcoal">
                                 {assignment.teacherName}
                                 {assignment.isHelper && <span className="text-xs text-blue-600 dark:text-blue-400"> *</span>}
                                 {assignment.isSecondChoice && <span className="text-xs text-orange-600 dark:text-orange-400"> 2</span>}
@@ -385,7 +385,7 @@ export default function TeacherManagement() {
   if (!canEdit) {
     return (
       <div className="text-center p-8">
-        <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">Teacher Management</h1>
+        <h1 className="text-2xl font-bold text-charcoal mb-4">Teacher Management</h1>
         <p className="text-gray-600 dark:text-gray-400">You don't have permission to access this page.</p>
       </div>
     );

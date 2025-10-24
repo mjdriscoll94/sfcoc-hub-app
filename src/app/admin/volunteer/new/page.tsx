@@ -72,10 +72,10 @@ export default function NewVolunteerOpportunityPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
         <BackButton className="mr-4" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">New Volunteer Opportunity</h1>
+        <h1 className="text-3xl font-bold text-charcoal">New Volunteer Opportunity</h1>
       </div>
 
-      <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
+      <div className="bg-card rounded-lg p-6 border border-border">
         {error && (
           <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 rounded-md">
             <p className="text-sm text-red-600 dark:text-red-200">{error}</p>
@@ -84,7 +84,7 @@ export default function NewVolunteerOpportunityPage() {
 
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label htmlFor="title" className="block text-sm font-medium text-gray-900 dark:text-white">
+            <label htmlFor="title" className="block text-sm font-medium text-charcoal">
               Title
             </label>
             <input
@@ -93,13 +93,13 @@ export default function NewVolunteerOpportunityPage() {
               required
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
               placeholder="e.g., Sunday Service Setup"
             />
           </div>
 
           <div>
-            <label htmlFor="description" className="block text-sm font-medium text-gray-900 dark:text-white">
+            <label htmlFor="description" className="block text-sm font-medium text-charcoal">
               Description
             </label>
             <textarea
@@ -108,14 +108,14 @@ export default function NewVolunteerOpportunityPage() {
               rows={4}
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
               placeholder="Describe what volunteers will be doing..."
             />
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label htmlFor="date" className="block text-sm font-medium text-gray-900 dark:text-white">
+              <label htmlFor="date" className="block text-sm font-medium text-charcoal">
                 Date
               </label>
               <input
@@ -124,12 +124,12 @@ export default function NewVolunteerOpportunityPage() {
                 required
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
               />
             </div>
 
             <div>
-              <label htmlFor="time" className="block text-sm font-medium text-gray-900 dark:text-white">
+              <label htmlFor="time" className="block text-sm font-medium text-charcoal">
                 Time
               </label>
               <input
@@ -138,13 +138,13 @@ export default function NewVolunteerOpportunityPage() {
                 required
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="location" className="block text-sm font-medium text-gray-900 dark:text-white">
+            <label htmlFor="location" className="block text-sm font-medium text-charcoal">
               Location
             </label>
             <input
@@ -153,14 +153,14 @@ export default function NewVolunteerOpportunityPage() {
               required
               value={formData.location}
               onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
               placeholder="e.g., Church Building"
             />
           </div>
 
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
-              <label htmlFor="contactEmail" className="block text-sm font-medium text-gray-900 dark:text-white">
+              <label htmlFor="contactEmail" className="block text-sm font-medium text-charcoal">
                 Contact Email
               </label>
               <input
@@ -169,13 +169,13 @@ export default function NewVolunteerOpportunityPage() {
                 required
                 value={formData.contactEmail}
                 onChange={(e) => setFormData({ ...formData, contactEmail: e.target.value })}
-                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
                 placeholder="contact@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="contactPhone" className="block text-sm font-medium text-gray-900 dark:text-white">
+              <label htmlFor="contactPhone" className="block text-sm font-medium text-charcoal">
                 Contact Phone (Optional)
               </label>
               <input
@@ -183,14 +183,14 @@ export default function NewVolunteerOpportunityPage() {
                 id="contactPhone"
                 value={formData.contactPhone}
                 onChange={(e) => setFormData({ ...formData, contactPhone: e.target.value })}
-                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+                className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
                 placeholder="(555) 555-5555"
               />
             </div>
           </div>
 
           <div>
-            <label htmlFor="maxVolunteers" className="block text-sm font-medium text-gray-900 dark:text-white">
+            <label htmlFor="maxVolunteers" className="block text-sm font-medium text-charcoal">
               Maximum Number of Volunteers
             </label>
             <input
@@ -200,7 +200,7 @@ export default function NewVolunteerOpportunityPage() {
               min="1"
               value={formData.maxVolunteers}
               onChange={(e) => setFormData({ ...formData, maxVolunteers: e.target.value })}
-              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-gray-900 dark:text-white shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
+              className="mt-1 block w-full rounded-md bg-white dark:bg-white/10 border border-gray-300 dark:border-white/20 text-charcoal shadow-sm focus:border-[#ff7c54] focus:ring-[#ff7c54] sm:text-sm px-3 py-2"
               placeholder="e.g., 5"
             />
           </div>

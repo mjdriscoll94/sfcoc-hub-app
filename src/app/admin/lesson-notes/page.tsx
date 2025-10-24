@@ -219,10 +219,10 @@ export default function LessonNotesManagement() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
         <BackButton className="mr-4" />
-        <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Lesson Notes Management</h1>
+        <h1 className="text-3xl font-bold text-charcoal">Lesson Notes Management</h1>
       </div>
 
-      <div className="bg-white dark:bg-white/5 rounded-lg shadow-sm p-6">
+      <div className="bg-card rounded-lg shadow-sm p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
@@ -246,7 +246,7 @@ export default function LessonNotesManagement() {
               <div className="space-y-1 text-center">
                 <FileText className="mx-auto h-12 w-12 text-gray-400" />
                 <div className="flex text-sm text-gray-600 dark:text-gray-300">
-                  <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-[#D6805F] hover:text-[#c0734f] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]">
+                  <label htmlFor="file-upload" className="relative cursor-pointer rounded-md font-medium text-coral hover:text-[#c0734f] focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary">
                     <span>Upload a file</span>
                     <input
                       id="file-upload"
@@ -309,8 +309,8 @@ export default function LessonNotesManagement() {
 
       {/* List of uploaded notes */}
       <div className="mt-8">
-        <h2 className="text-xl font-medium text-gray-900 dark:text-white mb-4">Uploaded Notes</h2>
-        <div className="bg-white dark:bg-white/5 rounded-lg shadow-sm overflow-hidden">
+        <h2 className="text-xl font-medium text-charcoal mb-4">Uploaded Notes</h2>
+        <div className="bg-card rounded-lg shadow-sm overflow-hidden">
           <ul className="divide-y divide-gray-200 dark:divide-white/10">
             {notes.map((note) => (
               <li key={note.id} className="p-4 hover:bg-gray-50 dark:hover:bg-white/5">
@@ -318,7 +318,7 @@ export default function LessonNotesManagement() {
                   <div className="flex items-center space-x-3">
                     <FileText className="h-5 w-5 text-gray-400" />
                     <div>
-                      <h3 className="text-sm font-medium text-gray-900 dark:text-white">{note.title}</h3>
+                      <h3 className="text-sm font-medium text-charcoal">{note.title}</h3>
                       <div className="flex items-center space-x-2 text-sm text-gray-500 dark:text-gray-400">
                         <span>Uploaded on {note.uploadedAt.toLocaleDateString()}</span>
                         <span>•</span>
@@ -334,7 +334,7 @@ export default function LessonNotesManagement() {
                       href={note.fileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-[#D6805F] hover:text-[#c0734f] p-2 rounded-full hover:bg-[#D6805F]/10"
+                      className="text-coral hover:text-[#c0734f] p-2 rounded-full hover:bg-[#D6805F]/10"
                       title="Open PDF"
                     >
                       <ExternalLink className="h-5 w-5" />

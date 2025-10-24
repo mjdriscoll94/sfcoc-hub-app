@@ -29,8 +29,8 @@ export default function AdminDashboard() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-8">
       <div className="space-y-8">
         <div>
-          <h1 className="text-3xl font-bold text-white dark:text-white">Admin Dashboard</h1>
-          <p className="mt-2 text-sm text-white dark:text-white">
+          <h1 className="text-3xl font-bold text-charcoal">Admin Dashboard</h1>
+          <p className="mt-2 text-sm text-text-light">
             Manage prayer requests, users, and other administrative tasks.
           </p>
         </div>
@@ -40,76 +40,76 @@ export default function AdminDashboard() {
           {/* User Management */}
           <Link
             href="/admin/users"
-            className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
-              <Users className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+              <Users className="h-6 w-6 text-coral" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
               <span className="absolute inset-0" aria-hidden="true" />
-              <p className="text-sm font-medium text-gray-900 dark:text-white">User Management</p>
-              <p className="text-sm text-gray-500 dark:text-white/60">Manage user accounts and approvals</p>
+              <p className="text-sm font-semibold text-charcoal">User Management</p>
+              <p className="text-sm text-text-light">Manage user accounts and approvals</p>
             </div>
           </Link>
 
           {/* Add Announcement */}
           <Link
             href="/admin/announcements/new"
-            className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
-              <PlusIcon className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+              <PlusIcon className="h-6 w-6 text-coral" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
               <span className="absolute inset-0" aria-hidden="true" />
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Add Announcement</p>
-              <p className="text-sm text-gray-500 dark:text-white/60">Create a new announcement</p>
+              <p className="text-sm font-medium text-charcoal">Add Announcement</p>
+              <p className="text-sm text-text-light">Create a new announcement</p>
             </div>
           </Link>
 
           {/* Directory Management */}
           <Link
             href="/admin/directory"
-            className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
-              <FileText className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+              <FileText className="h-6 w-6 text-coral" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
               <span className="absolute inset-0" aria-hidden="true" />
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Directory</p>
-              <p className="text-sm text-gray-500 dark:text-white/60">Manage church directory</p>
+              <p className="text-sm font-medium text-charcoal">Directory</p>
+              <p className="text-sm text-text-light">Manage church directory</p>
             </div>
           </Link>
 
           {/* Upload Sermon Notes */}
           <Link
             href="/admin/lesson-notes"
-            className="relative rounded-lg border border-gray-200 dark:border-white/10 bg-white dark:bg-white/5 px-6 py-5 shadow-sm flex items-center space-x-3 hover:border-[#D6805F] dark:hover:border-[#D6805F] focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-[#D6805F]"
+            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
-              <Upload className="h-6 w-6 text-[#D6805F]" aria-hidden="true" />
+              <Upload className="h-6 w-6 text-coral" aria-hidden="true" />
             </div>
             <div className="flex-1 min-w-0">
               <span className="absolute inset-0" aria-hidden="true" />
-              <p className="text-sm font-medium text-gray-900 dark:text-white">Upload Sermon Notes</p>
-              <p className="text-sm text-gray-500 dark:text-white/60">Manage and upload lesson notes</p>
+              <p className="text-sm font-medium text-charcoal">Upload Sermon Notes</p>
+              <p className="text-sm text-text-light">Manage and upload lesson notes</p>
             </div>
           </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-8">
           {/* Prayer Request Approval Queue */}
-          <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 sm:text-left text-center">
+          <div className="bg-card rounded-lg p-6 border border-border shadow">
+            <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Prayer Request Approval Queue
             </h2>
             <PrayerRequestApprovalQueue />
           </div>
 
           {/* Pending User Accounts */}
-          <div className="bg-white dark:bg-white/5 rounded-lg p-6 border border-gray-200 dark:border-white/10">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-4 sm:text-left text-center">
+          <div className="bg-card rounded-lg p-6 border border-border shadow">
+            <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Pending User Accounts
             </h2>
             <PendingUserQueue />

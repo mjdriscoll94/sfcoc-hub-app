@@ -201,7 +201,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
   return (
     <div className="relative">
       <style>{editorStyles}</style>
-      <div className="mb-2 flex flex-wrap gap-2 p-2 bg-gray-100 dark:bg-white/5 rounded-t-md border-b border-gray-200 dark:border-white/10">
+      <div className="mb-2 flex flex-wrap gap-2 p-2 bg-gray-100 dark:bg-white/5 rounded-t-md border-b border-border">
         <button
           type="button"
           onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}
@@ -210,7 +210,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Heading 1"
         >
-          <span className="font-bold text-gray-900 dark:text-white text-lg">H1</span>
+          <span className="font-bold text-charcoal text-lg">H1</span>
         </button>
         <button
           type="button"
@@ -220,7 +220,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Heading 2"
         >
-          <span className="font-bold text-gray-900 dark:text-white text-base">H2</span>
+          <span className="font-bold text-charcoal text-base">H2</span>
         </button>
         <div className="w-px h-6 my-auto bg-gray-300 dark:bg-white/20" />
         <button
@@ -231,7 +231,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Bold"
         >
-          <BoldIcon className="w-5 h-5 text-gray-900 dark:text-white" />
+          <BoldIcon className="w-5 h-5 text-charcoal" />
         </button>
         <button
           type="button"
@@ -241,7 +241,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Italic"
         >
-          <ItalicIcon className="w-5 h-5 text-gray-900 dark:text-white" />
+          <ItalicIcon className="w-5 h-5 text-charcoal" />
         </button>
         <button
           type="button"
@@ -251,7 +251,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Underline"
         >
-          <UnderlineIcon className="w-5 h-5 text-gray-900 dark:text-white" />
+          <UnderlineIcon className="w-5 h-5 text-charcoal" />
         </button>
         <div className="w-px h-6 my-auto bg-gray-300 dark:bg-white/20" />
         <button
@@ -262,7 +262,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Bullet List"
         >
-          <ListBulletIcon className="w-5 h-5 text-gray-900 dark:text-white" />
+          <ListBulletIcon className="w-5 h-5 text-charcoal" />
         </button>
         <button
           type="button"
@@ -272,7 +272,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Numbered List"
         >
-          <QueueListIcon className="w-5 h-5 text-gray-900 dark:text-white" />
+          <QueueListIcon className="w-5 h-5 text-charcoal" />
         </button>
         <div className="w-px h-6 my-auto bg-gray-300 dark:bg-white/20" />
         <button
@@ -283,7 +283,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Align Left"
         >
-          <span className="font-bold text-gray-900 dark:text-white">←</span>
+          <span className="font-bold text-charcoal">←</span>
         </button>
         <button
           type="button"
@@ -293,7 +293,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Align Center"
         >
-          <span className="font-bold text-gray-900 dark:text-white">↔</span>
+          <span className="font-bold text-charcoal">↔</span>
         </button>
         <button
           type="button"
@@ -303,7 +303,7 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Align Right"
         >
-          <span className="font-bold text-gray-900 dark:text-white">→</span>
+          <span className="font-bold text-charcoal">→</span>
         </button>
         <div className="w-px h-6 my-auto bg-gray-300 dark:bg-white/20" />
         <button
@@ -314,10 +314,10 @@ export default function RichTextEditor({ content, onChange }: RichTextEditorProp
           }`}
           title="Add Link"
         >
-          <LinkIcon className="w-5 h-5 text-gray-900 dark:text-white" />
+          <LinkIcon className="w-5 h-5 text-charcoal" />
         </button>
       </div>
-      <div className="bg-white dark:bg-white/10 rounded-b-md border border-gray-200 dark:border-white/10">
+      <div className="bg-white dark:bg-white/10 rounded-b-md border border-border">
         <EditorContent editor={editor} />
       </div>
     </div>
