@@ -258,12 +258,12 @@ export default function ServiceRolesPage() {
   const getStatusStyles = (status?: string) => {
     switch(status) {
       case 'accepted':
-        return 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300';
+        return 'bg-success-bg text-success';
       case 'declined':
-        return 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300';
+        return 'bg-error-bg text-error';
       case 'pending':
       case 'awaiting_confirmation':
-        return 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300';
+        return 'bg-warning-bg text-warning';
       default:
         return '';
     }
@@ -281,18 +281,18 @@ export default function ServiceRolesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-8">
         <div className="text-center pb-12">
-          <h1 className="text-3xl font-bold text-white mb-4">Sunday Service Roles List</h1>
+          <h1 className="text-3xl font-bold text-charcoal mb-4">Sunday Service Roles List</h1>
         </div>
         
         {error && (
-          <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 rounded-md p-4 text-red-600 dark:text-red-200">
+          <div className="bg-error-bg border border-error rounded-md p-4 text-error">
             {error}
           </div>
         )}
 
         {loading && !weeks.length ? (
           <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral"></div>
           </div>
         ) : (
           <div className="space-y-6">
@@ -300,13 +300,13 @@ export default function ServiceRolesPage() {
               <div key={week.date.toISOString()} className="bg-card rounded-lg border border-border overflow-hidden">
                 <button
                   onClick={() => toggleWeek(weekIndex)}
-                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-gray-50 dark:hover:bg-white/5"
+                  className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-bg-secondary transition-colors"
                 >
                   <div className="flex items-center space-x-2">
                     {week.isExpanded ? (
-                      <ChevronDown className="w-5 h-5 text-gray-400 dark:text-white/60" />
+                      <ChevronDown className="w-5 h-5 text-text-muted" />
                     ) : (
-                      <ChevronRight className="w-5 h-5 text-gray-400 dark:text-white/60" />
+                      <ChevronRight className="w-5 h-5 text-text-muted" />
                     )}
                     <h3 className="text-lg font-medium text-charcoal">
                       {format(week.date, 'MMMM d, yyyy')}
@@ -319,21 +319,21 @@ export default function ServiceRolesPage() {
 
                 {week.isExpanded && (
                   <div className="mt-4">
-                    <table className="min-w-full divide-y divide-gray-200 dark:divide-white/10">
+                    <table className="min-w-full divide-y divide-border">
                       <thead>
                         <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                             Role
                           </th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                             Assigned To
                           </th>
-                          <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                          <th className="hidden sm:table-cell px-6 py-3 text-left text-xs font-medium text-text-light uppercase tracking-wider">
                             Status
                           </th>
                         </tr>
                       </thead>
-                      <tbody className="bg-white dark:bg-transparent divide-y divide-gray-200 dark:divide-white/10">
+                      <tbody className="bg-card divide-y divide-border">
                         {SERVICE_ROLES.map((role) => {
                           const assignment = week.assignments.find(a => a.role === role);
                           return (
@@ -341,24 +341,24 @@ export default function ServiceRolesPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-charcoal">
                                 {role}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-text-light">
                                 {canAssignRoles ? (
                                   <select
                                     value={week.pendingAssignments[role] || ''}
                                     onChange={(e) => handleAssignmentChange(weekIndex, role, e.target.value || null)}
-                                    className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base border-gray-300 dark:border-white/10 focus:outline-none focus:ring-[#D6805F] focus:border-[#D6805F] sm:text-sm rounded-md ${
+                                    className={`mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base border-border focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md ${
                                       week.isEditing 
                                         ? 'bg-card' 
-                                        : 'bg-gray-50 dark:bg-white/5 cursor-not-allowed'
+                                        : 'bg-bg-secondary cursor-not-allowed'
                                     } ${
                                       !week.isEditing && assignment && assignment.status && 'sm:hidden' // Hide colored select on desktop
                                     } ${
                                       !week.isEditing && assignment && assignment.status === 'accepted'
-                                        ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300'
+                                        ? 'bg-success-bg text-success'
                                         : !week.isEditing && assignment && assignment.status === 'declined'
-                                        ? 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300'
+                                        ? 'bg-error-bg text-error'
                                         : !week.isEditing && assignment && (assignment.status === 'pending' || assignment.status === 'awaiting_confirmation')
-                                        ? 'bg-yellow-50 dark:bg-yellow-900/20 text-yellow-700 dark:text-yellow-300'
+                                        ? 'bg-warning-bg text-warning'
                                         : ''
                                     }`}
                                     disabled={!week.isEditing}
@@ -372,13 +372,13 @@ export default function ServiceRolesPage() {
                                   </select>
                                 ) : (
                                   <div className="sm:block">
-                                    <span className={`sm:inline ${assignment ? `sm:bg-transparent sm:text-gray-500 dark:sm:text-gray-400 px-2 py-1 rounded-full text-sm ${getStatusStyles(assignment.status)}` : ''}`}>
+                                    <span className={`sm:inline ${assignment ? `sm:bg-transparent sm:text-text-light px-2 py-1 rounded-full text-sm ${getStatusStyles(assignment.status)}` : ''}`}>
                                       {getUserName(assignment?.userId || week.pendingAssignments[role] || '')}
                                     </span>
                                   </div>
                                 )}
                               </td>
-                              <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                              <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-text-light">
                                 {assignment ? (
                                   <div className="flex items-center">
                                     {assignment.status === 'accepted' && (
@@ -422,13 +422,13 @@ export default function ServiceRolesPage() {
                           <>
                             <button
                               onClick={() => handleCancel(weekIndex)}
-                              className="px-4 py-2 border border-gray-300 dark:border-white/10 text-sm font-medium rounded-md text-gray-700 dark:text-white bg-white dark:bg-transparent hover:bg-gray-50 dark:hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F]"
+                              className="px-4 py-2 border border-border text-sm font-medium rounded-md text-charcoal bg-card hover:bg-bg-secondary transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                             >
                               Cancel
                             </button>
                             <button
                               onClick={() => handleSave(weekIndex)}
-                              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#D6805F] hover:bg-[#D6805F]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F]"
+                              className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-coral hover:bg-coral-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                             >
                               Save Changes
                             </button>
@@ -447,7 +447,7 @@ export default function ServiceRolesPage() {
                               };
                               setWeeks(updatedWeeks);
                             }}
-                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-[#D6805F] hover:bg-[#D6805F]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#D6805F]"
+                            className="px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-coral hover:bg-coral-dark focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                           >
                             Edit Assignments
                           </button>
