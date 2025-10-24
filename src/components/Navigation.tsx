@@ -280,7 +280,7 @@ const Navigation = () => {
   const activeNavItems = [...publicNavItems, ...(user ? [...protectedNavItems, ...adminNavItems] : [])];
 
   return (
-    <nav className="bg-primary relative z-40">
+    <nav className="bg-[#E88B5F] relative z-40">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
@@ -347,8 +347,8 @@ const Navigation = () => {
                                   rel="noopener noreferrer"
                                   className={`${
                                     pathname === subItem.href
-                                      ? 'text-black bg-primary/10 font-semibold'
-                                      : 'text-black hover:bg-primary/10'
+                                      ? 'text-black bg-[#E88B5F]/10 font-semibold'
+                                      : 'text-black hover:bg-[#E88B5F]/10'
                                   } flex items-center px-4 py-2 text-sm`}
                                   onClick={() => handleDropdownClick(item.name)}
                                 >
@@ -361,8 +361,8 @@ const Navigation = () => {
                                   href={subItem.href}
                                   className={`${
                                     pathname === subItem.href
-                                      ? 'text-black bg-primary/10 font-semibold'
-                                      : 'text-black hover:bg-primary/10'
+                                      ? 'text-black bg-[#E88B5F]/10 font-semibold'
+                                      : 'text-black hover:bg-[#E88B5F]/10'
                                   } flex items-center px-4 py-2 text-sm`}
                                   onClick={() => handleDropdownClick(item.name)}
                                 >
@@ -400,7 +400,7 @@ const Navigation = () => {
               <Menu as="div" className="relative">
                 {({ open }) => (
                   <>
-                    <Menu.Button className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-primary focus:ring-black">
+                    <Menu.Button className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#E88B5F] focus:ring-black">
                       <span className="sr-only">Open user menu</span>
                       <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-black font-semibold">
                         {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
@@ -429,7 +429,7 @@ const Navigation = () => {
                                 <Link
                                   href="/settings"
                                   className={`block w-full text-left px-4 py-2 text-sm text-black ${
-                                    active ? 'bg-primary/10' : ''
+                                    active ? 'bg-[#E88B5F]/10' : ''
                                   }`}
                                 >
                                   Settings
@@ -440,7 +440,7 @@ const Navigation = () => {
                               {({ active }) => (
                                 <button
                                   className={`block w-full text-left px-4 py-2 text-sm text-black ${
-                                    active ? 'bg-primary/10' : ''
+                                    active ? 'bg-[#E88B5F]/10' : ''
                                   } ${isSigningOut ? 'opacity-50' : ''}`}
                                   onClick={async () => {
                                     if (isSigningOut) return;
@@ -480,7 +480,7 @@ const Navigation = () => {
       </div>
 
       {/* Mobile menu */}
-      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-primary`}>
+      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#E88B5F]`}>
         <div className="pt-2 pb-3 space-y-1">
           {activeNavItems.map((item) => (
             item.dropdown ? (
@@ -502,7 +502,7 @@ const Navigation = () => {
                         } w-5 h-5 text-white`}
                       />
                     </Disclosure.Button>
-                    <Disclosure.Panel className="bg-primary/90">
+                    <Disclosure.Panel className="bg-[#E88B5F]/90">
                       {item.items?.map((subItem) => {
                         const isExternal = subItem.href?.startsWith('http');
                         return isExternal ? (
