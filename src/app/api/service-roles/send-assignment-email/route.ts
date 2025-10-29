@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     const formattedDate = format(serviceDate, 'EEEE, MMMM d, yyyy');
 
     // Create accept/decline links
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://sfcoc.vercel.app';
     const acceptUrl = `${baseUrl}/service-roles/respond?id=${assignmentId}&action=accept`;
     const declineUrl = `${baseUrl}/service-roles/respond?id=${assignmentId}&action=decline`;
 
