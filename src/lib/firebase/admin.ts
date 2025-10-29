@@ -1,5 +1,6 @@
 import { getApps, initializeApp, cert } from 'firebase-admin/app';
 import { getDatabase } from 'firebase-admin/database';
+import { getFirestore } from 'firebase-admin/firestore';
 
 export const initAdmin = () => {
   try {
@@ -45,4 +46,8 @@ export const initAdmin = () => {
     console.error('Error initializing Firebase Admin:', error);
     throw error;
   }
-}; 
+};
+
+// Initialize admin and get Firestore instance
+initAdmin();
+export const adminDb = getFirestore(); 
