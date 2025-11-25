@@ -407,7 +407,7 @@ export default function TeacherManagement() {
       </div>
 
       {/* Teacher Management Section */}
-      <div className="mb-8 bg-card rounded-lg shadow-sm border border-sage/20 p-6">
+      <div className="mb-8 bg-white rounded-lg shadow-sm border border-sage/20 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-text uppercase tracking-wide">Teacher Management</h2>
           <button
@@ -433,7 +433,7 @@ export default function TeacherManagement() {
         )}
 
         <div className="overflow-x-auto">
-          <table className="min-w-full bg-card border border-sage/20">
+          <table className="min-w-full bg-white border border-sage/20">
             <thead>
               <tr className="bg-sage/10">
                 <th className="px-4 py-2 text-left text-sm font-medium text-text border-r border-sage/20 uppercase tracking-wide">
