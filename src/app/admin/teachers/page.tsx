@@ -15,10 +15,11 @@ const DECORATOR_CLASSES: AgeGroup[] = ['Decorators'];
 
 export default function TeacherManagement() {
   const { userProfile } = useAuth();
-  const [teachingSchedule, setTeachingSchedule] = useState<TeachingSchedule | null>(null);
+  const [teachingSchedules, setTeachingSchedules] = useState<TeachingSchedule[]>([]);
+  const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());
   const [teachers, setTeachers] = useState<Teacher[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingCell, setEditingCell] = useState<{ classType: ClassType; ageGroup: AgeGroup; quarter: Quarter } | null>(null);
+  const [editingCell, setEditingCell] = useState<{ schoolYear: string; classType: ClassType; ageGroup: AgeGroup; quarter: Quarter } | null>(null);
   const [selectedTeacherId, setSelectedTeacherId] = useState('');
   const [isHelper, setIsHelper] = useState(false);
   const [isSecondChoice, setIsSecondChoice] = useState(false);
@@ -56,16 +57,25 @@ export default function TeacherManagement() {
       const querySnapshot = await getDocs(q);
       
       if (!querySnapshot.empty) {
-        const scheduleData = querySnapshot.docs[0].data() as TeachingSchedule;
-        setTeachingSchedule({
-          ...scheduleData,
-          id: querySnapshot.docs[0].id,
-          assignments: scheduleData.assignments.map(assignment => ({
-            ...assignment,
-            assignedAt: assignment.assignedAt instanceof Date ? assignment.assignedAt : (assignment.assignedAt as any).toDate(),
-            updatedAt: assignment.updatedAt instanceof Date ? assignment.updatedAt : (assignment.updatedAt as any).toDate()
-          }))
+        const schedules = querySnapshot.docs.map(doc => {
+          const scheduleData = doc.data() as TeachingSchedule;
+          return {
+            ...scheduleData,
+            id: doc.id,
+            assignments: scheduleData.assignments.map(assignment => ({
+              ...assignment,
+              assignedAt: assignment.assignedAt instanceof Date ? assignment.assignedAt : (assignment.assignedAt as any).toDate(),
+              updatedAt: assignment.updatedAt instanceof Date ? assignment.updatedAt : (assignment.updatedAt as any).toDate()
+            }))
+          };
         });
+        
+        setTeachingSchedules(schedules);
+        
+        // Expand the most recent year by default
+        if (schedules.length > 0) {
+          setExpandedYears(new Set([schedules[0].schoolYear]));
+        }
       } else {
         // Create default schedule for 2025-2026
         const defaultSchedule: TeachingSchedule = {
@@ -75,7 +85,8 @@ export default function TeacherManagement() {
           createdAt: new Date(),
           updatedAt: new Date()
         };
-        setTeachingSchedule(defaultSchedule);
+        setTeachingSchedules([defaultSchedule]);
+        setExpandedYears(new Set(['2025-2026']));
       }
     } catch (error) {
       console.error('Error loading teaching schedule:', error);
@@ -119,9 +130,59 @@ export default function TeacherManagement() {
     }
   };
 
-  const getAssignments = (classType: ClassType, ageGroup: AgeGroup, quarter: Quarter): TeacherAssignment[] => {
-    if (!teachingSchedule) return [];
-    return teachingSchedule.assignments.filter(
+  const toggleYear = (schoolYear: string) => {
+    setExpandedYears(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(schoolYear)) {
+        newSet.delete(schoolYear);
+      } else {
+        newSet.add(schoolYear);
+      }
+      return newSet;
+    });
+  };
+
+  const createNewSchoolYear = async () => {
+    if (!canEdit) return;
+    
+    const currentYear = new Date().getFullYear();
+    const nextYear = currentYear + 1;
+    const newSchoolYear = `${currentYear}-${nextYear}`;
+    
+    // Check if year already exists
+    if (teachingSchedules.some(s => s.schoolYear === newSchoolYear)) {
+      alert(`School year ${newSchoolYear} already exists.`);
+      return;
+    }
+    
+    try {
+      const newSchedule: TeachingSchedule = {
+        id: '',
+        schoolYear: newSchoolYear,
+        assignments: [],
+        createdAt: new Date(),
+        updatedAt: new Date()
+      };
+      
+      const docRef = await addDoc(collection(db, 'teachingSchedules'), newSchedule);
+      const scheduleWithId = { ...newSchedule, id: docRef.id };
+      
+      setTeachingSchedules(prev => [scheduleWithId, ...prev].sort((a, b) => b.schoolYear.localeCompare(a.schoolYear)));
+      setExpandedYears(new Set([newSchoolYear]));
+    } catch (error) {
+      console.error('Error creating new school year:', error);
+      alert('Failed to create new school year. Please try again.');
+    }
+  };
+
+  const getSchedule = (schoolYear: string): TeachingSchedule | undefined => {
+    return teachingSchedules.find(s => s.schoolYear === schoolYear);
+  };
+
+  const getAssignments = (schoolYear: string, classType: ClassType, ageGroup: AgeGroup, quarter: Quarter): TeacherAssignment[] => {
+    const schedule = getSchedule(schoolYear);
+    if (!schedule) return [];
+    return schedule.assignments.filter(
       assignment => 
         assignment.classType === classType && 
         assignment.ageGroup === ageGroup && 
@@ -129,10 +190,10 @@ export default function TeacherManagement() {
     );
   };
 
-  const handleEditCell = (classType: ClassType, ageGroup: AgeGroup, quarter: Quarter) => {
+  const handleEditCell = (schoolYear: string, classType: ClassType, ageGroup: AgeGroup, quarter: Quarter) => {
     if (!canEdit) return;
     
-    setEditingCell({ classType, ageGroup, quarter });
+    setEditingCell({ schoolYear, classType, ageGroup, quarter });
     
     // Reset form for adding a new teacher
     setSelectedTeacherId('');
@@ -189,7 +250,10 @@ export default function TeacherManagement() {
   };
 
   const handleSaveAssignment = async () => {
-    if (!editingCell || !teachingSchedule || !userProfile || !selectedTeacherId) return;
+    if (!editingCell || !userProfile || !selectedTeacherId) return;
+
+    const schedule = getSchedule(editingCell.schoolYear);
+    if (!schedule) return;
 
     try {
       const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
@@ -210,13 +274,12 @@ export default function TeacherManagement() {
         updatedAt: new Date()
       };
 
-      const updatedAssignments = [...teachingSchedule.assignments, newAssignment];
-      const updatedSchedule = { ...teachingSchedule, assignments: updatedAssignments, updatedAt: new Date() };
-      setTeachingSchedule(updatedSchedule);
+      const updatedAssignments = [...schedule.assignments, newAssignment];
+      const updatedSchedule = { ...schedule, assignments: updatedAssignments, updatedAt: new Date() };
       
       // Update in Firestore
-      if (teachingSchedule.id) {
-        const scheduleRef = doc(db, 'teachingSchedules', teachingSchedule.id);
+      if (schedule.id) {
+        const scheduleRef = doc(db, 'teachingSchedules', schedule.id);
         await updateDoc(scheduleRef, {
           assignments: updatedAssignments,
           updatedAt: new Date()
@@ -225,8 +288,13 @@ export default function TeacherManagement() {
         // Create new schedule document
         const newSchedule = { ...updatedSchedule, createdAt: new Date() };
         const docRef = await addDoc(collection(db, 'teachingSchedules'), newSchedule);
-        setTeachingSchedule({ ...newSchedule, id: docRef.id });
+        updatedSchedule.id = docRef.id;
       }
+
+      // Update local state
+      setTeachingSchedules(prev => prev.map(s => 
+        s.schoolYear === editingCell.schoolYear ? updatedSchedule : s
+      ));
 
       // Reset form but keep cell in edit mode
       setSelectedTeacherId('');
@@ -238,22 +306,29 @@ export default function TeacherManagement() {
     }
   };
 
-  const handleDeleteAssignment = async (assignmentId: string) => {
-    if (!teachingSchedule || !canEdit) return;
+  const handleDeleteAssignment = async (schoolYear: string, assignmentId: string) => {
+    if (!canEdit) return;
+
+    const schedule = getSchedule(schoolYear);
+    if (!schedule) return;
 
     try {
-      const updatedAssignments = teachingSchedule.assignments.filter(a => a.id !== assignmentId);
-      const updatedSchedule = { ...teachingSchedule, assignments: updatedAssignments, updatedAt: new Date() };
-      setTeachingSchedule(updatedSchedule);
+      const updatedAssignments = schedule.assignments.filter(a => a.id !== assignmentId);
+      const updatedSchedule = { ...schedule, assignments: updatedAssignments, updatedAt: new Date() };
       
       // Update in Firestore
-      if (teachingSchedule.id) {
-        const scheduleRef = doc(db, 'teachingSchedules', teachingSchedule.id);
+      if (schedule.id) {
+        const scheduleRef = doc(db, 'teachingSchedules', schedule.id);
         await updateDoc(scheduleRef, {
           assignments: updatedAssignments,
           updatedAt: new Date()
         });
       }
+
+      // Update local state
+      setTeachingSchedules(prev => prev.map(s => 
+        s.schoolYear === schoolYear ? updatedSchedule : s
+      ));
     } catch (error) {
       console.error('Error deleting assignment:', error);
     }
@@ -267,7 +342,7 @@ export default function TeacherManagement() {
     setNotes('');
   };
 
-  const renderClassTable = (classType: ClassType, classes: AgeGroup[], title: string) => (
+  const renderClassTable = (schoolYear: string, classType: ClassType, classes: AgeGroup[], title: string) => (
     <div className="mb-8">
       <h3 className="text-xl font-bold text-charcoal mb-4">{title}</h3>
       <div className="overflow-x-auto">
@@ -297,8 +372,9 @@ export default function TeacherManagement() {
                   {ageGroup}
                 </td>
                 {QUARTERS.map(quarter => {
-                  const assignments = getAssignments(classType, ageGroup, quarter);
-                  const isEditing = editingCell?.classType === classType && 
+                  const assignments = getAssignments(schoolYear, classType, ageGroup, quarter);
+                  const isEditing = editingCell?.schoolYear === schoolYear &&
+                                 editingCell?.classType === classType && 
                                  editingCell?.ageGroup === ageGroup && 
                                  editingCell?.quarter === quarter;
                   
@@ -323,7 +399,7 @@ export default function TeacherManagement() {
                               </div>
                               {canEdit && (
                                 <button
-                                  onClick={() => handleDeleteAssignment(assignment.id)}
+                                  onClick={() => handleDeleteAssignment(schoolYear, assignment.id)}
                                   className="text-red-600 hover:text-red-800 text-xs ml-2 font-bold"
                                   title="Remove teacher"
                                 >
@@ -395,7 +471,7 @@ export default function TeacherManagement() {
                           </div>
                         ) : (
                           <button
-                            onClick={() => handleEditCell(classType, ageGroup, quarter)}
+                            onClick={() => handleEditCell(schoolYear, classType, ageGroup, quarter)}
                             className="w-full px-2 py-2 text-xs text-primary border border-primary/30 rounded hover:bg-primary/10 transition-colors"
                           >
                             + Add Teacher
@@ -434,14 +510,14 @@ export default function TeacherManagement() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-text mb-2 uppercase tracking-wide">
-          Teacher's Calendar {teachingSchedule?.schoolYear}
+          Teacher's Calendar
         </h1>
         <p className="text-text/70 uppercase tracking-wide">
           Manage quarterly teaching assignments for Sunday classes, Wednesday classes, and decorators.
         </p>
       </div>
 
-      {/* Teacher Management Section */}
+      {/* Teacher Management Section - Always Visible */}
       <div className="mb-8 bg-white rounded-lg shadow-sm border border-sage/20 p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-text uppercase tracking-wide">Teacher Management</h2>
@@ -533,16 +609,74 @@ export default function TeacherManagement() {
         </div>
       </div>
 
-      <div className="mb-6">
-        <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-          <p><span className="font-medium">*</span> Teacher's Helper</p>
-          <p><span className="font-medium">2nd</span> Second choice</p>
+      {/* School Year Assignments - Collapsible */}
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-2xl font-bold text-charcoal">Teaching Assignments by Year</h2>
+          {canEdit && (
+            <button
+              onClick={createNewSchoolYear}
+              className="px-4 py-2 bg-[#70A8A0] text-white font-semibold rounded-lg hover:bg-[#5A8A83] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#70A8A0] transition-colors"
+            >
+              + Create New School Year
+            </button>
+          )}
         </div>
-      </div>
 
-      {renderClassTable('Sunday', SUNDAY_CLASSES, 'Sunday Classes')}
-      {renderClassTable('Wednesday', WEDNESDAY_CLASSES, 'Wednesday Classes')}
-      {renderClassTable('Decorators', DECORATOR_CLASSES, 'Sunday Decorators')}
+        {teachingSchedules.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-lg border border-sage/20">
+            <p className="text-text/50">No school years found. Create your first school year to get started.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {teachingSchedules.map((schedule) => {
+              const isExpanded = expandedYears.has(schedule.schoolYear);
+              
+              return (
+                <div key={schedule.schoolYear} className="bg-white rounded-lg border border-sage/20 overflow-hidden">
+                  {/* Year Header - Clickable to expand/collapse */}
+                  <button
+                    onClick={() => toggleYear(schedule.schoolYear)}
+                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-sage/5 transition-colors text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      {isExpanded ? (
+                        <svg className="w-6 h-6 text-charcoal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                        </svg>
+                      ) : (
+                        <svg className="w-6 h-6 text-charcoal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      )}
+                      <h3 className="text-xl font-bold text-charcoal">School Year {schedule.schoolYear}</h3>
+                    </div>
+                    <div className="text-sm text-text/50">
+                      {schedule.assignments.length} {schedule.assignments.length === 1 ? 'assignment' : 'assignments'}
+                    </div>
+                  </button>
+
+                  {/* Year Content - Collapsible */}
+                  {isExpanded && (
+                    <div className="px-6 pb-6">
+                      <div className="mb-4 pt-2">
+                        <div className="text-sm text-gray-600 space-y-1">
+                          <p><span className="font-medium">*</span> Teacher's Helper</p>
+                          <p><span className="font-medium">2nd</span> Second choice</p>
+                        </div>
+                      </div>
+
+                      {renderClassTable(schedule.schoolYear, 'Sunday', SUNDAY_CLASSES, 'Sunday Classes')}
+                      {renderClassTable(schedule.schoolYear, 'Wednesday', WEDNESDAY_CLASSES, 'Wednesday Classes')}
+                      {renderClassTable(schedule.schoolYear, 'Decorators', DECORATOR_CLASSES, 'Sunday Decorators')}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
