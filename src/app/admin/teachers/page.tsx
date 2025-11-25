@@ -93,8 +93,12 @@ export default function TeacherManagement() {
     } catch (error) {
       console.error('Error loading teachers:', error);
       // Show user-friendly error message
-      if (error instanceof Error && error.message.includes('Firebase')) {
-        console.error('Firebase configuration error. Please check your environment variables.');
+      if (error instanceof Error) {
+        if (error.message.includes('index')) {
+          console.error('Missing Firestore index. Please deploy indexes using: firebase deploy --only firestore:indexes');
+        } else if (error.message.includes('Firebase')) {
+          console.error('Firebase configuration error. Please check your environment variables.');
+        }
       }
     }
   };
@@ -123,7 +127,7 @@ export default function TeacherManagement() {
     setNotes(assignment?.notes || '');
   };
 
-  const handleTeacherSave = (teacher: Teacher) => {
+  const handleTeacherSave = async (teacher: Teacher) => {
     setTeachers(prev => {
       const existingIndex = prev.findIndex(t => t.id === teacher.id);
       if (existingIndex >= 0) {
@@ -136,6 +140,9 @@ export default function TeacherManagement() {
     });
     setShowTeacherForm(false);
     setEditingTeacher(null);
+    
+    // Reload teachers to ensure we have the latest data
+    await loadTeachers();
   };
 
   const handleTeacherCancel = () => {
@@ -232,7 +239,7 @@ export default function TeacherManagement() {
       }
 
       setEditingCell(null);
-      setNewTeacherName('');
+      setSelectedTeacherId('');
       setIsHelper(false);
       setIsSecondChoice(false);
       setNotes('');
