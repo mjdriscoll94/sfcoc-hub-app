@@ -272,16 +272,16 @@ export default function TeacherManagement() {
                       <div className="space-y-2">
                         {/* Show existing assignments */}
                         {assignments.map((assignment) => (
-                          <div key={assignment.id} className="bg-card border border-sage/20 rounded p-2 text-left">
+                          <div key={assignment.id} className="bg-[#8FC4BC]/20 border-2 border-[#70A8A0] rounded p-2 text-left">
                             <div className="flex justify-between items-start">
                               <div className="flex-1 text-sm">
-                                <div className="font-medium text-charcoal">
+                                <div className="font-medium text-[#2F3E46]">
                                   {assignment.teacherName}
                                   {assignment.isHelper && <span className="text-xs text-blue-600 dark:text-blue-400 ml-1">*</span>}
                                   {assignment.isSecondChoice && <span className="text-xs text-orange-600 dark:text-orange-400 ml-1">2</span>}
                                 </div>
                                 {assignment.notes && (
-                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                  <div className="text-xs text-[#5A6A74] mt-1">
                                     {assignment.notes}
                                   </div>
                                 )}
@@ -289,7 +289,7 @@ export default function TeacherManagement() {
                               {canEdit && (
                                 <button
                                   onClick={() => handleDeleteAssignment(assignment.id)}
-                                  className="text-red-600 hover:text-red-800 text-xs ml-2"
+                                  className="text-red-600 hover:text-red-800 text-xs ml-2 font-bold"
                                   title="Remove teacher"
                                 >
                                   ×
@@ -399,7 +399,7 @@ export default function TeacherManagement() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
         <h1 className="text-3xl font-bold text-text mb-2 uppercase tracking-wide">
-          Sioux Falls Church of Christ Teacher's Calendar {teachingSchedule?.schoolYear}
+          Teacher's Calendar {teachingSchedule?.schoolYear}
         </h1>
         <p className="text-text/70 uppercase tracking-wide">
           Manage quarterly teaching assignments for Sunday classes, Wednesday classes, and decorators.
