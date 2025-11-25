@@ -231,7 +231,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
         <button
           type="submit"
           disabled={loading}
-          className="px-4 py-2 text-sm font-medium text-on-primary bg-primary border border-transparent rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed focus-ring"
+          className="px-4 py-2 text-sm font-medium text-white bg-[#E88B5F] border border-transparent rounded-md hover:bg-[#D6714A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
         >
           {loading ? 'Saving...' : (isEditing ? 'Update Teacher' : 'Add Teacher')}
         </button>
