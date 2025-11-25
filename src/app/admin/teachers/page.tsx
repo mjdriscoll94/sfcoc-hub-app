@@ -352,7 +352,7 @@ export default function TeacherManagement() {
                               </button>
                               <button
                                 onClick={handleCancelEdit}
-                                className="flex-1 px-2 py-1 text-xs bg-charcoal text-white rounded hover:opacity-90"
+                                className="flex-1 px-2 py-1 text-xs bg-white text-black border-2 border-black rounded hover:bg-gray-100 transition-colors"
                               >
                                 Done
                               </button>
