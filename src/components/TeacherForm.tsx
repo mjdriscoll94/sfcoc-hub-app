@@ -20,7 +20,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
     lastName: teacher?.lastName || '',
     email: teacher?.email || '',
     phoneNumber: teacher?.phoneNumber || '',
-    gender: teacher?.gender || 'Prefer not to say' as Teacher['gender'],
+    gender: teacher?.gender || 'Male' as Teacher['gender'],
     preferHelper: teacher?.preferHelper || false,
     preferMainTeacher: teacher?.preferMainTeacher || false
   });
@@ -181,10 +181,8 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
           onChange={handleChange}
           className="w-full px-3 py-2 border border-border rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-text focus-ring"
         >
-          <option value="Prefer not to say">Prefer not to say</option>
           <option value="Male">Male</option>
           <option value="Female">Female</option>
-          <option value="Other">Other</option>
         </select>
       </div>
 

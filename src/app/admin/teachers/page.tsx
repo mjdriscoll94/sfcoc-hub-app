@@ -46,8 +46,8 @@ export default function TeacherManagement() {
           id: querySnapshot.docs[0].id,
           assignments: scheduleData.assignments.map(assignment => ({
             ...assignment,
-            assignedAt: assignment.assignedAt.toDate(),
-            updatedAt: assignment.updatedAt.toDate()
+            assignedAt: assignment.assignedAt instanceof Date ? assignment.assignedAt : (assignment.assignedAt as any).toDate(),
+            updatedAt: assignment.updatedAt instanceof Date ? assignment.updatedAt : (assignment.updatedAt as any).toDate()
           }))
         });
       } else {
@@ -151,6 +151,25 @@ export default function TeacherManagement() {
   const handleEditTeacher = (teacher: Teacher) => {
     setEditingTeacher(teacher);
     setShowTeacherForm(true);
+  };
+
+  const handleDeleteTeacher = async (teacherId: string) => {
+    if (!canEdit) return;
+    
+    if (!confirm('Are you sure you want to delete this teacher? This action cannot be undone.')) {
+      return;
+    }
+
+    try {
+      const teacherRef = doc(db, 'teachers', teacherId);
+      await deleteDoc(teacherRef);
+      
+      // Remove from local state
+      setTeachers(prev => prev.filter(t => t.id !== teacherId));
+    } catch (error) {
+      console.error('Error deleting teacher:', error);
+      alert('Failed to delete teacher. Please try again.');
+    }
   };
 
   const handleSaveAssignment = async () => {
@@ -469,12 +488,20 @@ export default function TeacherManagement() {
                     {teacher.gender}
                   </td>
                   <td className="px-4 py-2 text-center">
-                    <button
-                      onClick={() => handleEditTeacher(teacher)}
-                      className="px-3 py-1 text-sm bg-primary text-on-primary rounded hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus-ring uppercase tracking-wide"
-                    >
-                      Edit
-                    </button>
+                    <div className="flex justify-center space-x-2">
+                      <button
+                        onClick={() => handleEditTeacher(teacher)}
+                        className="px-3 py-1 text-sm bg-[#E88B5F] text-white rounded hover:bg-[#D6714A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] uppercase tracking-wide transition-colors"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => handleDeleteTeacher(teacher.id)}
+                        className="px-3 py-1 text-sm bg-white text-red-600 border-2 border-red-600 rounded hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-600 uppercase tracking-wide transition-colors"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
