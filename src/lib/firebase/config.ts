@@ -77,4 +77,31 @@ console.log('Initializing Storage...');
 const storage = getStorage(app);
 console.log('Storage initialized');
 
+// Cleanup Firebase on page unload to prevent "access control checks" errors
+// This fixes issues with Firebase re-initialization and stale connections
+if (typeof window !== 'undefined') {
+  const cleanupFirebase = async () => {
+    try {
+      const apps = getApps();
+      if (apps.length > 0) {
+        console.log('Cleaning up Firebase apps...');
+        await Promise.all(apps.map(app => app.delete()));
+        console.log('Firebase apps cleaned up successfully');
+      }
+    } catch (error) {
+      console.error('Error cleaning up Firebase:', error);
+    }
+  };
+
+  // Clean up before page unload
+  window.addEventListener('beforeunload', cleanupFirebase);
+  
+  // Clean up on visibility change (when tab is hidden/closed)
+  window.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'hidden') {
+      cleanupFirebase();
+    }
+  });
+}
+
 export { app, db, auth, rtdb, storage }; 
