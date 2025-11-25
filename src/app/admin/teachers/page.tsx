@@ -346,7 +346,7 @@ export default function TeacherManagement() {
                               <button
                                 onClick={handleSaveAssignment}
                                 disabled={!selectedTeacherId}
-                                className="flex-1 px-2 py-1 text-xs bg-success text-white rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="flex-1 px-2 py-1 text-xs bg-primary text-white rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
                               >
                                 Add
                               </button>
