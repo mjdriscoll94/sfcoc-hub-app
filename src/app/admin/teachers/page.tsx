@@ -28,6 +28,22 @@ export default function TeacherManagement() {
 
   const canEdit = userProfile && (userProfile.isAdmin || ROLE_PERMISSIONS[userProfile.role].canAssignServiceRoles);
 
+  // Format phone number as (XXX) XXX-XXXX
+  const formatPhoneNumber = (phone: string | undefined): string => {
+    if (!phone) return 'Not provided';
+    
+    // Remove all non-digit characters
+    const cleaned = phone.replace(/\D/g, '');
+    
+    // Check if we have a valid length
+    if (cleaned.length === 10) {
+      return `(${cleaned.slice(0, 3)}) ${cleaned.slice(3, 6)}-${cleaned.slice(6)}`;
+    }
+    
+    // Return as-is if not a standard 10-digit number
+    return phone;
+  };
+
   useEffect(() => {
     loadTeachingSchedule();
     loadTeachers();
@@ -482,7 +498,7 @@ export default function TeacherManagement() {
                     {teacher.email}
                   </td>
                   <td className="px-4 py-2 text-text/70 border-r border-sage/20">
-                    {teacher.phoneNumber || 'Not provided'}
+                    {formatPhoneNumber(teacher.phoneNumber)}
                   </td>
                   <td className="px-4 py-2 text-text/70 border-r border-sage/20">
                     {teacher.gender}
