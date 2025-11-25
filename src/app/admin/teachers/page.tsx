@@ -103,28 +103,26 @@ export default function TeacherManagement() {
     }
   };
 
-  const getAssignment = (classType: ClassType, ageGroup: AgeGroup, quarter: Quarter): TeacherAssignment | null => {
-    if (!teachingSchedule) return null;
-    return teachingSchedule.assignments.find(
+  const getAssignments = (classType: ClassType, ageGroup: AgeGroup, quarter: Quarter): TeacherAssignment[] => {
+    if (!teachingSchedule) return [];
+    return teachingSchedule.assignments.filter(
       assignment => 
         assignment.classType === classType && 
         assignment.ageGroup === ageGroup && 
         assignment.quarter === quarter
-    ) || null;
+    );
   };
 
   const handleEditCell = (classType: ClassType, ageGroup: AgeGroup, quarter: Quarter) => {
     if (!canEdit) return;
     
-    const assignment = getAssignment(classType, ageGroup, quarter);
     setEditingCell({ classType, ageGroup, quarter });
     
-    // Find teacher by name if assignment exists
-    const teacher = assignment ? teachers.find(t => `${t.firstName} ${t.lastName}` === assignment.teacherName) : null;
-    setSelectedTeacherId(teacher?.id || '');
-    setIsHelper(assignment?.isHelper || false);
-    setIsSecondChoice(assignment?.isSecondChoice || false);
-    setNotes(assignment?.notes || '');
+    // Reset form for adding a new teacher
+    setSelectedTeacherId('');
+    setIsHelper(false);
+    setIsSecondChoice(false);
+    setNotes('');
   };
 
   const handleTeacherSave = async (teacher: Teacher) => {
@@ -156,13 +154,15 @@ export default function TeacherManagement() {
   };
 
   const handleSaveAssignment = async () => {
-    if (!editingCell || !teachingSchedule || !userProfile) return;
+    if (!editingCell || !teachingSchedule || !userProfile || !selectedTeacherId) return;
 
     try {
       const selectedTeacher = teachers.find(t => t.id === selectedTeacherId);
       const teacherName = selectedTeacher ? `${selectedTeacher.firstName} ${selectedTeacher.lastName}` : '';
 
-      const assignmentData = {
+      // Create new assignment (always add, never replace)
+      const newAssignment = {
+        id: Date.now().toString(),
         classType: editingCell.classType,
         ageGroup: editingCell.ageGroup,
         quarter: editingCell.quarter,
@@ -175,76 +175,52 @@ export default function TeacherManagement() {
         updatedAt: new Date()
       };
 
-      if (selectedTeacherId) {
-        // Update or create assignment
-        const existingAssignment = getAssignment(editingCell.classType, editingCell.ageGroup, editingCell.quarter);
-        
-        if (existingAssignment) {
-          // Update existing assignment
-          const updatedAssignments = teachingSchedule.assignments.map(assignment =>
-            assignment.id === existingAssignment.id
-              ? { ...assignmentData, id: existingAssignment.id, assignedAt: existingAssignment.assignedAt }
-              : assignment
-          );
-          
-          const updatedSchedule = { ...teachingSchedule, assignments: updatedAssignments, updatedAt: new Date() };
-          setTeachingSchedule(updatedSchedule);
-          
-          // Update in Firestore
-          const scheduleRef = doc(db, 'teachingSchedules', teachingSchedule.id);
-          await updateDoc(scheduleRef, {
-            assignments: updatedAssignments,
-            updatedAt: new Date()
-          });
-        } else {
-          // Create new assignment
-          const newAssignment = { ...assignmentData, id: Date.now().toString() };
-          const updatedAssignments = [...teachingSchedule.assignments, newAssignment];
-          const updatedSchedule = { ...teachingSchedule, assignments: updatedAssignments, updatedAt: new Date() };
-          setTeachingSchedule(updatedSchedule);
-          
-          // Update in Firestore
-          if (teachingSchedule.id) {
-            const scheduleRef = doc(db, 'teachingSchedules', teachingSchedule.id);
-            await updateDoc(scheduleRef, {
-              assignments: updatedAssignments,
-              updatedAt: new Date()
-            });
-          } else {
-            // Create new schedule document
-            const newSchedule = { ...updatedSchedule, createdAt: new Date() };
-            const docRef = await addDoc(collection(db, 'teachingSchedules'), newSchedule);
-            setTeachingSchedule({ ...newSchedule, id: docRef.id });
-          }
-        }
-      } else {
-        // Remove assignment if teacher name is empty
-        const updatedAssignments = teachingSchedule.assignments.filter(
-          assignment => !(
-            assignment.classType === editingCell.classType &&
-            assignment.ageGroup === editingCell.ageGroup &&
-            assignment.quarter === editingCell.quarter
-          )
-        );
-        
-        const updatedSchedule = { ...teachingSchedule, assignments: updatedAssignments, updatedAt: new Date() };
-        setTeachingSchedule(updatedSchedule);
-        
-        // Update in Firestore
+      const updatedAssignments = [...teachingSchedule.assignments, newAssignment];
+      const updatedSchedule = { ...teachingSchedule, assignments: updatedAssignments, updatedAt: new Date() };
+      setTeachingSchedule(updatedSchedule);
+      
+      // Update in Firestore
+      if (teachingSchedule.id) {
         const scheduleRef = doc(db, 'teachingSchedules', teachingSchedule.id);
         await updateDoc(scheduleRef, {
           assignments: updatedAssignments,
           updatedAt: new Date()
         });
+      } else {
+        // Create new schedule document
+        const newSchedule = { ...updatedSchedule, createdAt: new Date() };
+        const docRef = await addDoc(collection(db, 'teachingSchedules'), newSchedule);
+        setTeachingSchedule({ ...newSchedule, id: docRef.id });
       }
 
-      setEditingCell(null);
+      // Reset form but keep cell in edit mode
       setSelectedTeacherId('');
       setIsHelper(false);
       setIsSecondChoice(false);
       setNotes('');
     } catch (error) {
       console.error('Error saving assignment:', error);
+    }
+  };
+
+  const handleDeleteAssignment = async (assignmentId: string) => {
+    if (!teachingSchedule || !canEdit) return;
+
+    try {
+      const updatedAssignments = teachingSchedule.assignments.filter(a => a.id !== assignmentId);
+      const updatedSchedule = { ...teachingSchedule, assignments: updatedAssignments, updatedAt: new Date() };
+      setTeachingSchedule(updatedSchedule);
+      
+      // Update in Firestore
+      if (teachingSchedule.id) {
+        const scheduleRef = doc(db, 'teachingSchedules', teachingSchedule.id);
+        await updateDoc(scheduleRef, {
+          assignments: updatedAssignments,
+          updatedAt: new Date()
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting assignment:', error);
     }
   };
 
@@ -286,90 +262,111 @@ export default function TeacherManagement() {
                   {ageGroup}
                 </td>
                 {QUARTERS.map(quarter => {
-                  const assignment = getAssignment(classType, ageGroup, quarter);
+                  const assignments = getAssignments(classType, ageGroup, quarter);
                   const isEditing = editingCell?.classType === classType && 
                                  editingCell?.ageGroup === ageGroup && 
                                  editingCell?.quarter === quarter;
                   
                   return (
-                    <td key={quarter} className="px-4 py-2 text-center border-r border-gray-300 dark:border-gray-600 min-w-[120px]">
-                      {isEditing ? (
-                        <div className="space-y-2">
-                          <select
-                            value={selectedTeacherId}
-                            onChange={(e) => setSelectedTeacherId(e.target.value)}
-                            className="w-full px-2 py-1 text-sm border border-gray-300 dark:border-gray-600 rounded bg-white dark:bg-gray-700 text-charcoal"
-                            autoFocus
-                          >
-                            <option value="">Select a teacher</option>
-                            {teachers.map(teacher => (
-                              <option key={teacher.id} value={teacher.id}>
-                                {teacher.firstName} {teacher.lastName}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="flex flex-col space-y-1">
-                            <label className="flex items-center text-xs">
-                              <input
-                                type="checkbox"
-                                checked={isHelper}
-                                onChange={(e) => setIsHelper(e.target.checked)}
-                                className="mr-1"
-                              />
-                              Helper
-                            </label>
-                            <label className="flex items-center text-xs">
-                              <input
-                                type="checkbox"
-                                checked={isSecondChoice}
-                                onChange={(e) => setIsSecondChoice(e.target.checked)}
-                                className="mr-1"
-                              />
-                              2nd Choice
-                            </label>
-                          </div>
-                          <div className="flex space-x-1">
-                            <button
-                              onClick={handleSaveAssignment}
-                              className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700"
-                            >
-                              Save
-                            </button>
-                            <button
-                              onClick={handleCancelEdit}
-                              className="px-2 py-1 text-xs bg-gray-600 text-white rounded hover:bg-gray-700"
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div
-                          className={`p-2 rounded cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-700 ${
-                            assignment ? 'bg-white dark:bg-gray-800' : 'bg-yellow-100 dark:bg-yellow-900/20'
-                          }`}
-                          onClick={() => handleEditCell(classType, ageGroup, quarter)}
-                        >
-                          {assignment ? (
-                            <div className="text-sm">
-                              <div className="font-medium text-charcoal">
-                                {assignment.teacherName}
-                                {assignment.isHelper && <span className="text-xs text-blue-600 dark:text-blue-400"> *</span>}
-                                {assignment.isSecondChoice && <span className="text-xs text-orange-600 dark:text-orange-400"> 2</span>}
-                              </div>
-                              {assignment.notes && (
-                                <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                                  {assignment.notes}
+                    <td key={quarter} className="px-4 py-2 border-r border-gray-300 dark:border-gray-600 min-w-[180px] align-top">
+                      <div className="space-y-2">
+                        {/* Show existing assignments */}
+                        {assignments.map((assignment) => (
+                          <div key={assignment.id} className="bg-card border border-sage/20 rounded p-2 text-left">
+                            <div className="flex justify-between items-start">
+                              <div className="flex-1 text-sm">
+                                <div className="font-medium text-charcoal">
+                                  {assignment.teacherName}
+                                  {assignment.isHelper && <span className="text-xs text-blue-600 dark:text-blue-400 ml-1">*</span>}
+                                  {assignment.isSecondChoice && <span className="text-xs text-orange-600 dark:text-orange-400 ml-1">2</span>}
                                 </div>
+                                {assignment.notes && (
+                                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                                    {assignment.notes}
+                                  </div>
+                                )}
+                              </div>
+                              {canEdit && (
+                                <button
+                                  onClick={() => handleDeleteAssignment(assignment.id)}
+                                  className="text-red-600 hover:text-red-800 text-xs ml-2"
+                                  title="Remove teacher"
+                                >
+                                  ×
+                                </button>
                               )}
                             </div>
-                          ) : (
-                            <div className="text-sm text-gray-500 dark:text-gray-400 italic">
-                              {canEdit ? 'Click to assign' : 'open'}
+                          </div>
+                        ))}
+                        
+                        {/* Add new teacher form */}
+                        {isEditing ? (
+                          <div className="space-y-2 border-2 border-primary rounded p-2 bg-primary/5">
+                            <select
+                              value={selectedTeacherId}
+                              onChange={(e) => setSelectedTeacherId(e.target.value)}
+                              className="w-full px-2 py-1 text-sm border border-border rounded bg-card text-charcoal"
+                              autoFocus
+                            >
+                              <option value="">Select a teacher</option>
+                              {teachers.map(teacher => (
+                                <option key={teacher.id} value={teacher.id}>
+                                  {teacher.firstName} {teacher.lastName}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="flex flex-col space-y-1">
+                              <label className="flex items-center text-xs text-text">
+                                <input
+                                  type="checkbox"
+                                  checked={isHelper}
+                                  onChange={(e) => setIsHelper(e.target.checked)}
+                                  className="mr-1"
+                                />
+                                Helper
+                              </label>
+                              <label className="flex items-center text-xs text-text">
+                                <input
+                                  type="checkbox"
+                                  checked={isSecondChoice}
+                                  onChange={(e) => setIsSecondChoice(e.target.checked)}
+                                  className="mr-1"
+                                />
+                                2nd Choice
+                              </label>
                             </div>
-                          )}
-                        </div>
-                      )}
+                            <input
+                              type="text"
+                              placeholder="Notes (optional)"
+                              value={notes}
+                              onChange={(e) => setNotes(e.target.value)}
+                              className="w-full px-2 py-1 text-xs border border-border rounded bg-card text-charcoal"
+                            />
+                            <div className="flex space-x-1">
+                              <button
+                                onClick={handleSaveAssignment}
+                                disabled={!selectedTeacherId}
+                                className="flex-1 px-2 py-1 text-xs bg-success text-white rounded hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed"
+                              >
+                                Add
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="flex-1 px-2 py-1 text-xs bg-charcoal text-white rounded hover:opacity-90"
+                              >
+                                Done
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => handleEditCell(classType, ageGroup, quarter)}
+                            className="w-full px-2 py-2 text-xs text-primary border border-primary/30 rounded hover:bg-primary/10 transition-colors"
+                          >
+                            + Add Teacher
+                          </button>
+                        )}
+                      </div>
                     </td>
                   );
                 })}
