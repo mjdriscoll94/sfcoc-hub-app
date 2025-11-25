@@ -297,7 +297,7 @@ export default function TeacherManagement() {
                                 <div className="font-medium text-[#2F3E46]">
                                   {assignment.teacherName}
                                   {assignment.isHelper && <span className="text-xs text-blue-600 dark:text-blue-400 ml-1">*</span>}
-                                  {assignment.isSecondChoice && <span className="text-xs text-orange-600 dark:text-orange-400 ml-1">2</span>}
+                                  {assignment.isSecondChoice && <span className="text-xs text-orange-600 dark:text-orange-400 ml-1">2nd</span>}
                                 </div>
                                 {assignment.notes && (
                                   <div className="text-xs text-[#5A6A74] mt-1">
@@ -520,7 +520,7 @@ export default function TeacherManagement() {
       <div className="mb-6">
         <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
           <p><span className="font-medium">*</span> Teacher's Helper</p>
-          <p><span className="font-medium">2</span> Second choice</p>
+          <p><span className="font-medium">2nd</span> Second choice</p>
         </div>
       </div>
 
