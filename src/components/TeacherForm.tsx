@@ -20,7 +20,9 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
     lastName: teacher?.lastName || '',
     email: teacher?.email || '',
     phoneNumber: teacher?.phoneNumber || '',
-    gender: teacher?.gender || 'Prefer not to say' as Teacher['gender']
+    gender: teacher?.gender || 'Prefer not to say' as Teacher['gender'],
+    preferHelper: teacher?.preferHelper || false,
+    preferMainTeacher: teacher?.preferMainTeacher || false
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -56,6 +58,8 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
         email: formData.email.trim().toLowerCase(),
         phoneNumber: formData.phoneNumber.trim() || undefined,
         gender: formData.gender,
+        preferHelper: formData.preferHelper,
+        preferMainTeacher: formData.preferMainTeacher,
         updatedAt: new Date(),
         isActive: true
       };
@@ -94,8 +98,9 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
+    const { name, value, type } = e.target;
+    const newValue = type === 'checkbox' ? (e.target as HTMLInputElement).checked : value;
+    setFormData(prev => ({ ...prev, [name]: newValue }));
   };
 
   return (
@@ -181,6 +186,34 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
           <option value="Female">Female</option>
           <option value="Other">Other</option>
         </select>
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium text-text mb-2">
+          Teaching Preferences
+        </label>
+        <div className="space-y-2">
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              name="preferMainTeacher"
+              checked={formData.preferMainTeacher}
+              onChange={handleChange}
+              className="h-4 w-4 text-[#E88B5F] border-border rounded focus:ring-2 focus:ring-[#E88B5F]"
+            />
+            <span className="ml-2 text-sm text-text">Prefers Main Teacher role</span>
+          </label>
+          <label className="flex items-center">
+            <input
+              type="checkbox"
+              name="preferHelper"
+              checked={formData.preferHelper}
+              onChange={handleChange}
+              className="h-4 w-4 text-[#E88B5F] border-border rounded focus:ring-2 focus:ring-[#E88B5F]"
+            />
+            <span className="ml-2 text-sm text-text">Prefers Teacher's Helper role</span>
+          </label>
+        </div>
       </div>
 
       {error && (

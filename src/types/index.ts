@@ -56,6 +56,8 @@ export interface Teacher {
   email: string;
   phoneNumber?: string;
   gender: 'Male' | 'Female' | 'Other' | 'Prefer not to say';
+  preferHelper?: boolean;
+  preferMainTeacher?: boolean;
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
