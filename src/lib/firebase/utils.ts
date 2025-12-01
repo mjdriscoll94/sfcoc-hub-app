@@ -157,7 +157,8 @@ export const addVolunteerOpportunity = async (data: VolunteerOpportunityData) =>
       dateTime: Timestamp.fromDate(data.dateTime),
       createdAt: Timestamp.now(),
       currentVolunteers: 0,
-      volunteers: [] // Array to store volunteer information
+      volunteers: [], // Array to store volunteer information
+      approvalStatus: 'approved' // Admin-created opportunities are auto-approved
     };
 
     const docRef = await addDoc(collection(db, 'volunteerOpportunities'), docData);

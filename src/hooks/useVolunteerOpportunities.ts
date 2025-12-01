@@ -49,12 +49,13 @@ export function useVolunteerOpportunities() {
     setError(null);
     setIsIndexBuilding(false);
 
-    // Create query
+    // Create query - only show approved opportunities
     let q: Query;
     try {
       q = query(
         collection(db, 'volunteerOpportunities'),
         where('status', '==', 'open'),
+        where('approvalStatus', '==', 'approved'),
         orderBy('dateTime', 'asc')
       );
     } catch (error) {

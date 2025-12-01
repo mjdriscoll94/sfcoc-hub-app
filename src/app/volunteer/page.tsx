@@ -5,6 +5,7 @@ import { useVolunteerOpportunities } from '@/hooks/useVolunteerOpportunities';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import VolunteerOpportunityForm from '@/components/VolunteerOpportunityForm';
 
 export default function VolunteerPage() {
   const { 
@@ -19,6 +20,7 @@ export default function VolunteerPage() {
   
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [signUpError, setSignUpError] = useState<string | null>(null);
+  const [showCreateForm, setShowCreateForm] = useState(false);
 
   const toggleExpand = (id: string) => {
     setExpandedItems(prev => {
@@ -80,14 +82,45 @@ export default function VolunteerPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Volunteer Opportunities</h1>
+      <div className="mb-8">
+        <div className="flex justify-between items-center mb-4">
+          <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Volunteer Opportunities</h1>
+          
+          {user && (
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="inline-flex items-center px-4 py-2 bg-[#70A8A0] text-white font-semibold rounded-lg hover:bg-[#5A8A83] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#70A8A0] transition-colors"
+            >
+              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+              </svg>
+              Create Opportunity
+            </button>
+          )}
+        </div>
+        <p className="text-text-light text-center">
+          {user ? 'Sign up for opportunities or create your own!' : 'Sign in to volunteer or create opportunities'}
+        </p>
       </div>
 
       {signUpError && (
         <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
           <p className="text-error">{signUpError}</p>
         </div>
+      )}
+
+      {showCreateForm && (
+        <VolunteerOpportunityForm
+          onClose={() => setShowCreateForm(false)}
+          onSuccess={() => {
+            // Show success message
+            const successDiv = document.createElement('div');
+            successDiv.className = 'fixed top-4 right-4 bg-success-bg border border-success text-success px-6 py-3 rounded-lg shadow-lg z-50';
+            successDiv.textContent = 'Volunteer opportunity submitted for approval!';
+            document.body.appendChild(successDiv);
+            setTimeout(() => successDiv.remove(), 5000);
+          }}
+        />
       )}
 
       {/* Loading State */}
