@@ -109,12 +109,8 @@ export default function PrayerRequestApprovalQueue() {
 
   if (pendingItems.length === 0) {
     return (
-      <div className="bg-white dark:bg-transparent">
-        <div className="bg-white dark:bg-transparent rounded-lg p-6">
-          <div className="text-gray-900 dark:text-gray-500 text-center py-4">
-            No pending prayer requests to approve.
-          </div>
-        </div>
+      <div className="text-text-muted text-center py-4">
+        No pending prayer requests to approve.
       </div>
     );
   }

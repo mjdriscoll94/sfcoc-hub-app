@@ -100,7 +100,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 gap-8">
           {/* Prayer Request Approval Queue */}
-          <div className="bg-card rounded-lg p-6 border border-border shadow">
+          <div className="bg-card rounded-lg p-6 border border-border shadow bg-none">
             <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Prayer Request Approval Queue
             </h2>
