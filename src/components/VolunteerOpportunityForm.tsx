@@ -89,7 +89,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
     <div className="fixed inset-0 z-[9999] isolate">
       <div className="absolute inset-0 bg-black/50 z-[1]" onClick={onClose}></div>
       <div className="absolute inset-0 flex items-center justify-center p-4 z-[2] pointer-events-none">
-        <div className="bg-card rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto">
+        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-charcoal">Submit Volunteer Opportunity</h2>
@@ -129,7 +129,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 onChange={handleChange}
                 required
                 maxLength={100}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-charcoal"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
                 placeholder="e.g., Church Cleanup Day"
               />
             </div>
@@ -146,7 +146,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 required
                 rows={5}
                 maxLength={1000}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-charcoal resize-none"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal resize-none"
                 placeholder="Provide details about the volunteer opportunity..."
               />
               <p className="mt-1 text-xs text-text-muted">
@@ -166,7 +166,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 onChange={handleChange}
                 required
                 min={new Date().toISOString().slice(0, 16)}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-charcoal"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
               />
             </div>
 
@@ -182,7 +182,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 onChange={handleChange}
                 required
                 maxLength={200}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-charcoal"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
                 placeholder="e.g., Church Building"
               />
             </div>
@@ -200,7 +200,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 required
                 min={1}
                 max={100}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-charcoal"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
               />
             </div>
 
@@ -215,7 +215,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 value={formData.contactEmail}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-charcoal"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
               />
             </div>
 
@@ -229,7 +229,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 name="contactPhone"
                 value={formData.contactPhone}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-card text-charcoal"
+                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
                 placeholder="(555) 123-4567"
               />
             </div>
