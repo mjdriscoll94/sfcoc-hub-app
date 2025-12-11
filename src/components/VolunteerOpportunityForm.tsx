@@ -86,10 +86,17 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] isolate">
-      <div className="absolute inset-0 bg-black/50 z-[1]" onClick={onClose}></div>
-      <div className="absolute inset-0 flex items-center justify-center p-4 z-[2] pointer-events-none">
-        <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto pointer-events-auto">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto">
+      {/* Backdrop overlay */}
+      <div 
+        className="fixed inset-0 bg-black bg-opacity-60 transition-opacity" 
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      
+      {/* Modal container */}
+      <div className="fixed inset-0 flex items-center justify-center p-4">
+        <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold text-charcoal">Submit Volunteer Opportunity</h2>
@@ -254,7 +261,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
           </form>
         </div>
       </div>
-      </div>
+    </div>
     </div>
   );
 }
