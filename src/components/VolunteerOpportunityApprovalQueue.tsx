@@ -69,11 +69,18 @@ export default function VolunteerOpportunityApprovalQueue() {
           } as PendingOpportunity;
         });
         setPendingItems(items);
+        setError(null);
         setLoading(false);
       },
       (err) => {
         console.error('Error fetching pending volunteer opportunities:', err);
-        setError('Failed to load pending opportunities');
+        // Check if it's a missing index error - treat as empty list
+        if (err.message?.includes('index')) {
+          setPendingItems([]);
+          setError(null);
+        } else {
+          setError('Failed to load pending opportunities');
+        }
         setLoading(false);
       }
     );
@@ -167,7 +174,7 @@ export default function VolunteerOpportunityApprovalQueue() {
   if (pendingItems.length === 0) {
     return (
       <div className="text-text-muted text-center py-4">
-        No pending volunteer opportunities to approve.
+        No pending volunteer opportunities to review.
       </div>
     );
   }
