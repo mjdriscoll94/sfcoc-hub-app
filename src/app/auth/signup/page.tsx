@@ -18,7 +18,7 @@ export default function SignUpPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
-    setError(null);
+    setError(null); 
     setSuccess(null);
 
     try {
@@ -57,7 +57,7 @@ export default function SignUpPage() {
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="appearance-none rounded-none relative block w-full px-3 py-2 border border-sage/20 placeholder-text/50 text-text bg-card rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Display Name"
+                placeholder="Full Name"
               />
             </div>
             <div>
