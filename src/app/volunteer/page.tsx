@@ -257,14 +257,14 @@ export default function VolunteerPage() {
                                 e.stopPropagation();
                                 handleSignUp(opportunity.id);
                               }}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-on-primary bg-primary hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide"
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#E88B5F] hover:bg-[#D6714A] active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide transition-colors"
                             >
                               Sign Up
                             </button>
                           ) : (
                             <Link 
                               href="/auth/signin" 
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-on-primary bg-primary hover:opacity-90 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide"
+                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#E88B5F] hover:bg-[#D6714A] active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] uppercase tracking-wide transition-colors"
                               onClick={(e) => e.stopPropagation()}
                             >
                               Sign in to Volunteer
