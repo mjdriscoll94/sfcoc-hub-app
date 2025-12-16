@@ -173,8 +173,12 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
-                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  <div className={`w-14 h-7 rounded-full transition-colors duration-200 ease-in-out relative peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 ${
+                    localSubscriptions.announcements ? 'bg-[#FF6B6B]' : 'bg-gray-300'
+                  }`}>
+                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      localSubscriptions.announcements ? 'translate-x-7' : 'translate-x-0'
+                    }`}></div>
                   </div>
                 </label>
               </div>
@@ -197,8 +201,12 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
-                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  <div className={`w-14 h-7 rounded-full transition-colors duration-200 ease-in-out relative peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 ${
+                    localSubscriptions.prayerRequests ? 'bg-[#FF6B6B]' : 'bg-gray-300'
+                  }`}>
+                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      localSubscriptions.prayerRequests ? 'translate-x-7' : 'translate-x-0'
+                    }`}></div>
                   </div>
                 </label>
               </div>
@@ -221,8 +229,12 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
-                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  <div className={`w-14 h-7 rounded-full transition-colors duration-200 ease-in-out relative peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 ${
+                    localSubscriptions.praiseReports ? 'bg-[#FF6B6B]' : 'bg-gray-300'
+                  }`}>
+                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      localSubscriptions.praiseReports ? 'translate-x-7' : 'translate-x-0'
+                    }`}></div>
                   </div>
                 </label>
               </div>
@@ -245,8 +257,12 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
-                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  <div className={`w-14 h-7 rounded-full transition-colors duration-200 ease-in-out relative peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 ${
+                    localSubscriptions.events ? 'bg-[#FF6B6B]' : 'bg-gray-300'
+                  }`}>
+                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      localSubscriptions.events ? 'translate-x-7' : 'translate-x-0'
+                    }`}></div>
                   </div>
                 </label>
               </div>
@@ -269,8 +285,12 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
-                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  <div className={`w-14 h-7 rounded-full transition-colors duration-200 ease-in-out relative peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 ${
+                    localSubscriptions.newsletter ? 'bg-[#FF6B6B]' : 'bg-gray-300'
+                  }`}>
+                    <div className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out ${
+                      localSubscriptions.newsletter ? 'translate-x-7' : 'translate-x-0'
+                    }`}></div>
                   </div>
                 </label>
               </div>
