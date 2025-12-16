@@ -155,16 +155,16 @@ export default function SettingsPage() {
             <div>
               <h2 className="text-lg font-medium text-text mb-4 uppercase tracking-wide">Email Notifications</h2>
             <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <label htmlFor="announcements" className="text-text font-medium">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex-1">
+                  <label htmlFor="announcements" className="text-text font-medium block">
                     Announcements
                   </label>
-                  <p className="text-text/70 text-sm">
+                  <p className="text-text/70 text-sm mt-0.5">
                     Receive emails about new church announcements
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
                   <input
                     type="checkbox"
                     id="announcements"
@@ -173,20 +173,22 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
+                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  </div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <label htmlFor="prayerRequests" className="text-text font-medium">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex-1">
+                  <label htmlFor="prayerRequests" className="text-text font-medium block">
                     Prayer Requests
                   </label>
-                  <p className="text-text/70 text-sm">
+                  <p className="text-text/70 text-sm mt-0.5">
                     Receive notifications for new prayer requests
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
                   <input
                     type="checkbox"
                     id="prayerRequests"
@@ -195,20 +197,22 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
+                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  </div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <label htmlFor="praiseReports" className="text-text font-medium">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex-1">
+                  <label htmlFor="praiseReports" className="text-text font-medium block">
                     Praise Reports
                   </label>
-                  <p className="text-text/70 text-sm">
+                  <p className="text-text/70 text-sm mt-0.5">
                     Receive notifications for new praise reports
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
                   <input
                     type="checkbox"
                     id="praiseReports"
@@ -217,20 +221,22 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
+                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  </div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <label htmlFor="events" className="text-text font-medium">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex-1">
+                  <label htmlFor="events" className="text-text font-medium block">
                     Events
                   </label>
-                  <p className="text-text/70 text-sm">
+                  <p className="text-text/70 text-sm mt-0.5">
                     Receive emails about upcoming church events
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
                   <input
                     type="checkbox"
                     id="events"
@@ -239,20 +245,22 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
+                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  </div>
                 </label>
               </div>
 
-              <div className="flex items-center justify-between">
-                <div>
-                  <label htmlFor="newsletter" className="text-text font-medium">
+              <div className="flex items-center justify-between py-2">
+                <div className="flex-1">
+                  <label htmlFor="newsletter" className="text-text font-medium block">
                     Newsletter
                   </label>
-                  <p className="text-text/70 text-sm">
+                  <p className="text-text/70 text-sm mt-0.5">
                     Receive our weekly church newsletter
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer">
+                <label className="relative inline-flex items-center cursor-pointer ml-4">
                   <input
                     type="checkbox"
                     id="newsletter"
@@ -261,7 +269,9 @@ export default function SettingsPage() {
                     disabled={isSaving}
                     className="sr-only peer"
                   />
-                  <div className="w-11 h-6 bg-muted rounded-full peer-focus:ring-2 peer-focus:ring-primary peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:bg-primary after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-border after:border after:rounded-full after:h-5 after:w-5 after:transition-all"></div>
+                  <div className="w-14 h-7 bg-gray-300 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-[#FF6B6B] peer-focus:ring-offset-2 rounded-full peer peer-checked:bg-[#FF6B6B] transition-colors duration-200 ease-in-out relative">
+                    <div className="absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow-md transform transition-transform duration-200 ease-in-out peer-checked:translate-x-7"></div>
+                  </div>
                 </label>
               </div>
             </div>
