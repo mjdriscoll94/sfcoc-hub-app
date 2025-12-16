@@ -280,7 +280,7 @@ export default function PrayerBoard() {
         >
           {/* Modal Content */}
           <div 
-            className="bg-card backdrop-blur-md rounded-lg shadow-xl w-full max-w-lg relative border border-sage/20"
+            className="bg-white rounded-lg shadow-xl w-full max-w-lg relative border border-sage/20"
             onClick={e => e.stopPropagation()}
           >
             {/* Modal Header */}
