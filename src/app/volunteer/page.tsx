@@ -13,7 +13,8 @@ export default function VolunteerPage() {
     loading, 
     error, 
     isIndexBuilding,
-    signUpForOpportunity 
+    signUpForOpportunity,
+    removeSignUp
   } = useVolunteerOpportunities();
   const { user, userProfile } = useAuth();
   const router = useRouter();
@@ -50,6 +51,21 @@ export default function VolunteerPage() {
       );
     } catch (error) {
       setSignUpError(error instanceof Error ? error.message : 'Failed to sign up');
+    }
+  };
+
+  const handleRemoveSignUp = async (opportunityId: string) => {
+    try {
+      setSignUpError(null);
+      
+      if (!user || !userProfile) {
+        router.push('/auth/signin');
+        return;
+      }
+
+      await removeSignUp(opportunityId, userProfile.uid);
+    } catch (error) {
+      setSignUpError(error instanceof Error ? error.message : 'Failed to remove sign up');
     }
   };
 
@@ -250,17 +266,33 @@ export default function VolunteerPage() {
                       </div>
 
                       {opportunity.status === 'open' && (
-                        <div className="mt-6">
+                        <div className="mt-6 flex items-center gap-3">
                           {user ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleSignUp(opportunity.id);
-                              }}
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#E88B5F] hover:bg-[#D6714A] active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide transition-colors"
-                            >
-                              Sign Up
-                            </button>
+                            <>
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (!opportunity.volunteers?.some((volunteer) => volunteer.id === userProfile?.uid)) {
+                                    handleSignUp(opportunity.id);
+                                  }
+                                }}
+                                disabled={opportunity.volunteers?.some((volunteer) => volunteer.id === userProfile?.uid)}
+                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#E88B5F] hover:bg-[#D6714A] active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide transition-colors"
+                              >
+                                Sign Up
+                              </button>
+                              {opportunity.volunteers?.some((volunteer) => volunteer.id === userProfile?.uid) && (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleRemoveSignUp(opportunity.id);
+                                  }}
+                                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide transition-colors"
+                                >
+                                  Remove Sign Up
+                                </button>
+                              )}
+                            </>
                           ) : (
                             <Link 
                               href="/auth/signin" 

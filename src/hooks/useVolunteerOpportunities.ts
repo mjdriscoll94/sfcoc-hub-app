@@ -136,11 +136,41 @@ export function useVolunteerOpportunities() {
     }
   };
 
+  // Function to remove sign up from a volunteer opportunity
+  const removeSignUp = async (opportunityId: string, userId: string) => {
+    try {
+      const docRef = doc(db, 'volunteerOpportunities', opportunityId);
+      const docSnap = await getDoc(docRef);
+      const data = docSnap.data();
+      
+      if (!data) {
+        throw new Error('Opportunity not found');
+      }
+
+      const currentVolunteers = data.volunteers || [];
+      const updatedVolunteers = currentVolunteers.filter((user: { id: string }) => user.id !== userId);
+      
+      if (currentVolunteers.length === updatedVolunteers.length) {
+        throw new Error('You are not signed up for this opportunity');
+      }
+
+      await updateDoc(docRef, {
+        volunteers: updatedVolunteers,
+        currentVolunteers: updatedVolunteers.length,
+        status: 'open', // Reopen if it was closed
+      });
+    } catch (error) {
+      console.error('Error removing sign up:', error);
+      throw error;
+    }
+  };
+
   return {
     items,
     loading,
     error,
     isIndexBuilding,
-    signUpForOpportunity
+    signUpForOpportunity,
+    removeSignUp
   };
 } 
