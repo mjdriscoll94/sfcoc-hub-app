@@ -9,6 +9,10 @@ import { useAuth } from '@/lib/auth/AuthContext';
 type FilterType = 'all' | 'prayer' | 'praise';
 
 export default function PrayerBoard() {
+  useEffect(() => {
+    document.title = 'Prayer Board | Sioux Falls Church of Christ';
+  }, []);
+
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());

@@ -1,9 +1,14 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useLessonNotes } from '@/hooks/useLessonNotes';
 import { FileText, Download, Calendar, Clock } from 'lucide-react';
 
 export default function LessonNotesPage() {
+  useEffect(() => {
+    document.title = 'Lesson Notes | Sioux Falls Church of Christ';
+  }, []);
+
   const { notes, loading, error } = useLessonNotes();
 
   return (

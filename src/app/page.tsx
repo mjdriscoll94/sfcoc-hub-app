@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import BuildStatus from '@/components/BuildStatus';
 
 const eventCategories = [
@@ -129,6 +129,10 @@ const eventCategories = [
 ];
 
 export default function Home() {
+  useEffect(() => {
+    document.title = 'Home | Sioux Falls Church of Christ';
+  }, []);
+
   const [expandedCategories, setExpandedCategories] = useState(new Set([0])); // Start with first category expanded
 
   const toggleCategory = (index: number) => {

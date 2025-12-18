@@ -1,11 +1,16 @@
 'use client';
 
+import { useEffect } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import DirectorySubmissionForm from '@/components/DirectorySubmissionForm';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 import BackButton from '@/components/BackButton';
 
 export default function DirectorySubmitPage() {
+  useEffect(() => {
+    document.title = 'Submit to Directory | Sioux Falls Church of Christ';
+  }, []);
+
   const { userProfile } = useAuth();
 
   // Check if user has permission to submit to directory

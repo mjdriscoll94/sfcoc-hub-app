@@ -44,6 +44,10 @@ interface DirectoryEntry {
 }
 
 export default function DirectoryPage() {
+  useEffect(() => {
+    document.title = 'Directory | Sioux Falls Church of Christ';
+  }, []);
+
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMember, setSelectedMember] = useState<DirectoryMember | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);

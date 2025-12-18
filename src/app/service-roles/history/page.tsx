@@ -16,6 +16,10 @@ interface UserProfile {
 }
 
 export default function ServiceHistoryPage() {
+  useEffect(() => {
+    document.title = 'Service History | Sioux Falls Church of Christ';
+  }, []);
+
   const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

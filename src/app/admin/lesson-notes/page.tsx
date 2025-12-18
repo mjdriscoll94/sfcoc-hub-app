@@ -25,6 +25,10 @@ interface FirebaseUser extends DocumentData {
 }
 
 export default function LessonNotesManagement() {
+  useEffect(() => {
+    document.title = 'Lesson Notes Management | Sioux Falls Church of Christ';
+  }, []);
+
   const [title, setTitle] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);

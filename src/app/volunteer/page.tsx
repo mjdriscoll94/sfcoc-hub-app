@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useVolunteerOpportunities } from '@/hooks/useVolunteerOpportunities';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
@@ -8,6 +8,10 @@ import Link from 'next/link';
 import VolunteerOpportunityForm from '@/components/VolunteerOpportunityForm';
 
 export default function VolunteerPage() {
+  useEffect(() => {
+    document.title = 'Volunteer Opportunities | Sioux Falls Church of Christ';
+  }, []);
+
   const { 
     items: opportunities, 
     loading, 

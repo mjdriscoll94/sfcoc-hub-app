@@ -1,6 +1,11 @@
 'use client';
 
+import { useEffect } from 'react';
+
 export default function GivePage() {
+  useEffect(() => {
+    document.title = 'Give | Sioux Falls Church of Christ';
+  }, []);
   return (
     <div className="min-h-screen bg-bg">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

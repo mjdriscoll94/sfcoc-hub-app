@@ -22,6 +22,10 @@ type TipTapContent = {
 };
 
 export default function NewAnnouncementPage() {
+  useEffect(() => {
+    document.title = 'New Announcement | Sioux Falls Church of Christ';
+  }, []);
+
   const [title, setTitle] = useState('');
   const [content, setContent] = useState<string | TipTapContent>('');
   const [type, setType] = useState<AnnouncementType>('General');

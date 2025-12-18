@@ -30,6 +30,10 @@ const ANNOUNCEMENT_TYPES = ['All', 'Weekly', 'KFC', 'General', 'Youth', 'Young A
 type FilterType = typeof ANNOUNCEMENT_TYPES[number];
 
 export default function AnnouncementsPage() {
+  useEffect(() => {
+    document.title = 'Announcements | Sioux Falls Church of Christ';
+  }, []);
+
   const [announcements, setAnnouncements] = useState<Announcement[]>([]);
   const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
   const [isSubscribing, setIsSubscribing] = useState(false);

@@ -14,6 +14,10 @@ const WEDNESDAY_CLASSES: AgeGroup[] = ['Toddlers', 'Elementary A', 'Elementary B
 const DECORATOR_CLASSES: AgeGroup[] = ['Decorators'];
 
 export default function TeacherManagement() {
+  useEffect(() => {
+    document.title = 'Teacher Management | Sioux Falls Church of Christ';
+  }, []);
+
   const { userProfile } = useAuth();
   const [teachingSchedules, setTeachingSchedules] = useState<TeachingSchedule[]>([]);
   const [expandedYears, setExpandedYears] = useState<Set<string>>(new Set());

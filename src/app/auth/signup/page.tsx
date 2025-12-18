@@ -6,6 +6,10 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 
 export default function SignUpPage() {
+  useEffect(() => {
+    document.title = 'Sign Up | Sioux Falls Church of Christ';
+  }, []);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [displayName, setDisplayName] = useState('');

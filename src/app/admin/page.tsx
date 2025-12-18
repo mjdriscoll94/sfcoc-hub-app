@@ -12,6 +12,10 @@ import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
 
 export default function AdminDashboard() {
+  useEffect(() => {
+    document.title = 'Admin Dashboard | Sioux Falls Church of Christ';
+  }, []);
+
   const { userProfile } = useAuth();
   const router = useRouter();
 

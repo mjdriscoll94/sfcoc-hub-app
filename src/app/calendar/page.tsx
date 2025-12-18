@@ -3,6 +3,10 @@
 import { useEffect, useState } from 'react';
 
 export default function CalendarPage() {
+  useEffect(() => {
+    document.title = 'Calendar | Sioux Falls Church of Christ';
+  }, []);
+
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {

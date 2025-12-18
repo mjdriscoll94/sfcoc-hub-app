@@ -10,6 +10,10 @@ import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
 export default function RespondToAssignmentPage() {
+  useEffect(() => {
+    document.title = 'Respond to Assignment | Sioux Falls Church of Christ';
+  }, []);
+
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, loading: authLoading } = useAuth();

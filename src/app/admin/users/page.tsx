@@ -13,6 +13,10 @@ import { Users } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
 export default function UserManagement() {
+  useEffect(() => {
+    document.title = 'User Management | Sioux Falls Church of Christ';
+  }, []);
+
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

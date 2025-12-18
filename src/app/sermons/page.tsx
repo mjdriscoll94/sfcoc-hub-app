@@ -12,6 +12,10 @@ interface GroupedSermons {
 }
 
 export default function SermonsPage() {
+  useEffect(() => {
+    document.title = 'Sermons | Sioux Falls Church of Christ';
+  }, []);
+
   const { videos, loading, error, selectedVideo, selectVideo } = useSermons();
   const [searchTerm, setSearchTerm] = useState('');
   const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());

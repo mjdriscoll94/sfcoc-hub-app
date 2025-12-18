@@ -50,6 +50,10 @@ interface DirectoryMember {
 }
 
 export default function DirectoryAdminPage() {
+  useEffect(() => {
+    document.title = 'Directory Management | Sioux Falls Church of Christ';
+  }, []);
+
   const [submissions, setSubmissions] = useState<DirectorySubmission[]>([]);
   const [members, setMembers] = useState<DirectoryMember[]>([]);
   const [loading, setLoading] = useState(true);

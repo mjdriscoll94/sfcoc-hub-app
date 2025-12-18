@@ -8,6 +8,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function SettingsPage() {
+  useEffect(() => {
+    document.title = 'Settings | Sioux Falls Church of Christ';
+  }, []);
+
   const { userProfile, user } = useAuth();
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');

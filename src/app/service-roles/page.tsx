@@ -30,6 +30,10 @@ interface WeekData {
 }
 
 export default function ServiceRolesPage() {
+  useEffect(() => {
+    document.title = 'Service Roles | Sioux Falls Church of Christ';
+  }, []);
+
   const { user, userProfile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);

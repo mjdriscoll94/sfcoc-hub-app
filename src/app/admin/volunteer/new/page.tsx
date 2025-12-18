@@ -1,12 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { addVolunteerOpportunity } from '@/lib/firebase/utils';
 import BackButton from '@/components/BackButton';
 
 export default function NewVolunteerOpportunityPage() {
+  useEffect(() => {
+    document.title = 'New Volunteer Opportunity | Sioux Falls Church of Christ';
+  }, []);
+
   const router = useRouter();
   const { userProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);

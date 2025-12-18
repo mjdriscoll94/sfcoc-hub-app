@@ -11,6 +11,10 @@ interface FirebaseError extends Error {
 }
 
 export default function SignInPage() {
+  useEffect(() => {
+    document.title = 'Sign In | Sioux Falls Church of Christ';
+  }, []);
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
