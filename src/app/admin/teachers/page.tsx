@@ -522,7 +522,7 @@ export default function TeacherManagement() {
       </div>
 
       {/* Teacher Management Section - Always Visible */}
-      <div className="mb-8 bg-white rounded-lg shadow-sm border border-sage/20 p-6">
+      <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-xl font-semibold text-text uppercase tracking-wide">Teacher Management</h2>
           <button
@@ -637,7 +637,7 @@ export default function TeacherManagement() {
               const isExpanded = expandedYears.has(schedule.schoolYear);
               
               return (
-                <div key={schedule.schoolYear} className="bg-white rounded-lg border border-sage/20 overflow-hidden">
+                <div key={schedule.schoolYear} className="bg-white rounded-lg overflow-hidden">
                   {/* Year Header - Clickable to expand/collapse */}
                   <button
                     onClick={() => toggleYear(schedule.schoolYear)}
