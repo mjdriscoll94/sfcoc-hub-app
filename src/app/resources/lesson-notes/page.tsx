@@ -17,14 +17,14 @@ export default function LessonNotesPage() {
       )}
 
       {error && (
-        <div className="bg-red-50 dark:bg-red-900/50 p-4 rounded-lg mb-6">
-          <p className="text-red-600 dark:text-red-200">{error}</p>
+        <div className="bg-red-50 p-4 rounded-lg mb-6">
+          <p className="text-red-600">{error}</p>
         </div>
       )}
 
       {!loading && !error && notes.length === 0 && (
-        <div className="bg-[#1f1f1f] rounded-lg p-6">
-          <p className="text-gray-300 mb-4">
+        <div className="bg-card rounded-lg p-6 border border-sage/20">
+          <p className="text-charcoal mb-4">
             No lesson notes have been uploaded yet. Please check back soon as we continue to add more resources.
           </p>
         </div>
@@ -46,7 +46,7 @@ export default function LessonNotesPage() {
                     <h3 className="text-lg font-medium text-charcoal">
                       {note.title}
                     </h3>
-                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500 dark:text-gray-400">
+                    <div className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-sm text-gray-500">
                       <div className="flex items-center">
                         <Calendar className="h-4 w-4 mr-1" />
                         <span>{note.date.toLocaleDateString()}</span>
