@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Lesson Notes PDFs | South Franklin Church of Christ',
+  title: 'Lesson Notes PDFs | Sioux Falls Church of Christ',
   description: 'Access lesson notes and study materials from our services and Bible classes.',
 };
 

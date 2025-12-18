@@ -10,7 +10,7 @@ import { ThemeProvider } from '@/components/theme-provider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'SFCOC',
+  title: 'Sioux Falls Church of Christ',
   description: 'Sioux Falls Church of Christ'
 };
 
