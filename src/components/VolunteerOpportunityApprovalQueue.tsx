@@ -184,7 +184,7 @@ export default function VolunteerOpportunityApprovalQueue() {
       {pendingItems.map((item) => (
         <div
           key={item.id}
-          className="border border-sage/20 rounded-lg p-4 bg-card hover:shadow-md transition-shadow"
+          className="border border-sage/20 rounded-lg p-4 bg-white hover:shadow-md transition-shadow"
         >
           {editingItem?.id === item.id ? (
             <div className="space-y-4">
@@ -194,7 +194,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                   type="text"
                   value={editingItem.title}
                   onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-card text-charcoal"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
                 />
               </div>
               
@@ -215,7 +215,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                     type="datetime-local"
                     value={editingItem.dateTime}
                     onChange={(e) => setEditingItem({ ...editingItem, dateTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-card text-charcoal"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
                   />
                 </div>
                 
@@ -225,7 +225,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                     type="text"
                     value={editingItem.location}
                     onChange={(e) => setEditingItem({ ...editingItem, location: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-card text-charcoal"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
                   />
                 </div>
               </div>
@@ -237,7 +237,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                     type="email"
                     value={editingItem.contactEmail}
                     onChange={(e) => setEditingItem({ ...editingItem, contactEmail: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-card text-charcoal"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
                   />
                 </div>
                 
@@ -247,7 +247,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                     type="tel"
                     value={editingItem.contactPhone}
                     onChange={(e) => setEditingItem({ ...editingItem, contactPhone: e.target.value })}
-                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-card text-charcoal"
+                    className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
                   />
                 </div>
               </div>
@@ -259,7 +259,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                   min="1"
                   value={editingItem.maxVolunteers}
                   onChange={(e) => setEditingItem({ ...editingItem, maxVolunteers: parseInt(e.target.value) || 1 })}
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-card text-charcoal"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
                 />
               </div>
 
@@ -273,7 +273,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                 </button>
                 <button
                   onClick={handleCancelEdit}
-                  className="inline-flex items-center px-3 py-2 border border-border text-sm font-medium rounded shadow-sm text-charcoal bg-card hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border"
+                  className="inline-flex items-center px-3 py-2 border border-border text-sm font-medium rounded shadow-sm text-charcoal bg-white hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border"
                 >
                   Cancel
                 </button>

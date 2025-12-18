@@ -45,7 +45,7 @@ export default function AdminDashboard() {
           {/* User Management */}
           <Link
             href="/admin/users"
-            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+            className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
               <Users className="h-6 w-6 text-coral" aria-hidden="true" />
@@ -60,7 +60,7 @@ export default function AdminDashboard() {
           {/* Add Announcement */}
           <Link
             href="/admin/announcements/new"
-            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+            className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
               <PlusIcon className="h-6 w-6 text-coral" aria-hidden="true" />
@@ -75,7 +75,7 @@ export default function AdminDashboard() {
           {/* Directory Management */}
           <Link
             href="/admin/directory"
-            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+            className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
               <FileText className="h-6 w-6 text-coral" aria-hidden="true" />
@@ -90,7 +90,7 @@ export default function AdminDashboard() {
           {/* Upload Sermon Notes */}
           <Link
             href="/admin/lesson-notes"
-            className="relative rounded-lg border border-border bg-card px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+            className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
           >
             <div className="flex-shrink-0">
               <Upload className="h-6 w-6 text-coral" aria-hidden="true" />
@@ -105,7 +105,7 @@ export default function AdminDashboard() {
 
         <div className="grid grid-cols-1 gap-8">
           {/* Prayer Request Approval Queue */}
-          <div className="bg-card rounded-lg p-6 border border-border shadow">
+          <div className="bg-white rounded-lg p-6 border border-border shadow">
             <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Prayer Request Approval Queue
             </h2>
@@ -113,7 +113,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Volunteer Opportunity Approval Queue */}
-          <div className="bg-card rounded-lg p-6 border border-border shadow">
+          <div className="bg-white rounded-lg p-6 border border-border shadow">
             <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Volunteer Opportunity Approval Queue
             </h2>
@@ -121,7 +121,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Pending User Accounts */}
-          <div className="bg-card rounded-lg p-6 border border-border shadow">
+          <div className="bg-white rounded-lg p-6 border border-border shadow">
             <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Pending User Accounts
             </h2>
