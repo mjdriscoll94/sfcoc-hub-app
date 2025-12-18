@@ -99,13 +99,13 @@ export default function UserManagement() {
   const getStatusBadgeColor = (status: string = 'approved') => {
     switch (status) {
       case 'pending':
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300';
+        return 'bg-yellow-100 text-yellow-800';
       case 'approved':
-        return 'bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300';
+        return 'bg-green-100 text-green-800';
       case 'rejected':
-        return 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300';
+        return 'bg-red-100 text-red-800';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900/50 dark:text-gray-300';
+        return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -228,7 +228,7 @@ export default function UserManagement() {
       case 'organizer':
         return 'bg-[#85AAA0] text-white hover:bg-[#769B91] cursor-pointer';
       default:
-        return 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-white/60 hover:bg-gray-200 dark:hover:bg-white/20 cursor-pointer';
+        return 'bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer';
     }
   };
 
@@ -255,8 +255,8 @@ export default function UserManagement() {
       </div>
 
       {error && (
-        <div className="mb-6 p-4 bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 rounded-lg">
-          <p className="text-red-600 dark:text-red-200">{error}</p>
+        <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <p className="text-red-600">{error}</p>
         </div>
       )}
 
@@ -268,19 +268,19 @@ export default function UserManagement() {
         <div className="bg-card rounded-lg shadow overflow-hidden">
           {/* Desktop view */}
           <div className="hidden sm:block">
-            <table className="min-w-full divide-y divide-gray-200 dark:divide-white/10">
-              <thead className="bg-gray-50 dark:bg-white/5">
+            <table className="min-w-full divide-y divide-gray-200">
+              <thead className="bg-gray-50">
                 <tr>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Name
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Email
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
                   </th>
-                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Role
                   </th>
                   <th scope="col" className="relative px-6 py-3">
@@ -288,7 +288,7 @@ export default function UserManagement() {
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white dark:bg-transparent divide-y divide-gray-200 dark:divide-white/10">
+              <tbody className="bg-white divide-y divide-gray-200">
                 {users.map((user) => (
                   <tr key={user.uid}>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -300,7 +300,7 @@ export default function UserManagement() {
                           <div className="text-sm font-medium text-charcoal">
                             {user.displayName || 'No display name'}
                           </div>
-                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                          <div className="text-sm text-gray-500">
                             Created: {user.createdAt.toLocaleDateString()}
                           </div>
                         </div>
@@ -314,7 +314,7 @@ export default function UserManagement() {
                         {(user.approvalStatus || 'approved').charAt(0).toUpperCase() + (user.approvalStatus || 'approved').slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                       <button
                         onClick={() => handleRoleClick(user)}
                         className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
@@ -327,14 +327,14 @@ export default function UserManagement() {
                         <>
                           <button
                             onClick={() => handleApproval(user.uid, 'approved')}
-                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors duration-200"
+                            className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors duration-200"
                             title="Approve User"
                           >
                             <CheckIcon className="h-5 w-5" />
                           </button>
                           <button
                             onClick={() => handleApproval(user.uid, 'rejected')}
-                            className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/50 transition-colors duration-200"
+                            className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors duration-200"
                             title="Reject User"
                           >
                             <XMarkIcon className="h-5 w-5" />
@@ -344,7 +344,7 @@ export default function UserManagement() {
                       {user.approvalStatus === 'rejected' && (
                         <button
                           onClick={() => handleApproval(user.uid, 'approved')}
-                          className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors duration-200"
+                          className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors duration-200"
                           title="Approve User"
                         >
                           <CheckIcon className="h-5 w-5" />
@@ -359,7 +359,7 @@ export default function UserManagement() {
 
           {/* Mobile view */}
           <div className="sm:hidden">
-            <ul className="divide-y divide-gray-200 dark:divide-white/10">
+            <ul className="divide-y divide-gray-200">
               {users.map((user) => (
                 <li key={user.uid} className="px-4 py-4">
                   <div className="space-y-2">
@@ -368,7 +368,7 @@ export default function UserManagement() {
                         <div className="text-sm font-medium text-charcoal">
                           {user.displayName || 'No display name'}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">
+                        <div className="text-xs text-gray-500">
                           {user.email}
                         </div>
                       </div>
@@ -377,7 +377,7 @@ export default function UserManagement() {
                       </span>
                     </div>
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                      <div className="text-xs text-gray-500">
                         Created: {user.createdAt.toLocaleDateString()}
                       </div>
                       <div className="flex space-x-2">
@@ -385,14 +385,14 @@ export default function UserManagement() {
                           <>
                             <button
                               onClick={() => handleApproval(user.uid, 'approved')}
-                              className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors duration-200"
+                              className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors duration-200"
                               title="Approve User"
                             >
                               <CheckIcon className="h-5 w-5" />
                             </button>
                             <button
                               onClick={() => handleApproval(user.uid, 'rejected')}
-                              className="text-red-600 dark:text-red-400 hover:text-red-900 dark:hover:text-red-300 p-1 rounded-full hover:bg-red-50 dark:hover:bg-red-900/50 transition-colors duration-200"
+                              className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors duration-200"
                               title="Reject User"
                             >
                               <XMarkIcon className="h-5 w-5" />
@@ -402,7 +402,7 @@ export default function UserManagement() {
                         {user.approvalStatus === 'rejected' && (
                           <button
                             onClick={() => handleApproval(user.uid, 'approved')}
-                            className="text-green-600 dark:text-green-400 hover:text-green-900 dark:hover:text-green-300 p-1 rounded-full hover:bg-green-50 dark:hover:bg-green-900/50 transition-colors duration-200"
+                            className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors duration-200"
                             title="Approve User"
                           >
                             <CheckIcon className="h-5 w-5" />
