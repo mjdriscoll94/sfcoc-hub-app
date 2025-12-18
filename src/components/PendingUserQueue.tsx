@@ -81,7 +81,7 @@ export default function PendingUserQueue() {
 
   if (users.length === 0) {
     return (
-      <div className="text-gray-900 dark:text-gray-500 text-center py-4">
+      <div className="text-gray-500 text-center py-4">
         No pending user accounts to review.
       </div>
     );
@@ -92,21 +92,21 @@ export default function PendingUserQueue() {
       {users.map((user) => (
         <div
           key={user.uid}
-          className="bg-white/5 rounded-lg p-4 space-y-3"
+          className="bg-white rounded-lg p-4 space-y-3"
         >
           <div className="flex items-start justify-between">
             <div>
-              <h3 className="text-lg font-medium text-black dark:text-white">
+              <h3 className="text-lg font-medium text-charcoal">
                 {user.displayName || 'No display name'}
               </h3>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-600">
                 {user.email} • {user.createdAt.toLocaleDateString()}
               </p>
               <p className="text-sm mt-1">
                 <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
                   user.approvalStatus === 'pending'
-                    ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/50 dark:text-yellow-300'
-                    : 'bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300'
+                    ? 'bg-yellow-100 text-yellow-800'
+                    : 'bg-red-100 text-red-800'
                 }`}>
                   {user.approvalStatus.charAt(0).toUpperCase() + user.approvalStatus.slice(1)}
                 </span>

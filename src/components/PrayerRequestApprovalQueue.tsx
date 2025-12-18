@@ -117,12 +117,11 @@ export default function PrayerRequestApprovalQueue() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-white">Pending Prayer Requests</h2>
       <div className="space-y-4">
         {pendingItems.map((item) => (
           <div
             key={item.id}
-            className="bg-white/5 rounded-lg p-4 space-y-3"
+            className="bg-white rounded-lg p-4 space-y-3"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -132,18 +131,18 @@ export default function PrayerRequestApprovalQueue() {
                       type="text"
                       value={editingItem.title}
                       onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
-                      className="w-full px-3 py-2 bg-white/10 rounded-md text-white"
+                      className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal"
                     />
                     <textarea
                       value={editingItem.description}
                       onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
-                      className="w-full px-3 py-2 bg-white/10 rounded-md text-white min-h-[100px]"
+                      className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal min-h-[100px]"
                     />
                     {item.type === 'prayer' && (
                       <select
                         value={editingItem.priority || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, priority: e.target.value ? e.target.value as 'Urgent' | 'Batched' : undefined })}
-                        className="w-full px-3 py-2 bg-white/10 rounded-md text-white"
+                        className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal"
                         required
                       >
                         <option value="">Select Priority</option>
@@ -154,15 +153,15 @@ export default function PrayerRequestApprovalQueue() {
                   </div>
                 ) : (
                   <>
-                    <h3 className="text-lg font-medium text-black dark:text-white">
+                    <h3 className="text-lg font-medium text-charcoal">
                       {item.title}
                     </h3>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-sm text-gray-600">
                       {item.type === 'prayer' ? 'Prayer Request' : 'Praise Report'} by{' '}
                       {item.isAnonymous ? 'Anonymous' : item.author.name} •{' '}
                       {item.dateCreated.toLocaleDateString()}
                     </p>
-                    <p className="text-gray-700 dark:text-gray-300 text-sm mt-2">
+                    <p className="text-gray-700 text-sm mt-2">
                       {item.description}
                     </p>
                   </>
