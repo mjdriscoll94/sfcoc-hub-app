@@ -346,14 +346,14 @@ export default function TeacherManagement() {
     <div className="mb-8">
       <h3 className="text-xl font-bold text-charcoal mb-4">{title}</h3>
       <div className="overflow-x-auto">
-        <table className="min-w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600">
+        <table className="min-w-full bg-white border border-gray-300">
           <thead>
-            <tr className="bg-gray-50 dark:bg-gray-700">
-              <th className="px-4 py-2 text-left text-sm font-medium text-charcoal border-r border-gray-300 dark:border-gray-600">
+            <tr className="bg-gray-50">
+              <th className="px-4 py-2 text-left text-sm font-medium text-charcoal border-r border-gray-300">
                 {classType === 'Decorators' ? 'Sunday' : 'Class'}
               </th>
               {QUARTERS.map(quarter => (
-                <th key={quarter} className="px-4 py-2 text-center text-sm font-medium text-charcoal border-r border-gray-300 dark:border-gray-600">
+                <th key={quarter} className="px-4 py-2 text-center text-sm font-medium text-charcoal border-r border-gray-300">
                   {quarter}
                   <br />
                   <span className="text-xs text-gray-500">
@@ -367,8 +367,8 @@ export default function TeacherManagement() {
           </thead>
           <tbody>
             {classes.map(ageGroup => (
-              <tr key={ageGroup} className="border-t border-gray-300 dark:border-gray-600">
-                <td className="px-4 py-2 font-medium text-charcoal border-r border-gray-300 dark:border-gray-600">
+              <tr key={ageGroup} className="border-t border-gray-300">
+                <td className="px-4 py-2 font-medium text-charcoal border-r border-gray-300">
                   {ageGroup}
                 </td>
                 {QUARTERS.map(quarter => {
@@ -379,7 +379,7 @@ export default function TeacherManagement() {
                                  editingCell?.quarter === quarter;
                   
                   return (
-                    <td key={quarter} className="px-4 py-2 border-r border-gray-300 dark:border-gray-600 min-w-[180px] align-top">
+                    <td key={quarter} className="px-4 py-2 border-r border-gray-300 min-w-[180px] align-top">
                       <div className="space-y-2">
                         {/* Show existing assignments */}
                         {assignments.map((assignment) => (
@@ -388,8 +388,8 @@ export default function TeacherManagement() {
                               <div className="flex-1 text-sm">
                                 <div className="font-medium text-[#2F3E46]">
                                   {assignment.teacherName}
-                                  {assignment.isHelper && <span className="text-xs text-blue-600 dark:text-blue-400 ml-1">*</span>}
-                                  {assignment.isSecondChoice && <span className="text-xs text-orange-600 dark:text-orange-400 ml-1">2nd</span>}
+                                  {assignment.isHelper && <span className="text-xs text-blue-600 ml-1">*</span>}
+                                  {assignment.isSecondChoice && <span className="text-xs text-orange-600 ml-1">2nd</span>}
                                 </div>
                                 {assignment.notes && (
                                   <div className="text-xs text-[#5A6A74] mt-1">
@@ -501,7 +501,7 @@ export default function TeacherManagement() {
     return (
       <div className="text-center p-8">
         <h1 className="text-2xl font-bold text-charcoal mb-4">Teacher Management</h1>
-        <p className="text-gray-600 dark:text-gray-400">You don't have permission to access this page.</p>
+        <p className="text-gray-600">You don't have permission to access this page.</p>
       </div>
     );
   }
