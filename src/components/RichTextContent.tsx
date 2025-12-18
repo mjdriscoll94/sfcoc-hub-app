@@ -42,17 +42,17 @@ export default function RichTextContent({ content }: RichTextContentProps) {
         `}
       </style>
       <div 
-        className="rich-text-content prose prose-invert prose-white max-w-none
-          prose-h1:font-bold prose-h1:text-white
-          prose-h2:font-bold prose-h2:text-white
-          prose-p:text-gray-300 prose-p:mb-4 
+        className="rich-text-content prose max-w-none
+          prose-h1:font-bold prose-h1:text-charcoal
+          prose-h2:font-bold prose-h2:text-charcoal
+          prose-p:text-charcoal prose-p:mb-4 
           prose-a:text-coral prose-a:no-underline hover:prose-a:underline 
-          prose-strong:text-white 
-          prose-ul:text-gray-300 prose-ol:text-gray-300 
-          prose-li:text-gray-300 prose-li:marker:text-gray-400 
-          prose-hr:border-gray-700 
-          prose-blockquote:text-gray-300 prose-blockquote:border-gray-700 
-          prose-table:text-gray-300 prose-th:text-white prose-td:text-gray-300"
+          prose-strong:text-charcoal 
+          prose-ul:text-charcoal prose-ol:text-charcoal 
+          prose-li:text-charcoal prose-li:marker:text-gray-600 
+          prose-hr:border-gray-300 
+          prose-blockquote:text-charcoal prose-blockquote:border-gray-300 
+          prose-table:text-charcoal prose-th:text-charcoal prose-td:text-charcoal"
         dangerouslySetInnerHTML={{ __html: sanitizedContent }}
       />
     </>
