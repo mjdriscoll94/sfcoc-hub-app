@@ -234,7 +234,7 @@ export default function Home() {
                       : 'max-h-0 opacity-0 overflow-hidden'
                   }`}
                 >
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 pt-2 bg-gradient-to-b from-white to-bg">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 pt-2 bg-white">
                     {category.events.map((event, eventIndex) => (
                       <div
                         key={eventIndex}
