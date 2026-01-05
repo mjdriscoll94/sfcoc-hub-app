@@ -201,7 +201,7 @@ export default function Home() {
             {eventCategories.map((category, categoryIndex) => (
               <div 
                 key={categoryIndex} 
-                className="bg-card rounded-lg border border-border overflow-hidden shadow hover:shadow-md transition-all"
+                className="bg-white rounded-lg border border-border overflow-hidden shadow hover:shadow-md transition-all"
               >
                 <button
                   onClick={() => toggleCategory(categoryIndex)}
