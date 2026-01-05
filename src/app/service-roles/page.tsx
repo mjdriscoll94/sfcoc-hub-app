@@ -334,7 +334,7 @@ export default function ServiceRolesPage() {
         ) : (
           <div className="space-y-6">
             {weeks.map((week, weekIndex) => (
-              <div key={week.date.toISOString()} className="bg-card rounded-lg border border-border overflow-hidden">
+              <div key={week.date.toISOString()} className="bg-white rounded-lg border border-border overflow-hidden">
                 <button
                   onClick={() => toggleWeek(weekIndex)}
                   className="w-full px-6 py-4 flex items-center justify-between text-left hover:bg-bg-secondary transition-colors"
