@@ -7,7 +7,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { UserPlusIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import BackButton from '@/components/BackButton';
-import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { UserProfile } from '@/types';
 import { Users } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
@@ -24,6 +24,9 @@ export default function UserManagement() {
   const router = useRouter();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
+  const [isFirstDeleteConfirmationOpen, setIsFirstDeleteConfirmationOpen] = useState(false);
+  const [isSecondDeleteConfirmationOpen, setIsSecondDeleteConfirmationOpen] = useState(false);
 
   // Redirect if not admin
   useEffect(() => {
@@ -243,6 +246,51 @@ export default function UserManagement() {
     }
   };
 
+  const handleDeleteClick = (user: UserProfile) => {
+    setUserToDelete(user);
+    setIsFirstDeleteConfirmationOpen(true);
+  };
+
+  const handleFirstDeleteConfirm = () => {
+    setIsFirstDeleteConfirmationOpen(false);
+    setIsSecondDeleteConfirmationOpen(true);
+  };
+
+  const handleSecondDeleteConfirm = async () => {
+    if (!userToDelete) return;
+
+    try {
+      const response = await fetch('/api/admin/users/delete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ uid: userToDelete.uid }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete user');
+      }
+
+      // Remove from local state
+      setUsers(users.filter(u => u.uid !== userToDelete.uid));
+      setUserToDelete(null);
+      setIsSecondDeleteConfirmationOpen(false);
+      setError(null);
+    } catch (err) {
+      console.error('Error deleting user:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete user');
+      setIsSecondDeleteConfirmationOpen(false);
+      setUserToDelete(null);
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    setIsFirstDeleteConfirmationOpen(false);
+    setIsSecondDeleteConfirmationOpen(false);
+    setUserToDelete(null);
+  };
+
   if (!userProfile?.isAdmin) {
     return null;
   }
@@ -323,8 +371,26 @@ export default function UserManagement() {
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
-                      {user.approvalStatus === 'pending' && (
-                        <>
+                      <div className="flex items-center justify-end space-x-2">
+                        {user.approvalStatus === 'pending' && (
+                          <>
+                            <button
+                              onClick={() => handleApproval(user.uid, 'approved')}
+                              className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors duration-200"
+                              title="Approve User"
+                            >
+                              <CheckIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              onClick={() => handleApproval(user.uid, 'rejected')}
+                              className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors duration-200"
+                              title="Reject User"
+                            >
+                              <XMarkIcon className="h-5 w-5" />
+                            </button>
+                          </>
+                        )}
+                        {user.approvalStatus === 'rejected' && (
                           <button
                             onClick={() => handleApproval(user.uid, 'approved')}
                             className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors duration-200"
@@ -332,24 +398,15 @@ export default function UserManagement() {
                           >
                             <CheckIcon className="h-5 w-5" />
                           </button>
-                          <button
-                            onClick={() => handleApproval(user.uid, 'rejected')}
-                            className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors duration-200"
-                            title="Reject User"
-                          >
-                            <XMarkIcon className="h-5 w-5" />
-                          </button>
-                        </>
-                      )}
-                      {user.approvalStatus === 'rejected' && (
+                        )}
                         <button
-                          onClick={() => handleApproval(user.uid, 'approved')}
-                          className="text-green-600 hover:text-green-900 p-1 rounded-full hover:bg-green-50 transition-colors duration-200"
-                          title="Approve User"
+                          onClick={() => handleDeleteClick(user)}
+                          className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors duration-200"
+                          title="Delete User"
                         >
-                          <CheckIcon className="h-5 w-5" />
+                          <TrashIcon className="h-5 w-5" />
                         </button>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -408,6 +465,13 @@ export default function UserManagement() {
                             <CheckIcon className="h-5 w-5" />
                           </button>
                         )}
+                        <button
+                          onClick={() => handleDeleteClick(user)}
+                          className="text-red-600 hover:text-red-900 p-1 rounded-full hover:bg-red-50 transition-colors duration-200"
+                          title="Delete User"
+                        >
+                          <TrashIcon className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -428,6 +492,28 @@ export default function UserManagement() {
         title="Change User Role"
         message={selectedUser ? `Are you sure you want to change ${selectedUser.displayName || selectedUser.email || 'this user'}'s role from ${selectedUser.role || 'user'} to ${getNextRole(selectedUser.role || 'user')}?` : ''}
         confirmText={`Change to ${selectedUser ? getNextRole(selectedUser.role || 'user') : ''}`}
+        cancelText="Cancel"
+      />
+
+      {/* First Delete Confirmation */}
+      <ConfirmationModal
+        isOpen={isFirstDeleteConfirmationOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleFirstDeleteConfirm}
+        title="Delete User - First Confirmation"
+        message={userToDelete ? `Are you sure you want to delete ${userToDelete.displayName || userToDelete.email || 'this user'}? This action cannot be undone.` : ''}
+        confirmText="Yes, Delete User"
+        cancelText="Cancel"
+      />
+
+      {/* Second Delete Confirmation */}
+      <ConfirmationModal
+        isOpen={isSecondDeleteConfirmationOpen}
+        onClose={handleDeleteCancel}
+        onConfirm={handleSecondDeleteConfirm}
+        title="Delete User - Final Confirmation"
+        message={userToDelete ? `This is your final confirmation. Are you absolutely sure you want to permanently delete ${userToDelete.displayName || userToDelete.email || 'this user'}? This action cannot be undone and will delete all user data.` : ''}
+        confirmText="Yes, Permanently Delete"
         cancelText="Cancel"
       />
     </div>
