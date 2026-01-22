@@ -62,4 +62,28 @@ export interface Teacher {
   updatedAt: Date;
   createdBy: string;
   isActive: boolean;
+}
+
+export interface LifeGroupMember {
+  userId: string;
+  displayName: string | null;
+  email: string | null;
+  addedAt: Date;
+  addedBy: string;
+}
+
+export interface LifeGroup {
+  id: string;
+  name: string;
+  description?: string;
+  leaderId: string;
+  leaderName: string;
+  members: LifeGroupMember[];
+  meetingDay?: string;
+  meetingTime?: string;
+  meetingLocation?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
+  isActive: boolean;
 } 

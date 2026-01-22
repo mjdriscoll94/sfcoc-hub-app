@@ -116,6 +116,21 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Manage volunteer opportunities</p>
             </div>
           </Link>
+
+          {/* Life Groups Management */}
+          <Link
+            href="/admin/life-groups"
+            className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+          >
+            <div className="flex-shrink-0">
+              <Users className="h-6 w-6 text-coral" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="absolute inset-0" aria-hidden="true" />
+              <p className="text-sm font-medium text-charcoal">Life Groups</p>
+              <p className="text-sm text-text-light">Manage life groups and members</p>
+            </div>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 gap-8">
