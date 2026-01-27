@@ -454,13 +454,12 @@ export default function LifeGroupsManagement() {
     });
   };
 
-  const handleSaveFamily = async (e?: React.MouseEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    console.log('handleSaveFamily called', { familyFormData, userProfile: !!userProfile });
+  const handleSaveFamily = async () => {
+    console.log('=== handleSaveFamily CALLED ===');
+    console.log('Family Form Data:', JSON.stringify(familyFormData, null, 2));
+    console.log('User Profile exists:', !!userProfile);
+    console.log('User Profile UID:', userProfile?.uid);
+    console.log('Editing Family ID:', editingFamilyId);
 
     if (!familyFormData.familyName.trim()) {
       setError('Family name is required');
@@ -778,8 +777,17 @@ export default function LifeGroupsManagement() {
                 </button>
                 <button
                   type="button"
-                  onClick={(e) => handleSaveFamily(e)}
-                  className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors"
+                  onClick={() => {
+                    console.log('=== CREATE BUTTON CLICKED ===');
+                    console.log('Current state:', { 
+                      familyFormData, 
+                      userProfile: !!userProfile,
+                      editingFamilyId 
+                    });
+                    handleSaveFamily();
+                  }}
+                  disabled={!familyFormData.familyName.trim()}
+                  className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {editingFamilyId ? 'Update' : 'Create'}
                 </button>
