@@ -120,9 +120,6 @@ export default function LifeGroupsPage() {
       {isLifeGroupLeader && (
         <div className="mb-8 bg-white rounded-lg border border-border p-6">
           <h2 className="text-2xl font-bold text-charcoal mb-6">Leader Resources</h2>
-          <p className="text-text-light mb-6">
-            Download curriculum documents for life group leaders.
-          </p>
 
           {/* Curriculum Section */}
           {curriculumUrl ? (
