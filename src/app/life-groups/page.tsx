@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, Timestamp, getDocs } from 'firebase/firestore';
-import { LifeGroup } from '@/types';
+import { LifeGroup, FamilyUnit } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function LifeGroupsPage() {
   useEffect(() => {
@@ -17,6 +18,8 @@ export default function LifeGroupsPage() {
   const [error, setError] = useState<string | null>(null);
   const [curriculumUrl, setCurriculumUrl] = useState<string | null>(null);
   const [curriculumFileName, setCurriculumFileName] = useState<string | null>(null);
+  const [familyUnits, setFamilyUnits] = useState<FamilyUnit[]>([]);
+  const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const q = query(
@@ -85,7 +88,50 @@ export default function LifeGroupsPage() {
     fetchResources();
   }, [isLifeGroupLeader]);
 
+  // Fetch family units
+  useEffect(() => {
+    const q = query(
+      collection(db, 'lifegroupParticipants'),
+      orderBy('familyName', 'asc')
+    );
 
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const units = snapshot.docs.map(doc => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+            updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
+            members: (data.members || []).map((member: any) => ({
+              ...member,
+            })),
+            totalCount: (data.members || []).length, // Auto-calculated
+          } as FamilyUnit;
+        });
+        setFamilyUnits(units);
+      },
+      (err) => {
+        console.error('Error fetching family units:', err);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+  const toggleFamilyExpand = (familyId: string) => {
+    setExpandedFamilies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(familyId)) {
+        newSet.delete(familyId);
+      } else {
+        newSet.add(familyId);
+      }
+      return newSet;
+    });
+  };
 
   if (loading) {
     return (
@@ -208,6 +254,49 @@ export default function LifeGroupsPage() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Family Units Section */}
+      {familyUnits.length > 0 && (
+        <div className="mt-12">
+          <h2 className="text-2xl font-bold text-charcoal mb-6">Participants</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {familyUnits.map((family) => (
+              <div
+                key={family.id}
+                className="bg-white rounded-lg border border-border p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                onClick={() => toggleFamilyExpand(family.id)}
+              >
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 flex-1">
+                    {expandedFamilies.has(family.id) ? (
+                      <ChevronDownIcon className="h-5 w-5 text-charcoal" />
+                    ) : (
+                      <ChevronRightIcon className="h-5 w-5 text-charcoal" />
+                    )}
+                    <span className="font-semibold text-charcoal">{family.familyName}</span>
+                    <span className="text-text-light text-sm">
+                      ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
+                    </span>
+                  </div>
+                </div>
+                {expandedFamilies.has(family.id) && (
+                  <div className="mt-3 pt-3 border-t border-border">
+                    <div className="space-y-2">
+                      {family.members.map((member) => (
+                        <div key={member.id} className="text-sm text-charcoal pl-7">
+                          {member.firstName} {member.lastName}
+                          {member.age && ` (Age: ${member.age})`}
+                          {member.relationship && ` - ${member.relationship}`}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

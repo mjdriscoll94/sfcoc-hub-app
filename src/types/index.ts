@@ -86,4 +86,23 @@ export interface LifeGroup {
   updatedAt: Date;
   createdBy: string;
   isActive: boolean;
+}
+
+export interface FamilyMember {
+  id: string;
+  firstName: string;
+  lastName: string;
+  age?: number;
+  relationship?: string; // e.g., "Parent", "Child", "Spouse"
+}
+
+export interface FamilyUnit {
+  id: string;
+  familyName: string; // e.g., "Smith Family"
+  members: FamilyMember[];
+  totalCount: number; // Auto-calculated from members.length
+  lifeGroupId?: string; // Optional: if associated with a specific life group
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
 } 
