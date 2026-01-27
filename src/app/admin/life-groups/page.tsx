@@ -454,18 +454,31 @@ export default function LifeGroupsManagement() {
     });
   };
 
-  const handleSaveFamily = async () => {
+  const handleSaveFamily = async (e?: React.MouseEvent) => {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+
+    console.log('handleSaveFamily called', { familyFormData, userProfile: !!userProfile });
+
     if (!familyFormData.familyName.trim()) {
       setError('Family name is required');
       return;
     }
 
-    if (!userProfile) return;
+    if (!userProfile) {
+      setError('You must be logged in to save a family unit');
+      return;
+    }
 
     try {
       const membersWithIds = familyFormData.members.map((member, index) => ({
-        id: `member-${Date.now()}-${index}`,
-        ...member,
+        id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
+        firstName: member.firstName,
+        lastName: member.lastName,
+        age: member.age,
+        relationship: member.relationship,
       }));
 
       const familyData = {
@@ -475,21 +488,25 @@ export default function LifeGroupsManagement() {
         updatedAt: Timestamp.now(),
       };
 
+      console.log('Saving family data:', familyData);
+
       if (editingFamilyId) {
         await updateDoc(doc(db, 'lifegroupParticipants', editingFamilyId), familyData);
+        console.log('Family unit updated');
       } else {
-        await addDoc(collection(db, 'lifegroupParticipants'), {
+        const docRef = await addDoc(collection(db, 'lifegroupParticipants'), {
           ...familyData,
           createdAt: Timestamp.now(),
           createdBy: userProfile.uid,
         });
+        console.log('Family unit created with ID:', docRef.id);
       }
 
       handleCancelFamily();
       setError(null);
     } catch (err) {
       console.error('Error saving family unit:', err);
-      setError('Failed to save family unit');
+      setError(err instanceof Error ? err.message : 'Failed to save family unit');
     }
   };
 
@@ -760,7 +777,8 @@ export default function LifeGroupsManagement() {
                   Cancel
                 </button>
                 <button
-                  onClick={handleSaveFamily}
+                  type="button"
+                  onClick={(e) => handleSaveFamily(e)}
                   className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors"
                 >
                   {editingFamilyId ? 'Update' : 'Create'}
