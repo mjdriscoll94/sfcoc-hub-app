@@ -987,7 +987,15 @@ export default function LifeGroupsManagement() {
                       {group.meetingLocation && (
                         <div><span className="font-medium">Location:</span> {group.meetingLocation}</div>
                       )}
-                      <div><span className="font-medium">Members:</span> {group.members.length}</div>
+                      <div><span className="font-medium">Members:</span> {
+                        (group.familyUnitIds || []).reduce((total, familyUnitId) => {
+                          const family = familyUnits.find(f => f.id === familyUnitId);
+                          return total + (family?.totalCount || 0);
+                        }, 0)
+                      } {((group.familyUnitIds || []).reduce((total, familyUnitId) => {
+                        const family = familyUnits.find(f => f.id === familyUnitId);
+                        return total + (family?.totalCount || 0);
+                      }, 0)) === 1 ? 'person' : 'people'} across {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'family unit' : 'family units'}</div>
                     </div>
                   </div>
                   <div className="flex space-x-2 ml-4">
