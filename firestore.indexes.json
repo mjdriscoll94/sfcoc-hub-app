@@ -77,6 +77,16 @@
           "order": "ASCENDING"
         }
       ]
+    },
+    {
+      "collectionGroup": "lifegroupParticipants",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "familyName",
+          "order": "ASCENDING"
+        }
+      ]
     }
   ],
   "fieldOverrides": []
