@@ -5,6 +5,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, Timestamp, getDocs } from 'firebase/firestore';
 import { LifeGroup, FamilyUnit } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function LifeGroupsPage() {
   useEffect(() => {
@@ -18,6 +19,7 @@ export default function LifeGroupsPage() {
   const [curriculumUrl, setCurriculumUrl] = useState<string | null>(null);
   const [curriculumFileName, setCurriculumFileName] = useState<string | null>(null);
   const [familyUnits, setFamilyUnits] = useState<FamilyUnit[]>([]);
+  const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const q = query(
@@ -120,6 +122,17 @@ export default function LifeGroupsPage() {
     return () => unsubscribe();
   }, []);
 
+  const toggleFamilyExpand = (familyId: string) => {
+    setExpandedFamilies(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(familyId)) {
+        newSet.delete(familyId);
+      } else {
+        newSet.add(familyId);
+      }
+      return newSet;
+    });
+  };
 
   if (loading) {
     return (
@@ -248,6 +261,54 @@ export default function LifeGroupsPage() {
                   </span>
                 </div>
               </div>
+
+              {/* Family Units Section */}
+              {(group.familyUnitIds || []).length > 0 && (
+                <div className="mt-4 pt-4 border-t border-border">
+                  <h4 className="text-sm font-semibold text-charcoal mb-3">Family Units</h4>
+                  <div className="space-y-2">
+                    {(group.familyUnitIds || []).map((familyUnitId) => {
+                      const family = familyUnits.find(f => f.id === familyUnitId);
+                      if (!family) return null;
+                      return (
+                        <div
+                          key={familyUnitId}
+                          className="border border-border rounded-lg p-3 bg-gray-50"
+                        >
+                          <div className="flex items-center justify-between">
+                            <button
+                              onClick={() => toggleFamilyExpand(familyUnitId)}
+                              className="flex items-center space-x-2 flex-1 text-left"
+                            >
+                              {expandedFamilies.has(familyUnitId) ? (
+                                <ChevronDownIcon className="h-4 w-4 text-charcoal" />
+                              ) : (
+                                <ChevronRightIcon className="h-4 w-4 text-charcoal" />
+                              )}
+                              <span className="font-semibold text-charcoal text-sm">
+                                {family.familyName} - ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
+                              </span>
+                            </button>
+                          </div>
+                          {expandedFamilies.has(familyUnitId) && (
+                            <div className="mt-2 pt-2 border-t border-border">
+                              <div className="space-y-1">
+                                {family.members.map((member) => (
+                                  <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
+                                    {member.firstName} {member.lastName}
+                                    {member.age && ` (Age: ${member.age})`}
+                                    {member.relationship && ` - ${member.relationship}`}
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           ))}
         </div>
