@@ -89,11 +89,13 @@ export interface LifeGroup {
   isActive: boolean;
 }
 
+export type AgeCategory = 'Infant' | 'Toddler' | 'Adolescent' | 'Teenager' | 'Young Adult' | 'Adult' | 'Elder Adult';
+
 export interface FamilyMember {
   id: string;
   firstName: string;
   lastName: string;
-  age?: number;
+  age?: AgeCategory | number; // Support both category (string) and legacy numeric age
   relationship?: string; // e.g., "Parent", "Child", "Spouse"
 }
 

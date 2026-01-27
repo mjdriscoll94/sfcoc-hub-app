@@ -427,7 +427,7 @@ export default function LifeGroupsManagement() {
     const member: Omit<FamilyMember, 'id'> = {
       firstName: newMemberForm.firstName.trim(),
       lastName: newMemberForm.lastName.trim(),
-      age: newMemberForm.age ? parseInt(newMemberForm.age) : undefined,
+      age: newMemberForm.age ? (newMemberForm.age as 'Infant' | 'Toddler' | 'Adolescent' | 'Teenager' | 'Young Adult' | 'Adult' | 'Elder Adult') : undefined,
       relationship: newMemberForm.relationship.trim() || undefined,
     };
 
@@ -474,9 +474,14 @@ export default function LifeGroupsManagement() {
           lastName: member.lastName,
         };
         
-        // Only include age if it's a valid number
-        if (member.age !== undefined && member.age !== null && typeof member.age === 'number' && !isNaN(member.age)) {
-          memberData.age = member.age;
+        // Include age if it's a valid category (string) or legacy number
+        if (member.age !== undefined && member.age !== null) {
+          if (typeof member.age === 'string') {
+            memberData.age = member.age;
+          } else if (typeof member.age === 'number' && !isNaN(member.age)) {
+            // Support legacy numeric ages
+            memberData.age = member.age;
+          }
         }
         
         // Only include relationship if it's a valid non-empty string
@@ -728,13 +733,21 @@ export default function LifeGroupsManagement() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-charcoal mb-1">Age</label>
-                    <input
-                      type="number"
+                    <label className="block text-xs font-medium text-charcoal mb-1">Age Category</label>
+                    <select
                       value={newMemberForm.age}
                       onChange={(e) => setNewMemberForm({ ...newMemberForm, age: e.target.value })}
                       className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
-                    />
+                    >
+                      <option value="">Select age category</option>
+                      <option value="Infant">Infant</option>
+                      <option value="Toddler">Toddler</option>
+                      <option value="Adolescent">Adolescent</option>
+                      <option value="Teenager">Teenager</option>
+                      <option value="Young Adult">Young Adult</option>
+                      <option value="Adult">Adult</option>
+                      <option value="Elder Adult">Elder Adult</option>
+                    </select>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-charcoal mb-1">Relationship</label>
@@ -769,7 +782,7 @@ export default function LifeGroupsManagement() {
                       >
                         <span className="text-charcoal text-sm">
                           {member.firstName} {member.lastName}
-                          {member.age && ` (Age: ${member.age})`}
+                          {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                           {member.relationship && ` - ${member.relationship}`}
                         </span>
                         <button
@@ -855,7 +868,7 @@ export default function LifeGroupsManagement() {
                       {family.members.map((member) => (
                         <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                           {member.firstName} {member.lastName}
-                          {member.age && ` (Age: ${member.age})`}
+                          {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                           {member.relationship && ` - ${member.relationship}`}
                         </div>
                       ))}
@@ -1079,7 +1092,7 @@ export default function LifeGroupsManagement() {
                                   {family.members.map((member) => (
                                     <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                                       {member.firstName} {member.lastName}
-                                      {member.age && ` (Age: ${member.age})`}
+                                      {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                                       {member.relationship && ` - ${member.relationship}`}
                                     </div>
                                   ))}
