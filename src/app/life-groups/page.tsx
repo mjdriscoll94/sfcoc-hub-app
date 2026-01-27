@@ -134,6 +134,26 @@ export default function LifeGroupsPage() {
     });
   };
 
+  const toggleAllFamiliesForGroup = (group: LifeGroup) => {
+    const groupFamilyUnitIds = group.familyUnitIds || [];
+    if (groupFamilyUnitIds.length === 0) return;
+
+    // Check if all are currently expanded
+    const allExpanded = groupFamilyUnitIds.every(id => expandedFamilies.has(id));
+
+    setExpandedFamilies(prev => {
+      const newSet = new Set(prev);
+      if (allExpanded) {
+        // Collapse all
+        groupFamilyUnitIds.forEach(id => newSet.delete(id));
+      } else {
+        // Expand all
+        groupFamilyUnitIds.forEach(id => newSet.add(id));
+      }
+      return newSet;
+    });
+  };
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -265,7 +285,15 @@ export default function LifeGroupsPage() {
               {/* Family Units Section */}
               {(group.familyUnitIds || []).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-border">
-                  <h4 className="text-sm font-semibold text-charcoal mb-3">Family Units</h4>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="text-sm font-semibold text-charcoal">Family Units</h4>
+                    <button
+                      onClick={() => toggleAllFamiliesForGroup(group)}
+                      className="text-sm text-coral hover:text-[#D6714A] font-medium transition-colors"
+                    >
+                      {(group.familyUnitIds || []).every(id => expandedFamilies.has(id)) ? 'Collapse All' : 'See All'}
+                    </button>
+                  </div>
                   <div className="space-y-2">
                     {(group.familyUnitIds || []).map((familyUnitId) => {
                       const family = familyUnits.find(f => f.id === familyUnitId);
