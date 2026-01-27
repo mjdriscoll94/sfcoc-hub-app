@@ -105,6 +105,7 @@ export default function LifeGroupsManagement() {
               ...member,
               addedAt: (member.addedAt as Timestamp)?.toDate() || new Date(),
             })),
+            familyUnitIds: data.familyUnitIds || [],
           } as LifeGroup;
         });
         setLifeGroups(groups);
@@ -276,57 +277,49 @@ export default function LifeGroupsManagement() {
     }
   };
 
-  const handleAddMember = async (groupId: string, userId: string) => {
+  const handleAddMember = async (groupId: string, familyUnitId: string) => {
     try {
       const group = lifeGroups.find(g => g.id === groupId);
       if (!group) return;
 
-      const user = users.find(u => u.uid === userId);
-      if (!user) return;
+      const familyUnit = familyUnits.find(f => f.id === familyUnitId);
+      if (!familyUnit) return;
 
-      // Check if user is already a member
-      if (group.members.some(m => m.userId === userId)) {
-        setError('User is already a member of this group');
+      // Check if family unit is already in the group
+      const currentFamilyUnitIds = group.familyUnitIds || [];
+      if (currentFamilyUnitIds.includes(familyUnitId)) {
+        setError('This family unit is already in this group');
         return;
       }
 
-      const newMember: LifeGroupMember = {
-        userId: user.uid,
-        displayName: user.displayName,
-        email: user.email,
-        addedAt: new Date(),
-        addedBy: userProfile?.uid || '',
-      };
-
+      // Add the family unit ID to the group
       await updateDoc(doc(db, 'lifeGroups', groupId), {
-        members: [...group.members, {
-          ...newMember,
-          addedAt: Timestamp.now(),
-        }],
+        familyUnitIds: [...currentFamilyUnitIds, familyUnitId],
         updatedAt: Timestamp.now(),
       });
 
       setError(null);
     } catch (err) {
-      console.error('Error adding member:', err);
-      setError('Failed to add member');
+      console.error('Error adding family unit:', err);
+      setError('Failed to add family unit');
     }
   };
 
-  const handleRemoveMember = async (groupId: string, userId: string) => {
+  const handleRemoveMember = async (groupId: string, familyUnitId: string) => {
     try {
       const group = lifeGroups.find(g => g.id === groupId);
       if (!group) return;
 
+      const currentFamilyUnitIds = group.familyUnitIds || [];
       await updateDoc(doc(db, 'lifeGroups', groupId), {
-        members: group.members.filter(m => m.userId !== userId),
+        familyUnitIds: currentFamilyUnitIds.filter(id => id !== familyUnitId),
         updatedAt: Timestamp.now(),
       });
 
       setError(null);
     } catch (err) {
-      console.error('Error removing member:', err);
-      setError('Failed to remove member');
+      console.error('Error removing family unit:', err);
+      setError('Failed to remove family unit');
     }
   };
 
@@ -1015,10 +1008,10 @@ export default function LifeGroupsManagement() {
                   </div>
                 </div>
 
-                {/* Members Section */}
+                {/* Family Units Section */}
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-charcoal">Members</h4>
+                    <h4 className="text-lg font-semibold text-charcoal">Family Units</h4>
                     <select
                       onChange={(e) => {
                         if (e.target.value) {
@@ -1028,37 +1021,66 @@ export default function LifeGroupsManagement() {
                       }}
                       className="px-3 py-1 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
                     >
-                      <option value="">Add Member...</option>
-                      {users
-                        .filter(user => !group.members.some(m => m.userId === user.uid))
-                        .map((user) => (
-                          <option key={user.uid} value={user.uid}>
-                            {user.displayName || user.email}
+                      <option value="">Add Family Unit...</option>
+                      {familyUnits
+                        .filter(family => !(group.familyUnitIds || []).includes(family.id))
+                        .map((family) => (
+                          <option key={family.id} value={family.id}>
+                            {family.familyName} - ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
                           </option>
                         ))}
                     </select>
                   </div>
-                  {group.members.length === 0 ? (
-                    <p className="text-text-light text-sm">No members yet</p>
+                  {(group.familyUnitIds || []).length === 0 ? (
+                    <p className="text-text-light text-sm">No family units yet</p>
                   ) : (
                     <div className="space-y-2">
-                      {group.members.map((member) => (
-                        <div
-                          key={member.userId}
-                          className="flex items-center justify-between p-2 bg-gray-50 rounded-md"
-                        >
-                          <span className="text-charcoal">
-                            {member.displayName || member.email || 'Unknown'}
-                          </span>
-                          <button
-                            onClick={() => handleRemoveMember(group.id, member.userId)}
-                            className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors"
-                            title="Remove member"
+                      {(group.familyUnitIds || []).map((familyUnitId) => {
+                        const family = familyUnits.find(f => f.id === familyUnitId);
+                        if (!family) return null;
+                        return (
+                          <div
+                            key={familyUnitId}
+                            className="border border-border rounded-lg p-3 bg-gray-50"
                           >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      ))}
+                            <div className="flex items-center justify-between">
+                              <button
+                                onClick={() => toggleFamilyExpand(familyUnitId)}
+                                className="flex items-center space-x-2 flex-1 text-left"
+                              >
+                                {expandedFamilies.has(familyUnitId) ? (
+                                  <ChevronDownIcon className="h-4 w-4 text-charcoal" />
+                                ) : (
+                                  <ChevronRightIcon className="h-4 w-4 text-charcoal" />
+                                )}
+                                <span className="font-semibold text-charcoal">
+                                  {family.familyName} - ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
+                                </span>
+                              </button>
+                              <button
+                                onClick={() => handleRemoveMember(group.id, familyUnitId)}
+                                className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors ml-2"
+                                title="Remove family unit"
+                              >
+                                <XMarkIcon className="h-4 w-4" />
+                              </button>
+                            </div>
+                            {expandedFamilies.has(familyUnitId) && (
+                              <div className="mt-2 pt-2 border-t border-border">
+                                <div className="space-y-1">
+                                  {family.members.map((member) => (
+                                    <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
+                                      {member.firstName} {member.lastName}
+                                      {member.age && ` (Age: ${member.age})`}
+                                      {member.relationship && ` - ${member.relationship}`}
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   )}
                 </div>

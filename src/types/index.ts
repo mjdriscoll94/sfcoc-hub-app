@@ -79,6 +79,7 @@ export interface LifeGroup {
   leaderId: string;
   leaderName: string;
   members: LifeGroupMember[];
+  familyUnitIds?: string[]; // IDs of family units in this life group
   meetingDay?: string;
   meetingTime?: string;
   meetingLocation?: string;
