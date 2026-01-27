@@ -104,4 +104,43 @@ export const deleteFamilyPhoto = async (publicId: string): Promise<void> => {
     }
     throw new Error('Failed to delete photo: Unknown error');
   }
+};
+
+export const uploadLifeGroupResource = async (file: File): Promise<string> => {
+  try {
+    console.log('Starting life group resource upload process...', { 
+      fileName: file.name, 
+      fileSize: file.size,
+      fileType: file.type,
+    });
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
+    formData.append('folder', 'life-groups');
+    formData.append('resource_type', 'raw');
+    
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`;
+    
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(`Upload failed: ${response.statusText}${errorData ? ` - ${JSON.stringify(errorData)}` : ''}`);
+    }
+
+    const data = await response.json();
+    console.log('Upload successful:', data);
+    
+    return data.secure_url;
+  } catch (error) {
+    console.error('Error in uploadLifeGroupResource:', error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to upload file: ${error.message}`);
+    }
+    throw new Error('Failed to upload file: Unknown error');
+  }
 }; 

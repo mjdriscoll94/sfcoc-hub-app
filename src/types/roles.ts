@@ -1,4 +1,4 @@
-export type UserRole = 'admin' | 'organizer' | 'member' | 'user';
+export type UserRole = 'admin' | 'organizer' | 'member' | 'user' | 'lifeGroupLeader';
 
 export interface UserRolePermissions {
   canAssignServiceRoles: boolean;
@@ -36,5 +36,12 @@ export const ROLE_PERMISSIONS: Record<UserRole, UserRolePermissions> = {
     canApprovePrayerRequests: false,
     canManageAnnouncements: false,
     canAccessDirectory: false,
+  },
+  lifeGroupLeader: {
+    canAssignServiceRoles: false,
+    canManageUsers: false,
+    canApprovePrayerRequests: false,
+    canManageAnnouncements: false,
+    canAccessDirectory: true,
   },
 }; 
