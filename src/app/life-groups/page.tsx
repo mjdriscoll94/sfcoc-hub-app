@@ -5,7 +5,6 @@ import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, Timestamp, getDocs } from 'firebase/firestore';
 import { LifeGroup, FamilyUnit } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function LifeGroupsPage() {
   useEffect(() => {
@@ -19,7 +18,6 @@ export default function LifeGroupsPage() {
   const [curriculumUrl, setCurriculumUrl] = useState<string | null>(null);
   const [curriculumFileName, setCurriculumFileName] = useState<string | null>(null);
   const [familyUnits, setFamilyUnits] = useState<FamilyUnit[]>([]);
-  const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const q = query(
@@ -41,6 +39,7 @@ export default function LifeGroupsPage() {
               ...member,
               addedAt: (member.addedAt as Timestamp)?.toDate() || new Date(),
             })),
+            familyUnitIds: data.familyUnitIds || [],
           } as LifeGroup;
         }).filter(group => group.isActive);
         setLifeGroups(groups);
@@ -121,17 +120,6 @@ export default function LifeGroupsPage() {
     return () => unsubscribe();
   }, []);
 
-  const toggleFamilyExpand = (familyId: string) => {
-    setExpandedFamilies(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(familyId)) {
-        newSet.delete(familyId);
-      } else {
-        newSet.add(familyId);
-      }
-      return newSet;
-    });
-  };
 
   if (loading) {
     return (
@@ -249,7 +237,15 @@ export default function LifeGroupsPage() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
                   </svg>
                   <span className="font-medium">Members:</span>
-                  <span className="ml-2">{group.members.length}</span>
+                  <span className="ml-2">
+                    {(group.familyUnitIds || []).reduce((total, familyUnitId) => {
+                      const family = familyUnits.find(f => f.id === familyUnitId);
+                      return total + (family?.totalCount || 0);
+                    }, 0)} {((group.familyUnitIds || []).reduce((total, familyUnitId) => {
+                      const family = familyUnits.find(f => f.id === familyUnitId);
+                      return total + (family?.totalCount || 0);
+                    }, 0)) === 1 ? 'person' : 'people'} across {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'family unit' : 'family units'}
+                  </span>
                 </div>
               </div>
             </div>
@@ -257,48 +253,6 @@ export default function LifeGroupsPage() {
         </div>
       )}
 
-      {/* Family Units Section */}
-      {familyUnits.length > 0 && (
-        <div className="mt-12">
-          <h2 className="text-2xl font-bold text-charcoal mb-6">Participants</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {familyUnits.map((family) => (
-              <div
-                key={family.id}
-                className="bg-white rounded-lg border border-border p-4 shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => toggleFamilyExpand(family.id)}
-              >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2 flex-1">
-                    {expandedFamilies.has(family.id) ? (
-                      <ChevronDownIcon className="h-5 w-5 text-charcoal" />
-                    ) : (
-                      <ChevronRightIcon className="h-5 w-5 text-charcoal" />
-                    )}
-                    <span className="font-semibold text-charcoal">{family.familyName}</span>
-                    <span className="text-text-light text-sm">
-                      ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
-                    </span>
-                  </div>
-                </div>
-                {expandedFamilies.has(family.id) && (
-                  <div className="mt-3 pt-3 border-t border-border">
-                    <div className="space-y-2">
-                      {family.members.map((member) => (
-                        <div key={member.id} className="text-sm text-charcoal pl-7">
-                          {member.firstName} {member.lastName}
-                          {member.age && ` (Age: ${member.age})`}
-                          {member.relationship && ` - ${member.relationship}`}
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
     </div>
   );
 }
