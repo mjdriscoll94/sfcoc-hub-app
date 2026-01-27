@@ -2,11 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase/config';
-import { collection, query, orderBy, onSnapshot, Timestamp, doc, updateDoc, addDoc, deleteDoc, getDocs, where } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, Timestamp, getDocs } from 'firebase/firestore';
 import { LifeGroup } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
-import { TrashIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 
 export default function LifeGroupsPage() {
   useEffect(() => {
@@ -17,8 +15,6 @@ export default function LifeGroupsPage() {
   const [lifeGroups, setLifeGroups] = useState<LifeGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [curriculumFile, setCurriculumFile] = useState<File | null>(null);
-  const [uploadingCurriculum, setUploadingCurriculum] = useState(false);
   const [curriculumUrl, setCurriculumUrl] = useState<string | null>(null);
   const [curriculumFileName, setCurriculumFileName] = useState<string | null>(null);
 
@@ -89,68 +85,6 @@ export default function LifeGroupsPage() {
     fetchResources();
   }, [isLifeGroupLeader]);
 
-  const handleCurriculumUpload = async () => {
-    if (!curriculumFile || !userProfile) return;
-
-    setUploadingCurriculum(true);
-    setError(null);
-
-    try {
-      const fileUrl = await uploadLifeGroupResource(curriculumFile);
-
-      // Check if curriculum already exists
-      const resourcesRef = collection(db, 'lifeGroupResources');
-      const snapshot = await getDocs(query(resourcesRef, where('type', '==', 'curriculum')));
-      
-      if (!snapshot.empty) {
-        // Update existing
-        const docRef = snapshot.docs[0];
-        await updateDoc(doc(db, 'lifeGroupResources', docRef.id), {
-          url: fileUrl,
-          fileName: curriculumFile.name,
-          updatedAt: Timestamp.now(),
-          updatedBy: userProfile.uid,
-        });
-      } else {
-        // Create new
-        await addDoc(resourcesRef, {
-          type: 'curriculum',
-          url: fileUrl,
-          fileName: curriculumFile.name,
-          createdAt: Timestamp.now(),
-          createdBy: userProfile.uid,
-          updatedAt: Timestamp.now(),
-        });
-      }
-
-      setCurriculumUrl(fileUrl);
-      setCurriculumFileName(curriculumFile.name);
-      setCurriculumFile(null);
-    } catch (err) {
-      console.error('Error uploading curriculum:', err);
-      setError('Failed to upload curriculum file');
-    } finally {
-      setUploadingCurriculum(false);
-    }
-  };
-
-  const handleDeleteCurriculum = async () => {
-    if (!userProfile) return;
-
-    try {
-      const resourcesRef = collection(db, 'lifeGroupResources');
-      const snapshot = await getDocs(query(resourcesRef, where('type', '==', 'curriculum')));
-      
-      if (!snapshot.empty) {
-        await deleteDoc(doc(db, 'lifeGroupResources', snapshot.docs[0].id));
-        setCurriculumUrl(null);
-        setCurriculumFileName(null);
-      }
-    } catch (err) {
-      console.error('Error deleting curriculum:', err);
-      setError('Failed to delete curriculum file');
-    }
-  };
 
 
   if (loading) {
@@ -187,20 +121,14 @@ export default function LifeGroupsPage() {
         <div className="mb-8 bg-white rounded-lg border border-border p-6">
           <h2 className="text-2xl font-bold text-charcoal mb-6">Leader Resources</h2>
           <p className="text-text-light mb-6">
-            Upload curriculum documents for life group leaders.
+            Download curriculum documents for life group leaders.
           </p>
 
-          {error && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600">{error}</p>
-            </div>
-          )}
-
           {/* Curriculum Section */}
-          <div className="border border-border rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-charcoal mb-4">Curriculum</h3>
-            {curriculumUrl ? (
-              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+          {curriculumUrl ? (
+            <div className="border border-border rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-charcoal mb-4">Curriculum</h3>
+              <div className="flex items-center p-3 bg-gray-50 rounded-md">
                 <div className="flex items-center space-x-3">
                   <svg className="w-5 h-5 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -217,50 +145,14 @@ export default function LifeGroupsPage() {
                     <p className="text-sm text-text-light">Click to view/download</p>
                   </div>
                 </div>
-                <button
-                  onClick={handleDeleteCurriculum}
-                  className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                  title="Delete curriculum"
-                >
-                  <TrashIcon className="h-5 w-5" />
-                </button>
               </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-2">
-                  Upload Curriculum Document
-                </label>
-                <div className="flex items-center space-x-2">
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx"
-                    onChange={(e) => setCurriculumFile(e.target.files?.[0] || null)}
-                    className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                  />
-                  <button
-                    onClick={handleCurriculumUpload}
-                    disabled={!curriculumFile || uploadingCurriculum}
-                    className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
-                  >
-                    {uploadingCurriculum ? (
-                      <>
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </>
-                    ) : (
-                      <>
-                        <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
-                        Upload
-                      </>
-                    )}
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
+            </div>
+          ) : (
+            <div className="border border-border rounded-lg p-4">
+              <h3 className="text-lg font-semibold text-charcoal mb-4">Curriculum</h3>
+              <p className="text-text-light">No curriculum document available yet.</p>
+            </div>
+          )}
         </div>
       )}
 

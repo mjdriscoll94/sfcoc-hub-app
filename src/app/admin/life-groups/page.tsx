@@ -4,11 +4,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
-import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, addDoc, Timestamp, getDocs } from 'firebase/firestore';
+import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, addDoc, Timestamp, getDocs, where } from 'firebase/firestore';
 import BackButton from '@/components/BackButton';
 import { LifeGroup, LifeGroupMember } from '@/types';
-import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon } from '@heroicons/react/24/outline';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
 
 interface UserProfile {
   uid: string;
@@ -31,6 +32,10 @@ export default function LifeGroupsManagement() {
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState<LifeGroup | null>(null);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
+  const [curriculumFile, setCurriculumFile] = useState<File | null>(null);
+  const [uploadingCurriculum, setUploadingCurriculum] = useState(false);
+  const [curriculumUrl, setCurriculumUrl] = useState<string | null>(null);
+  const [curriculumFileName, setCurriculumFileName] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -98,6 +103,26 @@ export default function LifeGroupsManagement() {
     );
 
     return () => unsubscribe();
+  }, []);
+
+  // Fetch curriculum resource
+  useEffect(() => {
+    const fetchCurriculum = async () => {
+      try {
+        const resourcesRef = collection(db, 'lifeGroupResources');
+        const snapshot = await getDocs(query(resourcesRef, where('type', '==', 'curriculum')));
+        
+        if (!snapshot.empty) {
+          const data = snapshot.docs[0].data();
+          setCurriculumUrl(data.url);
+          setCurriculumFileName(data.fileName || null);
+        }
+      } catch (err) {
+        console.error('Error fetching curriculum:', err);
+      }
+    };
+
+    fetchCurriculum();
   }, []);
 
   const resetForm = () => {
@@ -255,6 +280,71 @@ export default function LifeGroupsManagement() {
     }
   };
 
+  const handleCurriculumUpload = async () => {
+    if (!curriculumFile || !userProfile) return;
+
+    setUploadingCurriculum(true);
+    setError(null);
+
+    try {
+      const fileUrl = await uploadLifeGroupResource(curriculumFile);
+
+      // Check if curriculum already exists
+      const resourcesRef = collection(db, 'lifeGroupResources');
+      const snapshot = await getDocs(query(resourcesRef, where('type', '==', 'curriculum')));
+      
+      if (!snapshot.empty) {
+        // Update existing
+        const docRef = snapshot.docs[0];
+        await updateDoc(doc(db, 'lifeGroupResources', docRef.id), {
+          url: fileUrl,
+          fileName: curriculumFile.name,
+          updatedAt: Timestamp.now(),
+          updatedBy: userProfile.uid,
+        });
+      } else {
+        // Create new
+        await addDoc(resourcesRef, {
+          type: 'curriculum',
+          url: fileUrl,
+          fileName: curriculumFile.name,
+          createdAt: Timestamp.now(),
+          createdBy: userProfile.uid,
+          updatedAt: Timestamp.now(),
+        });
+      }
+
+      setCurriculumUrl(fileUrl);
+      setCurriculumFileName(curriculumFile.name);
+      setCurriculumFile(null);
+      setError(null);
+    } catch (err) {
+      console.error('Error uploading curriculum:', err);
+      setError('Failed to upload curriculum file');
+    } finally {
+      setUploadingCurriculum(false);
+    }
+  };
+
+  const handleDeleteCurriculum = async () => {
+    if (!userProfile) return;
+
+    try {
+      const resourcesRef = collection(db, 'lifeGroupResources');
+      const snapshot = await getDocs(query(resourcesRef, where('type', '==', 'curriculum')));
+      
+      if (!snapshot.empty) {
+        await deleteDoc(doc(db, 'lifeGroupResources', snapshot.docs[0].id));
+        setCurriculumUrl(null);
+        setCurriculumFileName(null);
+        setError(null);
+      }
+    } catch (err) {
+      console.error('Error deleting curriculum:', err);
+      setError('Failed to delete curriculum file');
+    }
+  };
+
   if (!userProfile?.isAdmin) {
     return null;
   }
@@ -290,6 +380,81 @@ export default function LifeGroupsManagement() {
           <p className="text-red-600">{error}</p>
         </div>
       )}
+
+      {/* Curriculum Management Section */}
+      <div className="mb-8 bg-white rounded-lg border border-border p-6">
+        <h2 className="text-2xl font-bold text-charcoal mb-4">Curriculum Management</h2>
+        <p className="text-text-light mb-6">
+          Upload and manage the curriculum document for life group leaders.
+        </p>
+
+        <div className="border border-border rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-charcoal mb-4">Curriculum Document</h3>
+          {curriculumUrl ? (
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-md">
+              <div className="flex items-center space-x-3">
+                <svg className="w-5 h-5 text-coral" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                <div>
+                  <a
+                    href={curriculumUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-coral hover:underline font-medium"
+                  >
+                    {curriculumFileName || 'Curriculum Document'}
+                  </a>
+                  <p className="text-sm text-text-light">Click to view/download</p>
+                </div>
+              </div>
+              <button
+                onClick={handleDeleteCurriculum}
+                className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                title="Delete curriculum"
+              >
+                <TrashIcon className="h-5 w-5" />
+              </button>
+            </div>
+          ) : (
+            <p className="text-text-light mb-4">No curriculum document uploaded yet.</p>
+          )}
+          
+          <div className="mt-4">
+            <label className="block text-sm font-medium text-charcoal mb-2">
+              {curriculumUrl ? 'Replace Curriculum Document' : 'Upload Curriculum Document'}
+            </label>
+            <div className="flex items-center space-x-2">
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx"
+                onChange={(e) => setCurriculumFile(e.target.files?.[0] || null)}
+                className="flex-1 px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+              />
+              <button
+                onClick={handleCurriculumUpload}
+                disabled={!curriculumFile || uploadingCurriculum}
+                className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+              >
+                {uploadingCurriculum ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Uploading...
+                  </>
+                ) : (
+                  <>
+                    <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
+                    {curriculumUrl ? 'Replace' : 'Upload'}
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Create/Edit Form */}
       {(showCreateForm || editingId) && (
