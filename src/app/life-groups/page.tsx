@@ -90,10 +90,8 @@ export default function LifeGroupsPage() {
 
   // Fetch family units
   useEffect(() => {
-    const q = query(
-      collection(db, 'lifegroupParticipants'),
-      orderBy('familyName', 'asc')
-    );
+    // Temporarily remove orderBy to test if index is the issue
+    const q = query(collection(db, 'lifegroupParticipants'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -111,6 +109,8 @@ export default function LifeGroupsPage() {
             totalCount: (data.members || []).length, // Auto-calculated
           } as FamilyUnit;
         });
+        // Sort manually instead of using orderBy
+        units.sort((a, b) => a.familyName.localeCompare(b.familyName));
         setFamilyUnits(units);
       },
       (err) => {

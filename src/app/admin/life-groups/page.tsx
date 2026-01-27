@@ -143,10 +143,8 @@ export default function LifeGroupsManagement() {
 
   // Fetch family units
   useEffect(() => {
-    const q = query(
-      collection(db, 'lifegroupParticipants'),
-      orderBy('familyName', 'asc')
-    );
+    // Temporarily remove orderBy to test if index is the issue
+    const q = query(collection(db, 'lifegroupParticipants'));
 
     const unsubscribe = onSnapshot(
       q,
@@ -164,6 +162,8 @@ export default function LifeGroupsManagement() {
             totalCount: (data.members || []).length, // Auto-calculate
           } as FamilyUnit;
         });
+        // Sort manually instead of using orderBy
+        units.sort((a, b) => a.familyName.localeCompare(b.familyName));
         setFamilyUnits(units);
       },
       (err) => {
@@ -463,11 +463,13 @@ export default function LifeGroupsManagement() {
 
     if (!familyFormData.familyName.trim()) {
       setError('Family name is required');
+      console.log('ERROR: Family name is empty');
       return;
     }
 
     if (!userProfile) {
       setError('You must be logged in to save a family unit');
+      console.log('ERROR: No user profile');
       return;
     }
 
@@ -487,24 +489,33 @@ export default function LifeGroupsManagement() {
         updatedAt: Timestamp.now(),
       };
 
-      console.log('Saving family data:', familyData);
+      console.log('About to save family data:', JSON.stringify(familyData, null, 2));
+      console.log('Collection name: lifegroupParticipants');
 
       if (editingFamilyId) {
+        console.log('Updating existing family unit:', editingFamilyId);
         await updateDoc(doc(db, 'lifegroupParticipants', editingFamilyId), familyData);
-        console.log('Family unit updated');
+        console.log('Family unit updated successfully');
       } else {
+        console.log('Creating new family unit...');
         const docRef = await addDoc(collection(db, 'lifegroupParticipants'), {
           ...familyData,
           createdAt: Timestamp.now(),
           createdBy: userProfile.uid,
         });
-        console.log('Family unit created with ID:', docRef.id);
+        console.log('Family unit created successfully with ID:', docRef.id);
+        console.log('Document path:', docRef.path);
       }
 
+      console.log('Save completed, calling handleCancelFamily');
       handleCancelFamily();
       setError(null);
     } catch (err) {
-      console.error('Error saving family unit:', err);
+      console.error('=== ERROR SAVING FAMILY UNIT ===');
+      console.error('Error details:', err);
+      console.error('Error message:', err instanceof Error ? err.message : 'Unknown error');
+      console.error('Error code:', (err as any)?.code);
+      console.error('Error stack:', err instanceof Error ? err.stack : 'No stack');
       setError(err instanceof Error ? err.message : 'Failed to save family unit');
     }
   };
