@@ -474,13 +474,25 @@ export default function LifeGroupsManagement() {
     }
 
     try {
-      const membersWithIds = familyFormData.members.map((member, index) => ({
-        id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
-        firstName: member.firstName,
-        lastName: member.lastName,
-        age: member.age,
-        relationship: member.relationship,
-      }));
+      const membersWithIds = familyFormData.members.map((member, index) => {
+        const memberData: any = {
+          id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
+          firstName: member.firstName,
+          lastName: member.lastName,
+        };
+        
+        // Only include age if it's a valid number
+        if (member.age !== undefined && member.age !== null && typeof member.age === 'number' && !isNaN(member.age)) {
+          memberData.age = member.age;
+        }
+        
+        // Only include relationship if it's a valid non-empty string
+        if (member.relationship && typeof member.relationship === 'string' && member.relationship.trim() !== '') {
+          memberData.relationship = member.relationship.trim();
+        }
+        
+        return memberData;
+      });
 
       const familyData = {
         familyName: familyFormData.familyName.trim(),
