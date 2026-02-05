@@ -106,6 +106,37 @@ export const deleteFamilyPhoto = async (publicId: string): Promise<void> => {
   }
 };
 
+export const uploadBulletin = async (file: File): Promise<string> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
+    formData.append('folder', 'bulletins');
+    formData.append('resource_type', 'raw');
+
+    const uploadUrl = `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`;
+
+    const response = await fetch(uploadUrl, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      throw new Error(`Upload failed: ${response.statusText}${errorData ? ` - ${JSON.stringify(errorData)}` : ''}`);
+    }
+
+    const data = await response.json();
+    return data.secure_url;
+  } catch (error) {
+    console.error('Error in uploadBulletin:', error);
+    if (error instanceof Error) {
+      throw new Error(`Failed to upload bulletin: ${error.message}`);
+    }
+    throw new Error('Failed to upload bulletin: Unknown error');
+  }
+};
+
 export const uploadLifeGroupResource = async (file: File): Promise<string> => {
   try {
     console.log('Starting life group resource upload process...', { 
