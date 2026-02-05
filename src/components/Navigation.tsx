@@ -7,12 +7,13 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 import { Fragment } from 'react';
 import { Dialog, Transition, Disclosure, Menu } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
+import { Bars3Icon, XMarkIcon, ChevronUpIcon, PlayCircleIcon } from '@heroicons/react/24/outline';
 
 type SubItem = {
   name: string;
-  href: string;
+  href?: string;
   icon?: React.ReactNode;
+  action?: 'podcast-modal';
 };
 
 type NavItem = {
@@ -23,10 +24,14 @@ type NavItem = {
   items?: SubItem[];
 };
 
+const SPOTIFY_PODCAST_URL = 'https://open.spotify.com/show/6BUbTQmZOpUZ9KvpOLPtwy';
+const APPLE_PODCASTS_URL = 'https://podcasts.apple.com/us/podcast/beyond-sunday/id1838805862';
+
 const Navigation = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const [isPodcastModalOpen, setIsPodcastModalOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const dropdownButtonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
   const router = useRouter();
@@ -132,6 +137,15 @@ const Navigation = () => {
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+            </svg>
+          )
+        },
+        {
+          name: 'Podcast',
+          action: 'podcast-modal',
+          icon: (
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
             </svg>
           )
         }
@@ -338,6 +352,21 @@ const Navigation = () => {
                         <div className="rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
                           <div className="py-1">
                             {item.items?.map((subItem) => {
+                              if (subItem.action === 'podcast-modal') {
+                                return (
+                                  <button
+                                    key={subItem.name}
+                                    onClick={() => {
+                                      setIsPodcastModalOpen(true);
+                                      handleDropdownClick(item.name);
+                                    }}
+                                    className="text-black hover:bg-[#E88B5F]/10 flex items-center px-4 py-2 text-sm w-full text-left"
+                                  >
+                                    {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                                    {subItem.name}
+                                  </button>
+                                );
+                              }
                               const isExternal = subItem.href?.startsWith('http');
                               return isExternal ? (
                                 <a
@@ -358,7 +387,7 @@ const Navigation = () => {
                               ) : (
                                 <Link
                                   key={subItem.name}
-                                  href={subItem.href}
+                                  href={subItem.href!}
                                   className={`${
                                     pathname === subItem.href
                                       ? 'text-black bg-[#E88B5F]/10 font-semibold'
@@ -504,6 +533,21 @@ const Navigation = () => {
                     </Disclosure.Button>
                     <Disclosure.Panel className="bg-[#E88B5F]/90">
                       {item.items?.map((subItem) => {
+                        if (subItem.action === 'podcast-modal') {
+                          return (
+                            <button
+                              key={subItem.name}
+                              onClick={() => {
+                                setIsPodcastModalOpen(true);
+                                setIsOpen(false);
+                              }}
+                              className="text-white hover:bg-black/5 flex items-center pl-12 pr-4 py-2 text-sm w-full text-left"
+                            >
+                              {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
+                              {subItem.name}
+                            </button>
+                          );
+                        }
                         const isExternal = subItem.href?.startsWith('http');
                         return isExternal ? (
                           <a
@@ -527,7 +571,7 @@ const Navigation = () => {
                         ) : (
                           <Link
                             key={subItem.name}
-                            href={subItem.href}
+                            href={subItem.href!}
                             className={`${
                               pathname === subItem.href
                                 ? 'text-white bg-black/10 font-semibold'
@@ -568,6 +612,76 @@ const Navigation = () => {
           ))}
         </div>
       </div>
+
+      {/* Podcast Platform Modal */}
+      <Transition appear show={isPodcastModalOpen} as={Fragment}>
+        <Dialog as="div" className="relative z-50" onClose={() => setIsPodcastModalOpen(false)}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black/30" />
+          </Transition.Child>
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all">
+                  <Dialog.Title as="h3" className="text-lg font-semibold text-charcoal mb-2">
+                    Beyond Sunday Podcast
+                  </Dialog.Title>
+                  <Dialog.Description className="text-sm text-text-light mb-6">
+                    Choose where you&apos;d like to listen:
+                  </Dialog.Description>
+                  <div className="space-y-3">
+                    <a
+                      href={SPOTIFY_PODCAST_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center w-full px-4 py-3 rounded-lg bg-[#1DB954] text-white font-medium hover:bg-[#1ed760] transition-colors"
+                      onClick={() => setIsPodcastModalOpen(false)}
+                    >
+                      <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
+                      </svg>
+                      Open in Spotify
+                    </a>
+                    <a
+                      href={APPLE_PODCASTS_URL}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center w-full px-4 py-3 rounded-lg bg-[#9254DE] text-white font-medium hover:bg-[#7c3aed] transition-colors"
+                      onClick={() => setIsPodcastModalOpen(false)}
+                    >
+                      <PlayCircleIcon className="w-6 h-6 mr-3" />
+                      Open in Apple Podcasts
+                    </a>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsPodcastModalOpen(false)}
+                    className="mt-4 w-full px-4 py-2 text-sm text-text-light hover:text-charcoal border border-border rounded-lg hover:bg-gray-50 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
+          </div>
+        </Dialog>
+      </Transition>
     </nav>
   );
 };
