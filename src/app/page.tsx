@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect } from "react";
 import BuildStatus from '@/components/BuildStatus';
+import { useAuth } from '@/lib/auth/AuthContext';
 
 const eventCategories = [
   {
@@ -129,6 +130,7 @@ const eventCategories = [
 ];
 
 export default function Home() {
+  const { user } = useAuth();
   useEffect(() => {
     document.title = 'Home | Sioux Falls Church of Christ';
   }, []);
@@ -170,17 +172,19 @@ export default function Home() {
             <p className="text-xl md:text-2xl mb-8 uppercase tracking-wide">
               One body. Many members. United and serving together.
             </p>
-            <div className="flex justify-center">
-              <Link
-                href="/calendar"
-                className="bg-primary text-on-primary px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity inline-flex items-center space-x-2 focus-ring uppercase tracking-wide"
-              >
-                <span>View Calendar</span>
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
-            </div>
+            {user && (
+              <div className="flex justify-center">
+                <Link
+                  href="/calendar"
+                  className="bg-primary text-on-primary px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity inline-flex items-center space-x-2 focus-ring uppercase tracking-wide"
+                >
+                  <span>View Calendar</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+                  </svg>
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </section>
@@ -259,17 +263,19 @@ export default function Home() {
             ))}
           </div>
 
-          <div className="text-center mt-12">
-            <Link
-              href="/calendar"
-              className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-coral to-coral-light text-white font-semibold rounded-lg hover:shadow-lg hover:from-coral-dark hover:to-coral transition-all focus-ring"
-            >
-              <span>View Full Calendar</span>
-              <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </Link>
-          </div>
+          {user && (
+            <div className="text-center mt-12">
+              <Link
+                href="/calendar"
+                className="inline-flex items-center px-6 py-3 bg-white border-2 border-black text-black font-semibold rounded-lg hover:bg-gray-50 transition-all focus-ring"
+              >
+                <span>View Full Calendar</span>
+                <svg className="w-5 h-5 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </Link>
+            </div>
+          )}
         </div>
       </section>
     </div>
