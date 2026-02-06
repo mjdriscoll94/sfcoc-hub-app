@@ -88,10 +88,10 @@ export default function AdminDashboard() {
             </div>
           )}
 
-          {/* Content & Publications */}
+          {/* Content & Resources */}
           {(canAccessAdmin || userProfile?.isAdmin) && (
             <div>
-              <h2 className="text-lg font-semibold text-charcoal mb-3">Content & Publications</h2>
+              <h2 className="text-lg font-semibold text-charcoal mb-3">Content & Resources</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {canAccessAdmin && (
                   <Link
