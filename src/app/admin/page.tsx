@@ -72,19 +72,6 @@ export default function AdminDashboard() {
                   </div>
                 </Link>
                 <Link
-                  href="/admin/directory"
-                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                >
-                  <div className="flex-shrink-0">
-                    <FileText className="h-6 w-6 text-coral" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-charcoal">Directory</p>
-                    <p className="text-sm text-text-light">Manage church directory</p>
-                  </div>
-                </Link>
-                <Link
                   href="/admin/life-groups"
                   className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
                 >
@@ -156,7 +143,7 @@ export default function AdminDashboard() {
           )}
 
           {/* Service & Events */}
-          {(canManageVolunteer || canAssignServiceRoles || userProfile?.isAdmin) && (
+          {(canManageVolunteer || canAssignServiceRoles) && (
             <div>
               <h2 className="text-lg font-semibold text-charcoal mb-3">Service & Events</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -190,21 +177,28 @@ export default function AdminDashboard() {
                     </div>
                   </Link>
                 )}
-                {userProfile?.isAdmin && (
-                  <Link
-                    href="/admin/events"
-                    className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                  >
-                    <div className="flex-shrink-0">
-                      <CalendarDays className="h-6 w-6 text-coral" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-charcoal">Home Page Events</p>
-                      <p className="text-sm text-text-light">Manage events displayed on the home page</p>
-                    </div>
-                  </Link>
-                )}
+              </div>
+            </div>
+          )}
+
+          {/* Site Management */}
+          {userProfile?.isAdmin && (
+            <div>
+              <h2 className="text-lg font-semibold text-charcoal mb-3">Site Management</h2>
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Link
+                  href="/admin/events"
+                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                >
+                  <div className="flex-shrink-0">
+                    <CalendarDays className="h-6 w-6 text-coral" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-charcoal">Home Page Events</p>
+                    <p className="text-sm text-text-light">Manage events displayed on the home page</p>
+                  </div>
+                </Link>
               </div>
             </div>
           )}
