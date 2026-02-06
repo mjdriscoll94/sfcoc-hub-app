@@ -108,4 +108,25 @@ export interface FamilyUnit {
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
+}
+
+/** Icon identifier for home page events - maps to SVG in EventIcon component */
+export type HomePageEventIcon = 'church' | 'book' | 'people';
+
+export interface HomePageEvent {
+  id?: string;
+  name: string;
+  time: string;
+  day: string;
+  description: string;
+  icon: HomePageEventIcon;
+}
+
+export interface EventCategory {
+  id: string;
+  title: string;
+  order: number;
+  events: HomePageEvent[];
+  createdAt?: Date;
+  updatedAt?: Date;
 } 
