@@ -10,6 +10,7 @@ import BuildInfo from '@/components/BuildInfo';
 import { Users, FileText, Upload, UsersRound } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
+import { ROLE_PERMISSIONS } from '@/types/roles';
 
 export default function AdminDashboard() {
   useEffect(() => {
@@ -19,14 +20,24 @@ export default function AdminDashboard() {
   const { userProfile } = useAuth();
   const router = useRouter();
 
+  const canAccessAdmin = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements
+  );
+  const canManageVolunteer = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageVolunteerOpportunities
+  );
+  const canAssignServiceRoles = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canAssignServiceRoles
+  );
+
   useEffect(() => {
-    if (!userProfile?.isAdmin) {
+    if (userProfile && !canAccessAdmin) {
       router.push('/');
       return;
     }
-  }, [userProfile, router]);
+  }, [userProfile, canAccessAdmin, router]);
 
-  if (!userProfile?.isAdmin) {
+  if (!canAccessAdmin) {
     return null;
   }
 
@@ -42,7 +53,8 @@ export default function AdminDashboard() {
 
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {/* User Management */}
+          {/* User Management - Admin only */}
+          {userProfile?.isAdmin && (
           <Link
             href="/admin/users"
             className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
@@ -56,8 +68,10 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Manage user accounts and approvals</p>
             </div>
           </Link>
+          )}
 
-          {/* Add Announcement */}
+          {/* Add Announcement - Admin and Organizer */}
+          {canAccessAdmin && (
           <Link
             href="/admin/announcements/new"
             className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
@@ -71,8 +85,10 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Create a new announcement</p>
             </div>
           </Link>
+          )}
 
-          {/* Directory Management */}
+          {/* Directory Management - Admin only */}
+          {userProfile?.isAdmin && (
           <Link
             href="/admin/directory"
             className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
@@ -86,8 +102,10 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Manage church directory</p>
             </div>
           </Link>
+          )}
 
-          {/* Upload Sermon Notes */}
+          {/* Upload Sermon Notes - Admin only */}
+          {userProfile?.isAdmin && (
           <Link
             href="/admin/lesson-notes"
             className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
@@ -101,8 +119,10 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Manage and upload lesson notes</p>
             </div>
           </Link>
+          )}
 
-          {/* Upload Bulletin */}
+          {/* Upload Bulletin - Admin only */}
+          {userProfile?.isAdmin && (
           <Link
             href="/admin/bulletin"
             className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
@@ -116,8 +136,10 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Manage and upload weekly bulletins</p>
             </div>
           </Link>
+          )}
 
-          {/* Volunteer Opportunity Management */}
+          {/* Volunteer Opportunity Management - Admin and Organizer */}
+          {canManageVolunteer && (
           <Link
             href="/admin/volunteer"
             className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
@@ -131,8 +153,27 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Manage volunteer opportunities</p>
             </div>
           </Link>
+          )}
 
-          {/* Life Groups Management */}
+          {/* Service Roles - Admin and Organizer */}
+          {canAssignServiceRoles && (
+          <Link
+            href="/service-roles"
+            className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+          >
+            <div className="flex-shrink-0">
+              <Users className="h-6 w-6 text-coral" aria-hidden="true" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <span className="absolute inset-0" aria-hidden="true" />
+              <p className="text-sm font-medium text-charcoal">Service Roles</p>
+              <p className="text-sm text-text-light">Manage Sunday service role assignments</p>
+            </div>
+          </Link>
+          )}
+
+          {/* Life Groups Management - Admin only */}
+          {userProfile?.isAdmin && (
           <Link
             href="/admin/life-groups"
             className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
@@ -146,32 +187,39 @@ export default function AdminDashboard() {
               <p className="text-sm text-text-light">Manage life groups and members</p>
             </div>
           </Link>
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-8">
-          {/* Prayer Request Approval Queue */}
+          {/* Prayer Request Approval Queue - Admin only */}
+          {userProfile?.isAdmin && (
           <div className="bg-white rounded-lg p-6 border border-border shadow">
             <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Prayer Request Approval Queue
             </h2>
             <PrayerRequestApprovalQueue />
           </div>
+          )}
 
-          {/* Volunteer Opportunity Approval Queue */}
+          {/* Volunteer Opportunity Approval Queue - Admin and Organizer */}
+          {canManageVolunteer && (
           <div className="bg-white rounded-lg p-6 border border-border shadow">
             <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Volunteer Opportunity Approval Queue
             </h2>
             <VolunteerOpportunityApprovalQueue />
           </div>
+          )}
 
-          {/* Pending User Accounts */}
+          {/* Pending User Accounts - Admin only */}
+          {userProfile?.isAdmin && (
           <div className="bg-white rounded-lg p-6 border border-border shadow">
             <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
               Pending User Accounts
             </h2>
             <PendingUserQueue />
           </div>
+          )}
         </div>
 
         {/* Build Information */}

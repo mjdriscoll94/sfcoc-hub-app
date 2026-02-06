@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { ROLE_PERMISSIONS } from '@/types/roles';
 
 interface AnnouncementFormProps {
   onSuccess?: () => void;
@@ -17,10 +18,14 @@ export default function AnnouncementForm({ onSuccess }: AnnouncementFormProps) {
   const [error, setError] = useState<string | null>(null);
   const { userProfile } = useAuth();
 
+  const canManageAnnouncements = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!userProfile?.isAdmin) {
-      setError('Only admins can create announcements');
+    if (!canManageAnnouncements) {
+      setError('You do not have permission to create announcements');
       return;
     }
 

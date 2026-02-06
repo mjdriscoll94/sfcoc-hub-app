@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { ROLE_PERMISSIONS } from '@/types/roles';
 
 const protectedPaths = [
   '/prayer-board',
@@ -21,25 +22,26 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
 
+  // Admin or organizer can access admin routes (organizer has limited access enforced per-page)
+  const canAccessAdmin = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements
+  );
+
   useEffect(() => {
     if (!loading) {
-      // Check if the current path requires protection
       const requiresAuth = protectedPaths.some(path => pathname?.startsWith(path));
       const requiresAdmin = adminPaths.some(path => pathname?.startsWith(path));
 
       if (requiresAuth && !user) {
         console.log('RouteGuard: Unauthorized access attempt, redirecting to signin');
-        // Redirect to login if not authenticated
         router.push(`/auth/signin?redirect=${encodeURIComponent(pathname || '/')}`);
-      } else if (requiresAdmin && !userProfile?.isAdmin) {
-        console.log('RouteGuard: Non-admin access attempt, redirecting to home');
-        // Redirect to home if not admin
+      } else if (requiresAdmin && !canAccessAdmin) {
+        console.log('RouteGuard: No admin/organizer access, redirecting to home');
         router.push('/');
       }
     }
-  }, [loading, user, userProfile, pathname, router]);
+  }, [loading, user, userProfile, pathname, router, canAccessAdmin]);
 
-  // Show nothing while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -48,15 +50,13 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
     );
   }
 
-  // If the path requires auth and there's no user, don't render children
   const requiresAuth = protectedPaths.some(path => pathname?.startsWith(path));
   if (requiresAuth && !user) {
     return null;
   }
 
-  // If the path requires admin and the user isn't an admin, don't render children
   const requiresAdmin = adminPaths.some(path => pathname?.startsWith(path));
-  if (requiresAdmin && !userProfile?.isAdmin) {
+  if (requiresAdmin && !canAccessAdmin) {
     return null;
   }
 

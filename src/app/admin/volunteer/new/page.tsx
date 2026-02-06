@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { addVolunteerOpportunity } from '@/lib/firebase/utils';
 import BackButton from '@/components/BackButton';
+import { ROLE_PERMISSIONS } from '@/types/roles';
 
 export default function NewVolunteerOpportunityPage() {
   useEffect(() => {
@@ -27,8 +28,12 @@ export default function NewVolunteerOpportunityPage() {
     status: 'open' as const
   });
 
-  // Redirect if not admin
-  if (!userProfile?.isAdmin) {
+  const canManageVolunteer = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageVolunteerOpportunities
+  );
+
+  // Redirect if no volunteer management permission
+  if (userProfile && !canManageVolunteer) {
     router.push('/');
     return null;
   }

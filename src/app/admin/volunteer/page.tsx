@@ -8,6 +8,7 @@ import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, Time
 import BackButton from '@/components/BackButton';
 import { VolunteerOpportunityItem } from '@/hooks/useVolunteerOpportunities';
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { ROLE_PERMISSIONS } from '@/types/roles';
 
 export default function VolunteerOpportunityManagement() {
   useEffect(() => {
@@ -30,11 +31,15 @@ export default function VolunteerOpportunityManagement() {
     maxVolunteers: 1,
   });
 
+  const canManageVolunteer = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageVolunteerOpportunities
+  );
+
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) {
+    if (userProfile && !canManageVolunteer) {
       router.push('/');
     }
-  }, [userProfile, router]);
+  }, [userProfile, canManageVolunteer, router]);
 
   useEffect(() => {
     // Fetch all volunteer opportunities (not just approved/open)
@@ -153,7 +158,7 @@ export default function VolunteerOpportunityManagement() {
     }
   };
 
-  if (!userProfile?.isAdmin) {
+  if (!canManageVolunteer) {
     return null;
   }
 

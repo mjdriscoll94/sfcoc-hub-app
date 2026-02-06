@@ -8,6 +8,7 @@ import { db } from '@/lib/firebase/config';
 import RichTextEditor from '@/components/RichTextEditor';
 import { sendAnnouncementEmail, type EmailSubscriber } from '@/lib/email/emailService';
 import BackButton from '@/components/BackButton';
+import { ROLE_PERMISSIONS } from '@/types/roles';
 
 type AnnouncementType = 'Weekly' | 'KFC' | 'General' | 'Youth' | 'Young Adult';
 
@@ -35,14 +36,22 @@ export default function NewAnnouncementPage() {
   const router = useRouter();
   const { userProfile } = useAuth();
 
+  const canManageAnnouncements = userProfile?.isAdmin || (
+    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements
+  );
+
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) {
+    if (userProfile && !canManageAnnouncements) {
       router.push('/');
     }
-  }, [userProfile, router]);
+  }, [userProfile, canManageAnnouncements, router]);
 
   if (!userProfile) {
     return null; // Or a loading spinner
+  }
+
+  if (!canManageAnnouncements) {
+    return null;
   }
 
   const sendNotification = async (announcement: { title: string; content: string; type: string }) => {

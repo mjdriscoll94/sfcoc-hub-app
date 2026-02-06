@@ -30,6 +30,8 @@ export default function TeacherManagement() {
   const [notes, setNotes] = useState('');
   const [showTeacherForm, setShowTeacherForm] = useState(false);
   const [editingTeacher, setEditingTeacher] = useState<Teacher | null>(null);
+  const [scheduleToDelete, setScheduleToDelete] = useState<TeachingSchedule | null>(null);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
   const canEdit = userProfile && (userProfile.isAdmin || ROLE_PERMISSIONS[userProfile.role].canAssignServiceRoles);
 
@@ -307,6 +309,36 @@ export default function TeacherManagement() {
       setNotes('');
     } catch (error) {
       console.error('Error saving assignment:', error);
+    }
+  };
+
+  const handleDeleteSchoolYearClick = (schedule: TeachingSchedule) => {
+    setScheduleToDelete(schedule);
+    setDeleteConfirmText('');
+  };
+
+  const handleDeleteSchoolYearClose = () => {
+    setScheduleToDelete(null);
+    setDeleteConfirmText('');
+  };
+
+  const handleDeleteSchoolYearConfirm = async () => {
+    if (!scheduleToDelete || deleteConfirmText.toLowerCase() !== 'delete') return;
+
+    try {
+      if (scheduleToDelete.id) {
+        await deleteDoc(doc(db, 'teachingSchedules', scheduleToDelete.id));
+      }
+      setTeachingSchedules(prev => prev.filter(s => s.id !== scheduleToDelete.id));
+      setExpandedYears(prev => {
+        const next = new Set(prev);
+        next.delete(scheduleToDelete.schoolYear);
+        return next;
+      });
+      handleDeleteSchoolYearClose();
+    } catch (error) {
+      console.error('Error deleting school year:', error);
+      alert('Failed to delete school year. Please try again.');
     }
   };
 
@@ -639,26 +671,40 @@ export default function TeacherManagement() {
               return (
                 <div key={schedule.schoolYear} className="bg-white rounded-lg overflow-hidden">
                   {/* Year Header - Clickable to expand/collapse */}
-                  <button
-                    onClick={() => toggleYear(schedule.schoolYear)}
-                    className="w-full px-6 py-4 flex items-center justify-between hover:bg-sage/5 transition-colors text-left"
-                  >
-                    <div className="flex items-center space-x-3">
-                      {isExpanded ? (
-                        <svg className="w-6 h-6 text-charcoal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                        </svg>
-                      ) : (
-                        <svg className="w-6 h-6 text-charcoal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                        </svg>
-                      )}
-                      <h3 className="text-xl font-bold text-charcoal">School Year {schedule.schoolYear}</h3>
-                    </div>
-                    <div className="text-sm text-text/50">
-                      {schedule.assignments.length} {schedule.assignments.length === 1 ? 'assignment' : 'assignments'}
-                    </div>
-                  </button>
+                  <div className="w-full px-6 py-4 flex items-center justify-between hover:bg-sage/5 transition-colors">
+                    <button
+                      onClick={() => toggleYear(schedule.schoolYear)}
+                      className="flex-1 flex items-center justify-between text-left"
+                    >
+                      <div className="flex items-center space-x-3">
+                        {isExpanded ? (
+                          <svg className="w-6 h-6 text-charcoal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                          </svg>
+                        ) : (
+                          <svg className="w-6 h-6 text-charcoal" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        )}
+                        <h3 className="text-xl font-bold text-charcoal">School Year {schedule.schoolYear}</h3>
+                      </div>
+                      <div className="text-sm text-text/50">
+                        {schedule.assignments.length} {schedule.assignments.length === 1 ? 'assignment' : 'assignments'}
+                      </div>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleDeleteSchoolYearClick(schedule);
+                      }}
+                      className="ml-4 p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                      title="Delete school year"
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
 
                   {/* Year Content - Collapsible */}
                   {isExpanded && (
@@ -681,6 +727,51 @@ export default function TeacherManagement() {
           </div>
         )}
       </div>
+
+      {/* Delete School Year Confirmation Modal */}
+      {scheduleToDelete && (
+        <div className="fixed inset-0 z-50 overflow-y-auto">
+          <div className="fixed inset-0 bg-black/30" aria-hidden="true" />
+          <div className="fixed inset-0 flex items-center justify-center p-4">
+            <div className="relative w-full max-w-md overflow-hidden rounded-lg bg-white shadow-xl border border-border">
+              <div className="px-6 pt-6 pb-4">
+                <h3 className="text-lg font-semibold text-charcoal">Delete School Year</h3>
+                <p className="mt-2 text-sm text-text-light">
+                  Are you sure you want to delete school year <strong>{scheduleToDelete.schoolYear}</strong>? This will permanently remove all teaching assignments for this year. This action cannot be undone.
+                </p>
+                <p className="mt-4 text-sm text-charcoal font-medium">
+                  Type <span className="font-mono bg-gray-100 px-1.5 py-0.5 rounded">delete</span> to confirm:
+                </p>
+                <input
+                  type="text"
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder="delete"
+                  className="mt-2 w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] focus:border-transparent bg-white text-charcoal"
+                  autoFocus
+                />
+              </div>
+              <div className="px-6 py-4 bg-gray-50 border-t border-border flex justify-end space-x-2">
+                <button
+                  type="button"
+                  onClick={handleDeleteSchoolYearClose}
+                  className="px-4 py-2 text-sm font-medium text-charcoal bg-white border border-border rounded-md hover:bg-gray-50 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDeleteSchoolYearConfirm}
+                  disabled={deleteConfirmText.toLowerCase() !== 'delete'}
+                  className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  Delete School Year
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
