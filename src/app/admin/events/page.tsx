@@ -431,7 +431,7 @@ export default function EventsManagement() {
           )}
           <button
             onClick={handleCreateCategory}
-            className="inline-flex items-center px-4 py-2 bg-coral text-white rounded-lg hover:bg-coral-dark transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-black text-white rounded-lg hover:bg-gray-800 transition-colors"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
             Add category
@@ -630,7 +630,7 @@ export default function EventsManagement() {
                   </button>
                   <button
                     onClick={() => handleCreateEvent(cat.id)}
-                    className="inline-flex items-center px-3 py-1.5 text-sm bg-coral text-white rounded hover:bg-coral-dark"
+                    className="inline-flex items-center px-3 py-1.5 text-sm bg-black text-white rounded hover:bg-gray-800"
                   >
                     <PlusIcon className="h-4 w-4 mr-1" />
                     Event
