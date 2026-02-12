@@ -58,16 +58,17 @@ export default function LifeGroupsPage() {
     return () => unsubscribe();
   }, []);
 
-  // Check if user is a life group leader
-  const isLifeGroupLeader = userProfile && (
+  // Leader Resources visible only to life group leader, organizer, and admin roles
+  const canSeeLeaderResources = userProfile && (
     userProfile.role === 'lifeGroupLeader' ||
+    userProfile.role === 'organizer' ||
     userProfile.isAdmin ||
     lifeGroups.some(group => group.leaderId === userProfile.uid)
   );
 
   // Fetch leader resources
   useEffect(() => {
-    if (!isLifeGroupLeader) return;
+    if (!canSeeLeaderResources) return;
 
     const fetchResources = async () => {
       try {
@@ -87,7 +88,7 @@ export default function LifeGroupsPage() {
     };
 
     fetchResources();
-  }, [isLifeGroupLeader]);
+  }, [canSeeLeaderResources]);
 
   // Fetch family units
   useEffect(() => {
@@ -183,8 +184,8 @@ export default function LifeGroupsPage() {
         </p>
       </div>
 
-      {/* Life Group Leader Resources Section */}
-      {isLifeGroupLeader && (
+      {/* Life Group Leader Resources Section - only for lifeGroupLeader, organizer, admin */}
+      {canSeeLeaderResources && (
         <div className="mb-8 bg-white rounded-lg border border-border p-6">
           <h2 className="text-2xl font-bold text-charcoal mb-6">Leader Resources</h2>
 
