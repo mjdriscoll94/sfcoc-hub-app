@@ -713,6 +713,98 @@ export default function LifeGroupsManagement() {
         </div>
       </div>
 
+      {/* Create/Edit Life Group Form */}
+      {(showCreateForm || editingId) && (
+        <div className="mb-8 bg-white rounded-lg border border-border p-6">
+          <h2 className="text-xl font-semibold text-charcoal mb-4">
+            {editingId ? 'Edit Life Group' : 'Create New Life Group'}
+          </h2>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Group Name *</label>
+              <input
+                type="text"
+                value={formData.name}
+                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Description</label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                rows={3}
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal resize-none"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Leader *</label>
+              <select
+                value={formData.leaderId}
+                onChange={(e) => setFormData({ ...formData, leaderId: e.target.value })}
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+                required
+              >
+                <option value="">Select a leader</option>
+                {users.map((user) => (
+                  <option key={user.uid} value={user.uid}>
+                    {user.displayName || user.email}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="grid grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">Meeting Day</label>
+                <input
+                  type="text"
+                  value={formData.meetingDay}
+                  onChange={(e) => setFormData({ ...formData, meetingDay: e.target.value })}
+                  placeholder="e.g., Every Tuesday"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">Meeting Time</label>
+                <input
+                  type="text"
+                  value={formData.meetingTime}
+                  onChange={(e) => setFormData({ ...formData, meetingTime: e.target.value })}
+                  placeholder="e.g., 7:00 PM"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-charcoal mb-1">Meeting Location</label>
+                <input
+                  type="text"
+                  value={formData.meetingLocation}
+                  onChange={(e) => setFormData({ ...formData, meetingLocation: e.target.value })}
+                  placeholder="e.g., Church Building"
+                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={handleCancel}
+                className="px-4 py-2 border border-border rounded-md text-charcoal hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSave}
+                className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors"
+              >
+                {editingId ? 'Update' : 'Create'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Family Units Management Section */}
       <div className="mb-8 bg-white rounded-lg border border-border p-6">
         <div className="flex items-center justify-between mb-4">
@@ -812,7 +904,7 @@ export default function LifeGroupsManagement() {
                     />
                   </div>
                 </div>
-                <div className="mt-3 flex items-center gap-2">
+                <div className="mt-3 flex items-center justify-end gap-2">
                   <button
                     onClick={handleAddMemberToForm}
                     className="px-3 py-1 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors text-sm"
@@ -955,98 +1047,6 @@ export default function LifeGroupsManagement() {
           )}
         </div>
       </div>
-
-      {/* Create/Edit Form */}
-      {(showCreateForm || editingId) && (
-        <div className="mb-8 bg-white rounded-lg border border-border p-6">
-          <h2 className="text-xl font-semibold text-charcoal mb-4">
-            {editingId ? 'Edit Life Group' : 'Create New Life Group'}
-          </h2>
-          <div className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Group Name *</label>
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Description</label>
-              <textarea
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                rows={3}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal resize-none"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Leader *</label>
-              <select
-                value={formData.leaderId}
-                onChange={(e) => setFormData({ ...formData, leaderId: e.target.value })}
-                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                required
-              >
-                <option value="">Select a leader</option>
-                {users.map((user) => (
-                  <option key={user.uid} value={user.uid}>
-                    {user.displayName || user.email}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <div className="grid grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Meeting Day</label>
-                <input
-                  type="text"
-                  value={formData.meetingDay}
-                  onChange={(e) => setFormData({ ...formData, meetingDay: e.target.value })}
-                  placeholder="e.g., Every Tuesday"
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Meeting Time</label>
-                <input
-                  type="text"
-                  value={formData.meetingTime}
-                  onChange={(e) => setFormData({ ...formData, meetingTime: e.target.value })}
-                  placeholder="e.g., 7:00 PM"
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Meeting Location</label>
-                <input
-                  type="text"
-                  value={formData.meetingLocation}
-                  onChange={(e) => setFormData({ ...formData, meetingLocation: e.target.value })}
-                  placeholder="e.g., Church Building"
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                />
-              </div>
-            </div>
-            <div className="flex justify-end space-x-2">
-              <button
-                onClick={handleCancel}
-                className="px-4 py-2 border border-border rounded-md text-charcoal hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSave}
-                className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors"
-              >
-                {editingId ? 'Update' : 'Create'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Life Groups List */}
       <div className="space-y-6">
