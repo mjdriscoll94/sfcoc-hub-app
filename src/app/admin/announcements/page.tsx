@@ -109,6 +109,11 @@ export default function ManageAnnouncementsPage() {
     }
   };
 
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentItems = items.filter((item) => item.createdAt >= thirtyDaysAgo);
+  const olderItems = items.filter((item) => item.createdAt < thirtyDaysAgo);
+
   if (!canManage) return null;
 
   if (loading) {
@@ -143,8 +148,20 @@ export default function ManageAnnouncementsPage() {
           <p className="text-text-light">No announcements in the system.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {items.map((item) => (
+        <div className="space-y-8">
+          {[
+            { label: null as string | null, items: recentItems },
+            { label: 'Older than 30 days', items: olderItems },
+          ]
+            .filter((s) => s.items.length > 0)
+            .map((section) => (
+              <div key={section.label ?? 'recent'} className="space-y-4">
+                {section.label && (
+                  <h2 className="text-lg font-semibold text-charcoal border-b border-border pb-2">
+                    {section.label}
+                  </h2>
+                )}
+                {section.items.map((item) => (
             <div
               key={item.id}
               className="bg-white rounded-lg border border-border p-4 shadow-sm"
@@ -265,7 +282,9 @@ export default function ManageAnnouncementsPage() {
                 </>
               )}
             </div>
-          ))}
+                ))}
+              </div>
+            ))}
         </div>
       )}
 

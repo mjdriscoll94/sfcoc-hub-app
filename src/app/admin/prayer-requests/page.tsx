@@ -90,6 +90,11 @@ export default function PrayerRequestsManagement() {
     }
   };
 
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const recentItems = items.filter((item) => item.dateCreated >= thirtyDaysAgo);
+  const olderItems = items.filter((item) => item.dateCreated < thirtyDaysAgo);
+
   if (!userProfile?.isAdmin) return null;
 
   if (loading) {
@@ -124,162 +129,176 @@ export default function PrayerRequestsManagement() {
           <p className="text-text-light">No active prayer requests or praise reports in the system.</p>
         </div>
       ) : (
-        <div className="space-y-4">
-          {items.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-lg border border-border p-4 shadow-sm"
-            >
-              {editingId === item.id ? (
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-charcoal mb-1">Title</label>
-                    <input
-                      type="text"
-                      value={editForm.title}
-                      onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
-                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-charcoal mb-1">Description</label>
-                    <textarea
-                      value={editForm.description}
-                      onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                      rows={4}
-                      className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal resize-none"
-                    />
-                  </div>
-                  {item.type === 'prayer' && (
-                    <div>
-                      <label className="block text-sm font-medium text-charcoal mb-1">Priority</label>
-                      <select
-                        value={editForm.priority ?? ''}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            priority: e.target.value ? (e.target.value as 'Urgent' | 'Batched') : undefined,
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
-                      >
-                        <option value="">None</option>
-                        <option value="Urgent">Urgent</option>
-                        <option value="Batched">Batched</option>
-                      </select>
-                    </div>
-                  )}
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium text-charcoal mb-1">Status</label>
-                      <select
-                        value={editForm.status}
-                        onChange={(e) =>
-                          setEditForm({ ...editForm, status: e.target.value as 'active' | 'archived' })
-                        }
-                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
-                      >
-                        <option value="active">Active</option>
-                        <option value="archived">Archived</option>
-                      </select>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-charcoal mb-1">Approval</label>
-                      <select
-                        value={editForm.approvalStatus}
-                        onChange={(e) =>
-                          setEditForm({
-                            ...editForm,
-                            approvalStatus: e.target.value as 'pending' | 'approved' | 'rejected',
-                          })
-                        }
-                        className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="approved">Approved</option>
-                        <option value="rejected">Rejected</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={cancelEdit}
-                      className="px-4 py-2 border border-border rounded-md text-charcoal hover:bg-gray-50"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleSave}
-                      className="px-4 py-2 bg-coral text-white rounded-md hover:bg-coral-dark"
-                    >
-                      Save
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <>
-                  <div className="flex items-start justify-between gap-4">
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span
-                          className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${
-                            item.type === 'prayer'
-                              ? 'bg-coral/20 text-coral'
-                              : 'bg-sage/20 text-sage'
-                          }`}
-                        >
-                          {item.type === 'prayer' ? 'Prayer Request' : 'Praise Report'}
-                        </span>
-                        <span
-                          className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${
-                            item.approvalStatus === 'approved'
-                              ? 'bg-green-100 text-green-800'
-                              : item.approvalStatus === 'pending'
-                                ? 'bg-amber-100 text-amber-800'
-                                : 'bg-red-100 text-red-800'
-                          }`}
-                        >
-                          {item.approvalStatus}
-                        </span>
-                        {item.type === 'prayer' && item.priority && (
-                          <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-charcoal/10 text-charcoal">
-                            {item.priority}
-                          </span>
+        <div className="space-y-8">
+          {[
+            { label: null as string | null, items: recentItems },
+            { label: 'Older than 30 days', items: olderItems },
+          ]
+            .filter((s) => s.items.length > 0)
+            .map((section) => (
+              <div key={section.label ?? 'recent'} className="space-y-4">
+                {section.label && (
+                  <h2 className="text-lg font-semibold text-charcoal border-b border-border pb-2">
+                    {section.label}
+                  </h2>
+                )}
+                {section.items.map((item) => (
+                  <div
+                    key={item.id}
+                    className="bg-white rounded-lg border border-border p-4 shadow-sm"
+                  >
+                    {editingId === item.id ? (
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-charcoal mb-1">Title</label>
+                          <input
+                            type="text"
+                            value={editForm.title}
+                            onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-charcoal mb-1">Description</label>
+                          <textarea
+                            value={editForm.description}
+                            onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
+                            rows={4}
+                            className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal resize-none"
+                          />
+                        </div>
+                        {item.type === 'prayer' && (
+                          <div>
+                            <label className="block text-sm font-medium text-charcoal mb-1">Priority</label>
+                            <select
+                              value={editForm.priority ?? ''}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  priority: e.target.value ? (e.target.value as 'Urgent' | 'Batched') : undefined,
+                                })
+                              }
+                              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
+                            >
+                              <option value="">None</option>
+                              <option value="Urgent">Urgent</option>
+                              <option value="Batched">Batched</option>
+                            </select>
+                          </div>
                         )}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="block text-sm font-medium text-charcoal mb-1">Status</label>
+                            <select
+                              value={editForm.status}
+                              onChange={(e) =>
+                                setEditForm({ ...editForm, status: e.target.value as 'active' | 'archived' })
+                              }
+                              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
+                            >
+                              <option value="active">Active</option>
+                              <option value="archived">Archived</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-charcoal mb-1">Approval</label>
+                            <select
+                              value={editForm.approvalStatus}
+                              onChange={(e) =>
+                                setEditForm({
+                                  ...editForm,
+                                  approvalStatus: e.target.value as 'pending' | 'approved' | 'rejected',
+                                })
+                              }
+                              className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-coral bg-white text-charcoal"
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="approved">Approved</option>
+                              <option value="rejected">Rejected</option>
+                            </select>
+                          </div>
+                        </div>
+                        <div className="flex justify-end gap-2 pt-2">
+                          <button
+                            type="button"
+                            onClick={cancelEdit}
+                            className="px-4 py-2 border border-border rounded-md text-charcoal hover:bg-gray-50"
+                          >
+                            Cancel
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleSave}
+                            className="px-4 py-2 bg-coral text-white rounded-md hover:bg-coral-dark"
+                          >
+                            Save
+                          </button>
+                        </div>
                       </div>
-                      <h3 className="text-lg font-semibold text-charcoal mt-2">{item.title}</h3>
-                      <p className="text-sm text-text-light mt-1">
-                        {item.isAnonymous ? 'Anonymous' : item.author.name} ·{' '}
-                        {item.dateCreated.toLocaleDateString()}
-                        {item.isAdminOnly && ' · Admin only'}
-                      </p>
-                      <p className="text-charcoal text-sm mt-2 whitespace-pre-wrap">{item.description}</p>
-                    </div>
-                    <div className="flex gap-2 flex-shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => startEdit(item)}
-                        className="p-2 text-coral hover:bg-coral/10 rounded-md transition-colors"
-                        title="Edit"
-                      >
-                        <PencilIcon className="h-5 w-5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteClick(item)}
-                        className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                        title="Delete"
-                      >
-                        <TrashIcon className="h-5 w-5" />
-                      </button>
-                    </div>
+                    ) : (
+                      <>
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span
+                                className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${
+                                  item.type === 'prayer'
+                                    ? 'bg-coral/20 text-coral'
+                                    : 'bg-sage/20 text-sage'
+                                }`}
+                              >
+                                {item.type === 'prayer' ? 'Prayer Request' : 'Praise Report'}
+                              </span>
+                              <span
+                                className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${
+                                  item.approvalStatus === 'approved'
+                                    ? 'bg-green-100 text-green-800'
+                                    : item.approvalStatus === 'pending'
+                                      ? 'bg-amber-100 text-amber-800'
+                                      : 'bg-red-100 text-red-800'
+                                }`}
+                              >
+                                {item.approvalStatus}
+                              </span>
+                              {item.type === 'prayer' && item.priority && (
+                                <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-charcoal/10 text-charcoal">
+                                  {item.priority}
+                                </span>
+                              )}
+                            </div>
+                            <h3 className="text-lg font-semibold text-charcoal mt-2">{item.title}</h3>
+                            <p className="text-sm text-text-light mt-1">
+                              {item.isAnonymous ? 'Anonymous' : item.author.name} ·{' '}
+                              {item.dateCreated.toLocaleDateString()}
+                              {item.isAdminOnly && ' · Admin only'}
+                            </p>
+                            <p className="text-charcoal text-sm mt-2 whitespace-pre-wrap">{item.description}</p>
+                          </div>
+                          <div className="flex gap-2 flex-shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => startEdit(item)}
+                              className="p-2 text-coral hover:bg-coral/10 rounded-md transition-colors"
+                              title="Edit"
+                            >
+                              <PencilIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteClick(item)}
+                              className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                              title="Delete"
+                            >
+                              <TrashIcon className="h-5 w-5" />
+                            </button>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
-                </>
-              )}
-            </div>
-          ))}
+                ))}
+              </div>
+            ))}
         </div>
       )}
 
