@@ -324,7 +324,7 @@ export default function LifeGroupsPage() {
                                 {family.members.map((member) => (
                                   <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                                     {member.firstName} {member.lastName}
-                                    {member.relationship && ` - ${member.relationship}`}
+                                    {member.phoneNumber && ` · ${member.phoneNumber}`}
                                   </div>
                                 ))}
                               </div>
