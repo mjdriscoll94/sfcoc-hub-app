@@ -51,6 +51,7 @@ export default function LifeGroupsManagement() {
     lastName: '',
     age: '',
     relationship: '',
+    phoneNumber: '',
   });
   const [formData, setFormData] = useState({
     name: '',
@@ -391,7 +392,7 @@ export default function LifeGroupsManagement() {
   // Family Unit Management Functions
   const handleCreateFamily = () => {
     setFamilyFormData({ familyName: '', members: [] });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
     setShowFamilyForm(true);
     setEditingFamilyId(null);
   };
@@ -404,16 +405,17 @@ export default function LifeGroupsManagement() {
         lastName: m.lastName,
         age: m.age,
         relationship: m.relationship,
+        phoneNumber: m.phoneNumber,
       })),
     });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
     setShowFamilyForm(true);
     setEditingFamilyId(family.id);
   };
 
   const handleCancelFamily = () => {
     setFamilyFormData({ familyName: '', members: [] });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
     setShowFamilyForm(false);
     setEditingFamilyId(null);
   };
@@ -429,6 +431,7 @@ export default function LifeGroupsManagement() {
       lastName: newMemberForm.lastName.trim(),
       age: newMemberForm.age ? (newMemberForm.age as 'Infant' | 'Toddler' | 'Adolescent' | 'Teenager' | 'Young Adult' | 'Adult' | 'Elder Adult') : undefined,
       relationship: newMemberForm.relationship.trim() || undefined,
+      phoneNumber: newMemberForm.phoneNumber.trim() || undefined,
     };
 
     setFamilyFormData({
@@ -436,7 +439,7 @@ export default function LifeGroupsManagement() {
       members: [...familyFormData.members, member],
     });
 
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
     setError(null);
   };
 
@@ -487,6 +490,9 @@ export default function LifeGroupsManagement() {
         // Only include relationship if it's a valid non-empty string
         if (member.relationship && typeof member.relationship === 'string' && member.relationship.trim() !== '') {
           memberData.relationship = member.relationship.trim();
+        }
+        if (member.phoneNumber && typeof member.phoneNumber === 'string' && member.phoneNumber.trim() !== '') {
+          memberData.phoneNumber = member.phoneNumber.trim();
         }
         
         return memberData;
@@ -713,7 +719,7 @@ export default function LifeGroupsManagement() {
               {/* Add Member Form */}
               <div className="border border-border rounded-lg p-4 bg-white">
                 <h4 className="text-sm font-semibold text-charcoal mb-3">Add Family Member</h4>
-                <div className="grid grid-cols-4 gap-3">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   <div>
                     <label className="block text-xs font-medium text-charcoal mb-1">First Name *</label>
                     <input
@@ -759,6 +765,16 @@ export default function LifeGroupsManagement() {
                       className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
                     />
                   </div>
+                  <div>
+                    <label className="block text-xs font-medium text-charcoal mb-1">Phone</label>
+                    <input
+                      type="tel"
+                      value={newMemberForm.phoneNumber}
+                      onChange={(e) => setNewMemberForm({ ...newMemberForm, phoneNumber: e.target.value })}
+                      placeholder="e.g., (555) 123-4567"
+                      className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
+                    />
+                  </div>
                 </div>
                 <button
                   onClick={handleAddMemberToForm}
@@ -784,6 +800,7 @@ export default function LifeGroupsManagement() {
                           {member.firstName} {member.lastName}
                           {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                           {member.relationship && ` - ${member.relationship}`}
+                          {member.phoneNumber && ` · ${member.phoneNumber}`}
                         </span>
                         <button
                           onClick={() => handleRemoveMemberFromForm(index)}
@@ -870,6 +887,7 @@ export default function LifeGroupsManagement() {
                           {member.firstName} {member.lastName}
                           {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                           {member.relationship && ` - ${member.relationship}`}
+                          {member.phoneNumber && ` · ${member.phoneNumber}`}
                         </div>
                       ))}
                     </div>
@@ -1094,6 +1112,7 @@ export default function LifeGroupsManagement() {
                                       {member.firstName} {member.lastName}
                                       {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                                       {member.relationship && ` - ${member.relationship}`}
+                                      {member.phoneNumber && ` · ${member.phoneNumber}`}
                                     </div>
                                   ))}
                                 </div>

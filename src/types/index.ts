@@ -97,6 +97,7 @@ export interface FamilyMember {
   lastName: string;
   age?: AgeCategory | number; // Support both category (string) and legacy numeric age
   relationship?: string; // e.g., "Parent", "Child", "Spouse"
+  phoneNumber?: string;
 }
 
 export interface FamilyUnit {
