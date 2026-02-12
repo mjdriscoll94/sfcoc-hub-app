@@ -53,6 +53,7 @@ export default function LifeGroupsManagement() {
     relationship: '',
     phoneNumber: '',
   });
+  const [editingMemberIndex, setEditingMemberIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -393,6 +394,7 @@ export default function LifeGroupsManagement() {
   const handleCreateFamily = () => {
     setFamilyFormData({ familyName: '', members: [] });
     setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setEditingMemberIndex(null);
     setShowFamilyForm(true);
     setEditingFamilyId(null);
   };
@@ -409,6 +411,7 @@ export default function LifeGroupsManagement() {
       })),
     });
     setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setEditingMemberIndex(null);
     setShowFamilyForm(true);
     setEditingFamilyId(family.id);
   };
@@ -416,8 +419,26 @@ export default function LifeGroupsManagement() {
   const handleCancelFamily = () => {
     setFamilyFormData({ familyName: '', members: [] });
     setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setEditingMemberIndex(null);
     setShowFamilyForm(false);
     setEditingFamilyId(null);
+  };
+
+  const handleEditMemberInForm = (index: number) => {
+    const member = familyFormData.members[index];
+    setNewMemberForm({
+      firstName: member.firstName,
+      lastName: member.lastName,
+      age: member.age !== undefined && member.age !== null ? String(member.age) : '',
+      relationship: member.relationship ?? '',
+      phoneNumber: member.phoneNumber ?? '',
+    });
+    setEditingMemberIndex(index);
+  };
+
+  const handleCancelEditMember = () => {
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setEditingMemberIndex(null);
   };
 
   const handleAddMemberToForm = () => {
@@ -434,10 +455,17 @@ export default function LifeGroupsManagement() {
       phoneNumber: newMemberForm.phoneNumber.trim() || undefined,
     };
 
-    setFamilyFormData({
-      ...familyFormData,
-      members: [...familyFormData.members, member],
-    });
+    if (editingMemberIndex !== null) {
+      const nextMembers = [...familyFormData.members];
+      nextMembers[editingMemberIndex] = member;
+      setFamilyFormData({ ...familyFormData, members: nextMembers });
+      setEditingMemberIndex(null);
+    } else {
+      setFamilyFormData({
+        ...familyFormData,
+        members: [...familyFormData.members, member],
+      });
+    }
 
     setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
     setError(null);
@@ -448,6 +476,12 @@ export default function LifeGroupsManagement() {
       ...familyFormData,
       members: familyFormData.members.filter((_, i) => i !== index),
     });
+    if (editingMemberIndex === index) {
+      setEditingMemberIndex(null);
+      setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    } else if (editingMemberIndex !== null && editingMemberIndex > index) {
+      setEditingMemberIndex(editingMemberIndex - 1);
+    }
   };
 
   const handleSaveFamily = async () => {
@@ -716,9 +750,11 @@ export default function LifeGroupsManagement() {
                 />
               </div>
 
-              {/* Add Member Form */}
+              {/* Add / Edit Member Form */}
               <div className="border border-border rounded-lg p-4 bg-white">
-                <h4 className="text-sm font-semibold text-charcoal mb-3">Add Family Member</h4>
+                <h4 className="text-sm font-semibold text-charcoal mb-3">
+                  {editingMemberIndex !== null ? 'Edit Family Member' : 'Add Family Member'}
+                </h4>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
                   <div>
                     <label className="block text-xs font-medium text-charcoal mb-1">First Name *</label>
@@ -776,12 +812,23 @@ export default function LifeGroupsManagement() {
                     />
                   </div>
                 </div>
-                <button
-                  onClick={handleAddMemberToForm}
-                  className="mt-3 px-3 py-1 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors text-sm"
-                >
-                  Add Member
-                </button>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    onClick={handleAddMemberToForm}
+                    className="px-3 py-1 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors text-sm"
+                  >
+                    {editingMemberIndex !== null ? 'Update Member' : 'Add Member'}
+                  </button>
+                  {editingMemberIndex !== null && (
+                    <button
+                      type="button"
+                      onClick={handleCancelEditMember}
+                      className="px-3 py-1 border border-border rounded-md text-charcoal hover:bg-gray-50 text-sm"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Current Members List */}
@@ -794,7 +841,7 @@ export default function LifeGroupsManagement() {
                     {familyFormData.members.map((member, index) => (
                       <div
                         key={index}
-                        className="flex items-center justify-between p-2 bg-white border border-border rounded-md"
+                        className={`flex items-center justify-between p-2 bg-white border rounded-md ${editingMemberIndex === index ? 'border-[#E88B5F] ring-1 ring-[#E88B5F]' : 'border-border'}`}
                       >
                         <span className="text-charcoal text-sm">
                           {member.firstName} {member.lastName}
@@ -802,12 +849,22 @@ export default function LifeGroupsManagement() {
                           {member.relationship && ` - ${member.relationship}`}
                           {member.phoneNumber && ` · ${member.phoneNumber}`}
                         </span>
-                        <button
-                          onClick={() => handleRemoveMemberFromForm(index)}
-                          className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                        >
-                          <XMarkIcon className="h-4 w-4" />
-                        </button>
+                        <div className="flex items-center gap-1">
+                          <button
+                            onClick={() => handleEditMemberInForm(index)}
+                            className="p-1 text-coral hover:bg-coral/10 rounded transition-colors"
+                            title="Edit member"
+                          >
+                            <PencilIcon className="h-4 w-4" />
+                          </button>
+                          <button
+                            onClick={() => handleRemoveMemberFromForm(index)}
+                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Remove member"
+                          >
+                            <XMarkIcon className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
