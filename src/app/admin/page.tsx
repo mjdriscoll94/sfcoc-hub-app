@@ -7,7 +7,7 @@ import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue'
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
 import BuildInfo from '@/components/BuildInfo';
-import { Users, FileText, Upload, UsersRound, CalendarDays } from 'lucide-react';
+import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS } from '@/types/roles';
@@ -197,6 +197,32 @@ export default function AdminDashboard() {
                     <span className="absolute inset-0" aria-hidden="true" />
                     <p className="text-sm font-medium text-charcoal">Home Page Events</p>
                     <p className="text-sm text-text-light">Manage events displayed on the home page</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/admin/prayer-requests"
+                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                >
+                  <div className="flex-shrink-0">
+                    <FileText className="h-6 w-6 text-coral" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-charcoal">Manage Prayer Requests</p>
+                    <p className="text-sm text-text-light">View, edit, or delete prayer requests and praise reports</p>
+                  </div>
+                </Link>
+                <Link
+                  href="/admin/announcements"
+                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                >
+                  <div className="flex-shrink-0">
+                    <Megaphone className="h-6 w-6 text-coral" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-charcoal">Manage Announcements</p>
+                    <p className="text-sm text-text-light">View, edit, or delete announcements</p>
                   </div>
                 </Link>
               </div>

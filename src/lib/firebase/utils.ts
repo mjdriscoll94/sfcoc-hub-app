@@ -149,6 +149,32 @@ export const getAnnouncements = async () => {
   })) as Announcement[];
 };
 
+/** Fetch all announcements for admin (no status filter), ordered by createdAt desc. */
+export const getAnnouncementsForAdmin = async () => {
+  const q = query(
+    collection(db, 'announcements'),
+    orderBy('createdAt', 'desc')
+  );
+  const snapshot = await getDocs(q);
+  return snapshot.docs.map(d => {
+    const data = d.data();
+    return {
+      id: d.id,
+      title: data.title,
+      content: data.content,
+      type: data.type || 'General',
+      createdAt: data.createdAt,
+      createdBy: data.createdBy,
+      status: data.status ?? 'active',
+    };
+  });
+};
+
+export const deleteAnnouncement = async (id: string) => {
+  const docRef = doc(db, 'announcements', id);
+  await deleteDoc(docRef);
+};
+
 // Volunteer Opportunities
 export const addVolunteerOpportunity = async (data: VolunteerOpportunityData) => {
   try {

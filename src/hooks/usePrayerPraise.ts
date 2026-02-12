@@ -9,13 +9,12 @@ import {
   orderBy, 
   onSnapshot,
   updateDoc,
+  deleteDoc,
   doc,
   getDoc,
   Timestamp,
-  DocumentData,
   FirestoreError,
   Query,
-  addDoc
 } from 'firebase/firestore';
 
 export interface PrayerPraiseItem {
@@ -41,6 +40,8 @@ interface UpdatePrayerRequestData {
   description?: string;
   priority?: 'Urgent' | 'Batched';
   isSent?: boolean;
+  status?: 'active' | 'archived';
+  approvalStatus?: 'pending' | 'approved' | 'rejected';
 }
 
 export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: boolean = false) {
@@ -152,10 +153,20 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
   const updatePrayerRequest = async (id: string, data: UpdatePrayerRequestData) => {
     try {
       const docRef = doc(db, 'prayerPraise', id);
-      await updateDoc(docRef, data as { [x: string]: any });
+      await updateDoc(docRef, data as { [x: string]: unknown });
     } catch (error) {
       console.error('Error updating prayer request:', error);
       throw new Error('Failed to update prayer request');
+    }
+  };
+
+  const deletePrayerRequest = async (id: string) => {
+    try {
+      const docRef = doc(db, 'prayerPraise', id);
+      await deleteDoc(docRef);
+    } catch (error) {
+      console.error('Error deleting prayer request:', error);
+      throw new Error('Failed to delete prayer request');
     }
   };
 
@@ -166,6 +177,7 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
     isIndexBuilding,
     incrementPrayerCount,
     updateApprovalStatus,
-    updatePrayerRequest
+    updatePrayerRequest,
+    deletePrayerRequest,
   };
 } 
