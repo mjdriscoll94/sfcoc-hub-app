@@ -321,12 +321,37 @@ export default function LifeGroupsPage() {
                           {expandedFamilies.has(familyUnitId) && (
                             <div className="mt-2 pt-2 border-t border-border">
                               <div className="space-y-1">
-                                {family.members.map((member) => (
-                                  <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
-                                    {member.firstName} {member.lastName}
-                                    {member.phoneNumber && ` · ${member.phoneNumber}`}
-                                  </div>
-                                ))}
+                                {family.members.map((member) => {
+                                  const telNumber = member.phoneNumber?.replace(/\D/g, '') || '';
+                                  return (
+                                    <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
+                                      {member.firstName} {member.lastName}
+                                      {member.phoneNumber && (
+                                        <span className="ml-1">
+                                          · {member.phoneNumber}
+                                          {telNumber && (
+                                            <>
+                                              {' · '}
+                                              <a
+                                                href={`tel:${telNumber}`}
+                                                className="text-coral hover:underline font-medium"
+                                              >
+                                                Call
+                                              </a>
+                                              {' · '}
+                                              <a
+                                                href={`sms:${telNumber}`}
+                                                className="text-coral hover:underline font-medium"
+                                              >
+                                                Text
+                                              </a>
+                                            </>
+                                          )}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}
