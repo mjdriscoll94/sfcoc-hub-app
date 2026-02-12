@@ -98,6 +98,7 @@ export interface FamilyMember {
   age?: AgeCategory | number; // Support both category (string) and legacy numeric age
   relationship?: string; // e.g., "Parent", "Child", "Spouse"
   phoneNumber?: string;
+  isLifeGroupLeader?: boolean;
 }
 
 export interface FamilyUnit {

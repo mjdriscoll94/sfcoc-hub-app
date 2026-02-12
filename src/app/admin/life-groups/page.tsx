@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
@@ -11,12 +11,6 @@ import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDow
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
 
-interface UserProfile {
-  uid: string;
-  displayName: string | null;
-  email: string | null;
-}
-
 export default function LifeGroupsManagement() {
   useEffect(() => {
     document.title = 'Life Groups Management | Sioux Falls Church of Christ';
@@ -25,7 +19,6 @@ export default function LifeGroupsManagement() {
   const { userProfile } = useAuth();
   const router = useRouter();
   const [lifeGroups, setLifeGroups] = useState<LifeGroup[]>([]);
-  const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -52,6 +45,7 @@ export default function LifeGroupsManagement() {
     age: '',
     relationship: '',
     phoneNumber: '',
+    isLifeGroupLeader: false,
   });
   const [editingMemberIndex, setEditingMemberIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
@@ -68,23 +62,6 @@ export default function LifeGroupsManagement() {
       router.push('/');
     }
   }, [userProfile, router]);
-
-  // Fetch users
-  useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const usersSnapshot = await getDocs(collection(db, 'users'));
-        const fetchedUsers = usersSnapshot.docs.map(doc => ({
-          uid: doc.id,
-          ...doc.data()
-        })) as UserProfile[];
-        setUsers(fetchedUsers.filter(u => u.email)); // Only include users with emails
-      } catch (err) {
-        console.error('Error fetching users:', err);
-      }
-    };
-    fetchUsers();
-  }, []);
 
   // Fetch life groups
   useEffect(() => {
@@ -218,17 +195,29 @@ export default function LifeGroupsManagement() {
     try {
       if (!userProfile) return;
 
-      const leader = users.find(u => u.uid === formData.leaderId);
-      if (!leader) {
+      if (!formData.leaderId) {
         setError('Please select a leader');
         return;
+      }
+
+      let leaderName = 'Unknown';
+      if (formData.leaderId.includes('|')) {
+        const [familyUnitId, memberId] = formData.leaderId.split('|');
+        const family = familyUnits.find(f => f.id === familyUnitId);
+        const member = family?.members.find(m => m.id === memberId);
+        if (member) {
+          leaderName = `${member.firstName} ${member.lastName}`;
+        }
+      } else if (editingId) {
+        const group = lifeGroups.find(g => g.id === editingId);
+        if (group) leaderName = group.leaderName || 'Unknown';
       }
 
       const groupData = {
         name: formData.name,
         description: formData.description || null,
         leaderId: formData.leaderId,
-        leaderName: leader.displayName || leader.email || 'Unknown',
+        leaderName,
         meetingDay: formData.meetingDay || null,
         meetingTime: formData.meetingTime || null,
         meetingLocation: formData.meetingLocation || null,
@@ -393,7 +382,7 @@ export default function LifeGroupsManagement() {
   // Family Unit Management Functions
   const handleCreateFamily = () => {
     setFamilyFormData({ familyName: '', members: [] });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
     setEditingMemberIndex(null);
     setShowFamilyForm(true);
     setEditingFamilyId(null);
@@ -408,9 +397,10 @@ export default function LifeGroupsManagement() {
         age: m.age,
         relationship: m.relationship,
         phoneNumber: m.phoneNumber,
+        isLifeGroupLeader: m.isLifeGroupLeader ?? false,
       })),
     });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
     setEditingMemberIndex(null);
     setShowFamilyForm(true);
     setEditingFamilyId(family.id);
@@ -418,7 +408,7 @@ export default function LifeGroupsManagement() {
 
   const handleCancelFamily = () => {
     setFamilyFormData({ familyName: '', members: [] });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
     setEditingMemberIndex(null);
     setShowFamilyForm(false);
     setEditingFamilyId(null);
@@ -432,12 +422,13 @@ export default function LifeGroupsManagement() {
       age: member.age !== undefined && member.age !== null ? String(member.age) : '',
       relationship: member.relationship ?? '',
       phoneNumber: member.phoneNumber ?? '',
+      isLifeGroupLeader: member.isLifeGroupLeader ?? false,
     });
     setEditingMemberIndex(index);
   };
 
   const handleCancelEditMember = () => {
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
     setEditingMemberIndex(null);
   };
 
@@ -453,6 +444,7 @@ export default function LifeGroupsManagement() {
       age: newMemberForm.age ? (newMemberForm.age as 'Infant' | 'Toddler' | 'Adolescent' | 'Teenager' | 'Young Adult' | 'Adult' | 'Elder Adult') : undefined,
       relationship: newMemberForm.relationship.trim() || undefined,
       phoneNumber: newMemberForm.phoneNumber.trim() || undefined,
+      isLifeGroupLeader: newMemberForm.isLifeGroupLeader || undefined,
     };
 
     if (editingMemberIndex !== null) {
@@ -467,7 +459,7 @@ export default function LifeGroupsManagement() {
       });
     }
 
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
     setError(null);
   };
 
@@ -478,7 +470,7 @@ export default function LifeGroupsManagement() {
     });
     if (editingMemberIndex === index) {
       setEditingMemberIndex(null);
-      setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '' });
+      setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
     } else if (editingMemberIndex !== null && editingMemberIndex > index) {
       setEditingMemberIndex(editingMemberIndex - 1);
     }
@@ -527,6 +519,9 @@ export default function LifeGroupsManagement() {
         }
         if (member.phoneNumber && typeof member.phoneNumber === 'string' && member.phoneNumber.trim() !== '') {
           memberData.phoneNumber = member.phoneNumber.trim();
+        }
+        if (member.isLifeGroupLeader) {
+          memberData.isLifeGroupLeader = true;
         }
         
         return memberData;
@@ -601,6 +596,22 @@ export default function LifeGroupsManagement() {
       return newSet;
     });
   };
+
+  // Life group leader options: family members with isLifeGroupLeader checked
+  const lifeGroupLeaderOptions = useMemo(() => {
+    const options: { value: string; label: string }[] = [];
+    familyUnits.forEach((family) => {
+      family.members.forEach((member) => {
+        if (member.isLifeGroupLeader) {
+          options.push({
+            value: `${family.id}|${member.id}`,
+            label: `${member.firstName} ${member.lastName} (${family.familyName})`,
+          });
+        }
+      });
+    });
+    return options;
+  }, [familyUnits]);
 
   if (!userProfile?.isAdmin) {
     return null;
@@ -748,12 +759,17 @@ export default function LifeGroupsManagement() {
                 required
               >
                 <option value="">Select a leader</option>
-                {users.map((user) => (
-                  <option key={user.uid} value={user.uid}>
-                    {user.displayName || user.email}
+                {lifeGroupLeaderOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
                   </option>
                 ))}
               </select>
+              {lifeGroupLeaderOptions.length === 0 && (
+                <p className="mt-1 text-xs text-text-light">
+                  Add family members and check &quot;Life Group Leader&quot; on them to see leaders here.
+                </p>
+              )}
             </div>
             <div className="grid grid-cols-3 gap-4">
               <div>
@@ -904,6 +920,18 @@ export default function LifeGroupsManagement() {
                     />
                   </div>
                 </div>
+                <div className="mt-3 flex items-center">
+                  <input
+                    type="checkbox"
+                    id="isLifeGroupLeader"
+                    checked={newMemberForm.isLifeGroupLeader}
+                    onChange={(e) => setNewMemberForm({ ...newMemberForm, isLifeGroupLeader: e.target.checked })}
+                    className="h-4 w-4 rounded border-border text-[#E88B5F] focus:ring-[#E88B5F]"
+                  />
+                  <label htmlFor="isLifeGroupLeader" className="ml-2 text-sm font-medium text-charcoal">
+                    Life Group Leader
+                  </label>
+                </div>
                 <div className="mt-3 flex items-center justify-end gap-2">
                   <button
                     onClick={handleAddMemberToForm}
@@ -937,6 +965,11 @@ export default function LifeGroupsManagement() {
                       >
                         <span className="text-charcoal text-sm">
                           {member.firstName} {member.lastName}
+                          {member.isLifeGroupLeader && (
+                            <span className="ml-1.5 inline-flex items-center rounded bg-coral/20 px-1.5 py-0.5 text-xs font-medium text-coral">
+                              Life Group Leader
+                            </span>
+                          )}
                           {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                           {member.relationship && ` - ${member.relationship}`}
                           {member.phoneNumber && ` · ${member.phoneNumber}`}
@@ -1034,6 +1067,11 @@ export default function LifeGroupsManagement() {
                       {family.members.map((member) => (
                         <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                           {member.firstName} {member.lastName}
+                          {member.isLifeGroupLeader && (
+                            <span className="ml-1.5 inline-flex items-center rounded bg-coral/20 px-1.5 py-0.5 text-xs font-medium text-coral">
+                              Life Group Leader
+                            </span>
+                          )}
                           {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                           {member.relationship && ` - ${member.relationship}`}
                           {member.phoneNumber && ` · ${member.phoneNumber}`}
@@ -1167,6 +1205,11 @@ export default function LifeGroupsManagement() {
                                   {family.members.map((member) => (
                                     <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                                       {member.firstName} {member.lastName}
+                                      {member.isLifeGroupLeader && (
+                                        <span className="ml-1.5 inline-flex items-center rounded bg-coral/20 px-1.5 py-0.5 text-xs font-medium text-coral">
+                                          Life Group Leader
+                                        </span>
+                                      )}
                                       {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
                                       {member.relationship && ` - ${member.relationship}`}
                                       {member.phoneNumber && ` · ${member.phoneNumber}`}
