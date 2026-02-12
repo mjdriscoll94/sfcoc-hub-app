@@ -276,14 +276,20 @@ export default function LifeGroupsManagement() {
       const familyUnit = familyUnits.find(f => f.id === familyUnitId);
       if (!familyUnit) return;
 
-      // Check if family unit is already in the group
       const currentFamilyUnitIds = group.familyUnitIds || [];
       if (currentFamilyUnitIds.includes(familyUnitId)) {
         setError('This family unit is already in this group');
         return;
       }
 
-      // Add the family unit ID to the group
+      const otherGroupWithFamily = lifeGroups.find(
+        g => g.id !== groupId && (g.familyUnitIds || []).includes(familyUnitId)
+      );
+      if (otherGroupWithFamily) {
+        setError(`This family is already in "${otherGroupWithFamily.name}". Remove them from that group first.`);
+        return;
+      }
+
       await updateDoc(doc(db, 'lifeGroups', groupId), {
         familyUnitIds: [...currentFamilyUnitIds, familyUnitId],
         updatedAt: Timestamp.now(),
@@ -1157,7 +1163,14 @@ export default function LifeGroupsManagement() {
                     >
                       <option value="">Add Family Unit...</option>
                       {familyUnits
-                        .filter(family => !(group.familyUnitIds || []).includes(family.id))
+                        .filter(family => {
+                          const inThisGroup = (group.familyUnitIds || []).includes(family.id);
+                          if (inThisGroup) return false;
+                          const inOtherGroup = lifeGroups.some(
+                            g => g.id !== group.id && (g.familyUnitIds || []).includes(family.id)
+                          );
+                          return !inOtherGroup;
+                        })
                         .map((family) => (
                           <option key={family.id} value={family.id}>
                             {family.familyName} - ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
