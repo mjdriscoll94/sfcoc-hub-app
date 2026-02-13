@@ -333,9 +333,9 @@ export default function UserManagement() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
         </div>
       ) : (
-        <div className="bg-card rounded-lg shadow overflow-hidden">
+        <div className="bg-card rounded-lg shadow overflow-visible">
           {/* Desktop view */}
-          <div className="hidden sm:block">
+          <div className="hidden sm:block overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -382,22 +382,27 @@ export default function UserManagement() {
                         {(user.approvalStatus || 'approved').charAt(0).toUpperCase() + (user.approvalStatus || 'approved').slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 align-top">
                       <div className="relative inline-block" ref={roleDropdownOpenForUid === user.uid ? roleDropdownRef : null}>
                         <button
                           type="button"
-                          onClick={() => setRoleDropdownOpenForUid(prev => prev === user.uid ? null : user.uid)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setRoleDropdownOpenForUid(prev => prev === user.uid ? null : user.uid);
+                          }}
                           className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
                           aria-haspopup="listbox"
                           aria-expanded={roleDropdownOpenForUid === user.uid}
                         >
                           {getRoleDisplayName(user.role || 'user')}
-                          <ChevronDownIcon className="h-4 w-4 opacity-80" />
+                          <ChevronDownIcon className="h-4 w-4 opacity-80 shrink-0" />
                         </button>
                         {roleDropdownOpenForUid === user.uid && (
                           <div
-                            className="absolute left-0 top-full mt-1 z-10 min-w-[180px] py-1 bg-white border border-border rounded-lg shadow-lg"
+                            className="absolute left-0 top-full mt-1 z-[100] min-w-[180px] py-1 bg-white border border-border rounded-lg shadow-lg"
                             role="listbox"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {ROLE_ORDER.map((role) => {
                               const isCurrent = (user.role || 'user') === role;
@@ -407,7 +412,11 @@ export default function UserManagement() {
                                   type="button"
                                   role="option"
                                   aria-selected={isCurrent}
-                                  onClick={() => handleRoleSelect(user, role)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleRoleSelect(user, role);
+                                  }}
                                   className={`w-full text-left px-3 py-2 text-sm transition-colors ${getRoleStyle(role)} ${isCurrent ? 'ring-1 ring-inset ring-white/50' : ''} hover:opacity-90 first:rounded-t-lg last:rounded-b-lg`}
                                 >
                                   {ROLE_DISPLAY_NAMES[role]}
@@ -486,18 +495,23 @@ export default function UserManagement() {
                       <div className="relative inline-block" ref={roleDropdownOpenForUid === user.uid ? roleDropdownRef : null}>
                         <button
                           type="button"
-                          onClick={() => setRoleDropdownOpenForUid(prev => prev === user.uid ? null : user.uid)}
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setRoleDropdownOpenForUid(prev => prev === user.uid ? null : user.uid);
+                          }}
                           className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
                           aria-haspopup="listbox"
                           aria-expanded={roleDropdownOpenForUid === user.uid}
                         >
                           {getRoleDisplayName(user.role || 'user')}
-                          <ChevronDownIcon className="h-3 w-3 opacity-80" />
+                          <ChevronDownIcon className="h-3 w-3 opacity-80 shrink-0" />
                         </button>
                         {roleDropdownOpenForUid === user.uid && (
                           <div
-                            className="absolute left-0 top-full mt-1 z-10 min-w-[160px] py-1 bg-white border border-border rounded-lg shadow-lg"
+                            className="absolute left-0 top-full mt-1 z-[100] min-w-[160px] py-1 bg-white border border-border rounded-lg shadow-lg"
                             role="listbox"
+                            onClick={(e) => e.stopPropagation()}
                           >
                             {ROLE_ORDER.map((role) => {
                               const isCurrent = (user.role || 'user') === role;
@@ -507,7 +521,11 @@ export default function UserManagement() {
                                   type="button"
                                   role="option"
                                   aria-selected={isCurrent}
-                                  onClick={() => handleRoleSelect(user, role)}
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    handleRoleSelect(user, role);
+                                  }}
                                   className={`w-full text-left px-3 py-2 text-xs transition-colors ${getRoleStyle(role)} ${isCurrent ? 'ring-1 ring-inset ring-white/50' : ''} hover:opacity-90 first:rounded-t-lg last:rounded-b-lg`}
                                 >
                                   {ROLE_DISPLAY_NAMES[role]}
