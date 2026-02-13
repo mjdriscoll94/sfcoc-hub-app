@@ -10,7 +10,7 @@ import BuildInfo from '@/components/BuildInfo';
 import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
-import { ROLE_PERMISSIONS } from '@/types/roles';
+import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
 
 export default function AdminDashboard() {
   useEffect(() => {
@@ -21,13 +21,19 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   const canAccessAdmin = userProfile?.isAdmin || (
-    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements
+    userProfile?.role && (
+      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAnnouncements ||
+      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups
+    )
   );
   const canManageVolunteer = userProfile?.isAdmin || (
     userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageVolunteerOpportunities
   );
   const canAssignServiceRoles = userProfile?.isAdmin || (
     userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canAssignServiceRoles
+  );
+  const canManageLifeGroups = userProfile?.isAdmin || (
+    !!userProfile?.role && ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups
   );
 
   useEffect(() => {
@@ -54,23 +60,25 @@ export default function AdminDashboard() {
         {/* Quick Actions - organized by function */}
         <div className="space-y-8">
           {/* Members & Community */}
-          {(userProfile?.isAdmin) && (
+          {(userProfile?.isAdmin || canManageLifeGroups) && (
             <div>
               <h2 className="text-lg font-semibold text-charcoal mb-3">Members & Community</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Link
-                  href="/admin/users"
-                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                >
-                  <div className="flex-shrink-0">
-                    <Users className="h-6 w-6 text-coral" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-semibold text-charcoal">User Management</p>
-                    <p className="text-sm text-text-light">Manage user accounts and approvals</p>
-                  </div>
-                </Link>
+                {userProfile?.isAdmin && (
+                  <Link
+                    href="/admin/users"
+                    className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                  >
+                    <div className="flex-shrink-0">
+                      <Users className="h-6 w-6 text-coral" aria-hidden="true" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <span className="absolute inset-0" aria-hidden="true" />
+                      <p className="text-sm font-semibold text-charcoal">User Management</p>
+                      <p className="text-sm text-text-light">Manage user accounts and approvals</p>
+                    </div>
+                  </Link>
+                )}
                 <Link
                   href="/admin/life-groups"
                   className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"

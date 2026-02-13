@@ -10,6 +10,7 @@ import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember } from '@/types';
 import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
+import { ROLE_PERMISSIONS } from '@/types/roles';
 
 export default function LifeGroupsManagement() {
   useEffect(() => {
@@ -57,11 +58,14 @@ export default function LifeGroupsManagement() {
     meetingLocation: '',
   });
 
+  const canManageLifeGroups = userProfile?.isAdmin || (
+    !!userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageLifeGroups
+  );
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) {
+    if (userProfile && !canManageLifeGroups) {
       router.push('/');
     }
-  }, [userProfile, router]);
+  }, [userProfile, canManageLifeGroups, router]);
 
   // Fetch life groups
   useEffect(() => {
@@ -619,7 +623,7 @@ export default function LifeGroupsManagement() {
     return options;
   }, [familyUnits]);
 
-  if (!userProfile?.isAdmin) {
+  if (!canManageLifeGroups) {
     return null;
   }
 

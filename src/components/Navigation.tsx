@@ -261,7 +261,10 @@ const Navigation = () => {
   ];
 
   const canAccessAdmin = userProfile?.isAdmin || (
-    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements
+    userProfile?.role && (
+      ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements ||
+      ROLE_PERMISSIONS[userProfile.role]?.canManageLifeGroups
+    )
   );
 
   const adminNavItems: NavItem[] = canAccessAdmin ? [

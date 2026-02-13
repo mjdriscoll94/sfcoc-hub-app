@@ -22,9 +22,12 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
 
-  // Admin or organizer can access admin routes (organizer has limited access enforced per-page)
+  // Admin, Service Organizer, or Life Group Organizer can access admin routes (per-page enforcement for specific features)
   const canAccessAdmin = userProfile?.isAdmin || (
-    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements
+    userProfile?.role && (
+      ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements ||
+      ROLE_PERMISSIONS[userProfile.role]?.canManageLifeGroups
+    )
   );
 
   useEffect(() => {

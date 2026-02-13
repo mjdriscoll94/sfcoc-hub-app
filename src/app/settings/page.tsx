@@ -6,6 +6,7 @@ import { doc, updateDoc } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { ROLE_DISPLAY_NAMES } from '@/types/roles';
 
 export default function SettingsPage() {
   useEffect(() => {
@@ -140,13 +141,16 @@ export default function SettingsPage() {
             <div className={`px-3 py-1 rounded-full text-sm font-medium ${
               userProfile.role === 'admin' ? 'bg-primary text-on-primary' :
               userProfile.role === 'organizer' ? 'bg-secondary text-on-secondary' :
+              userProfile.role === 'lifeGroupOrganizer' ? 'bg-[#7A9B82] text-white' :
               'bg-muted text-text/60'
             }`}>
-              {userProfile.role ? userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1) : 'User'}
+              {userProfile.role ? ROLE_DISPLAY_NAMES[userProfile.role] ?? userProfile.role : 'User'}
             </div>
             <p className="text-sm text-text/70">
               {userProfile.role === 'admin' ? 'Full access to all features and administrative controls' :
-               userProfile.role === 'organizer' ? 'Can manage service roles and access member directory' :
+               userProfile.role === 'organizer' ? 'Can manage service roles, announcements, volunteer opportunities, and access member directory' :
+               userProfile.role === 'lifeGroupOrganizer' ? 'Can manage life groups and access member directory' :
+               userProfile.role === 'lifeGroupLeader' ? 'Can access life group leader resources and member directory' :
                userProfile.role === 'member' ? 'Can access member directory and participate in church activities' :
                'Basic access to church information and features'}
             </p>

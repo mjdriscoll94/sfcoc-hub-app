@@ -58,17 +58,26 @@ export default function LifeGroupsPage() {
     return () => unsubscribe();
   }, []);
 
-  // Leader Resources visible only to life group leader, organizer, and admin roles
-  const canSeeLeaderResources = userProfile && (
+  // Curriculum: life group leader, Service Organizer, admin, or leader of a group (NOT Life Group Organizer)
+  const canSeeCurriculum = userProfile && (
     userProfile.role === 'lifeGroupLeader' ||
     userProfile.role === 'organizer' ||
     userProfile.isAdmin ||
     lifeGroups.some(group => group.leaderId === userProfile.uid)
   );
 
-  // Fetch leader resources
+  // Phone numbers and call/text: life group leader, Life Group Organizer, Service Organizer, admin, or leader of a group (NOT standard user or member)
+  const canSeeContactInfo = userProfile && (
+    userProfile.role === 'lifeGroupLeader' ||
+    userProfile.role === 'lifeGroupOrganizer' ||
+    userProfile.role === 'organizer' ||
+    userProfile.isAdmin ||
+    lifeGroups.some(group => group.leaderId === userProfile.uid)
+  );
+
+  // Fetch leader resources (curriculum) only for those who can see it
   useEffect(() => {
-    if (!canSeeLeaderResources) return;
+    if (!canSeeCurriculum) return;
 
     const fetchResources = async () => {
       try {
@@ -88,7 +97,7 @@ export default function LifeGroupsPage() {
     };
 
     fetchResources();
-  }, [canSeeLeaderResources]);
+  }, [canSeeCurriculum]);
 
   // Fetch family units
   useEffect(() => {
@@ -184,8 +193,8 @@ export default function LifeGroupsPage() {
         </p>
       </div>
 
-      {/* Life Group Leader Resources Section - only for lifeGroupLeader, organizer, admin */}
-      {canSeeLeaderResources && (
+      {/* Curriculum - only for life group leader, Service Organizer, admin, or leader of a group (not Life Group Organizer) */}
+      {canSeeCurriculum && (
         <div className="mb-8 bg-white rounded-lg border border-border p-6">
           <h2 className="text-2xl font-bold text-charcoal mb-6">Leader Resources</h2>
 
@@ -283,83 +292,91 @@ export default function LifeGroupsPage() {
                 </div>
               </div>
 
-              {/* Family Units Section */}
+              {/* Family Units Section - only show expandable list with phone/call/text to roles that can see contact info */}
               {(group.familyUnitIds || []).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-semibold text-charcoal">Family Units</h4>
-                    <button
-                      onClick={() => toggleAllFamiliesForGroup(group)}
-                      className="text-sm text-coral hover:text-[#D6714A] font-medium transition-colors"
-                    >
-                      {(group.familyUnitIds || []).every(id => expandedFamilies.has(id)) ? 'Collapse All' : 'See All'}
-                    </button>
+                    {canSeeContactInfo && (
+                      <button
+                        onClick={() => toggleAllFamiliesForGroup(group)}
+                        className="text-sm text-coral hover:text-[#D6714A] font-medium transition-colors"
+                      >
+                        {(group.familyUnitIds || []).every(id => expandedFamilies.has(id)) ? 'Collapse All' : 'See All'}
+                      </button>
+                    )}
                   </div>
-                  <div className="space-y-2">
-                    {(group.familyUnitIds || []).map((familyUnitId) => {
-                      const family = familyUnits.find(f => f.id === familyUnitId);
-                      if (!family) return null;
-                      return (
-                        <div
-                          key={familyUnitId}
-                          className="border border-border rounded-lg p-3 bg-gray-50"
-                        >
-                          <div className="flex items-center justify-between">
-                            <button
-                              onClick={() => toggleFamilyExpand(familyUnitId)}
-                              className="flex items-center space-x-2 flex-1 text-left"
-                            >
-                              {expandedFamilies.has(familyUnitId) ? (
-                                <ChevronDownIcon className="h-4 w-4 text-charcoal" />
-                              ) : (
-                                <ChevronRightIcon className="h-4 w-4 text-charcoal" />
-                              )}
-                              <span className="font-semibold text-charcoal text-sm">
-                                {family.familyName} - ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
-                              </span>
-                            </button>
-                          </div>
-                          {expandedFamilies.has(familyUnitId) && (
-                            <div className="mt-2 pt-2 border-t border-border">
-                              <div className="space-y-1">
-                                {family.members.map((member) => {
-                                  const telNumber = member.phoneNumber?.replace(/\D/g, '') || '';
-                                  return (
-                                    <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
-                                      {member.firstName} {member.lastName}
-                                      {member.phoneNumber && (
-                                        <span className="ml-1">
-                                          · {member.phoneNumber}
-                                          {telNumber && (
-                                            <>
-                                              {' · '}
-                                              <a
-                                                href={`tel:${telNumber}`}
-                                                className="text-coral hover:underline font-medium"
-                                              >
-                                                Call
-                                              </a>
-                                              {' · '}
-                                              <a
-                                                href={`sms:${telNumber}`}
-                                                className="text-coral hover:underline font-medium"
-                                              >
-                                                Text
-                                              </a>
-                                            </>
-                                          )}
-                                        </span>
-                                      )}
-                                    </div>
-                                  );
-                                })}
-                              </div>
+                  {canSeeContactInfo ? (
+                    <div className="space-y-2">
+                      {(group.familyUnitIds || []).map((familyUnitId) => {
+                        const family = familyUnits.find(f => f.id === familyUnitId);
+                        if (!family) return null;
+                        return (
+                          <div
+                            key={familyUnitId}
+                            className="border border-border rounded-lg p-3 bg-gray-50"
+                          >
+                            <div className="flex items-center justify-between">
+                              <button
+                                onClick={() => toggleFamilyExpand(familyUnitId)}
+                                className="flex items-center space-x-2 flex-1 text-left"
+                              >
+                                {expandedFamilies.has(familyUnitId) ? (
+                                  <ChevronDownIcon className="h-4 w-4 text-charcoal" />
+                                ) : (
+                                  <ChevronRightIcon className="h-4 w-4 text-charcoal" />
+                                )}
+                                <span className="font-semibold text-charcoal text-sm">
+                                  {family.familyName} - ({family.totalCount} {family.totalCount === 1 ? 'person' : 'people'})
+                                </span>
+                              </button>
                             </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
+                            {expandedFamilies.has(familyUnitId) && (
+                              <div className="mt-2 pt-2 border-t border-border">
+                                <div className="space-y-1">
+                                  {family.members.map((member) => {
+                                    const telNumber = member.phoneNumber?.replace(/\D/g, '') || '';
+                                    return (
+                                      <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
+                                        {member.firstName} {member.lastName}
+                                        {member.phoneNumber && (
+                                          <span className="ml-1">
+                                            · {member.phoneNumber}
+                                            {telNumber && (
+                                              <>
+                                                {' · '}
+                                                <a
+                                                  href={`tel:${telNumber}`}
+                                                  className="text-coral hover:underline font-medium"
+                                                >
+                                                  Call
+                                                </a>
+                                                {' · '}
+                                                <a
+                                                  href={`sms:${telNumber}`}
+                                                  className="text-coral hover:underline font-medium"
+                                                >
+                                                  Text
+                                                </a>
+                                              </>
+                                            )}
+                                          </span>
+                                        )}
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-text-light">
+                      {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'family unit' : 'family units'}
+                    </p>
+                  )}
                 </div>
               )}
             </div>

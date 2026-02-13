@@ -9,6 +9,7 @@ import { UserPlusIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/
 import BackButton from '@/components/BackButton';
 import { CheckIcon, XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { UserProfile } from '@/types';
+import { ROLE_DISPLAY_NAMES, type UserRole } from '@/types/roles';
 import { Users } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
 
@@ -203,8 +204,8 @@ export default function UserManagement() {
 
     try {
       const userRef = doc(db, 'users', selectedUser.uid);
-      const currentRole = selectedUser.role || 'user';
-      const newRole = currentRole === 'user' ? 'organizer' : currentRole === 'organizer' ? 'admin' : 'user';
+      const currentRole = (selectedUser.role || 'user') as UserRole;
+      const newRole = getNextRole(currentRole);
       
       await updateDoc(userRef, {
         role: newRole,
@@ -224,27 +225,33 @@ export default function UserManagement() {
     }
   };
 
+  const ROLE_ORDER: UserRole[] = ['user', 'member', 'lifeGroupLeader', 'lifeGroupOrganizer', 'organizer', 'admin'];
+
   const getRoleStyle = (role: string) => {
     switch(role) {
       case 'admin':
         return 'bg-[#D6805F] text-white hover:bg-[#C57050] cursor-pointer';
       case 'organizer':
         return 'bg-[#85AAA0] text-white hover:bg-[#769B91] cursor-pointer';
+      case 'lifeGroupOrganizer':
+        return 'bg-[#7A9B82] text-white hover:bg-[#6B8A72] cursor-pointer';
+      case 'lifeGroupLeader':
+        return 'bg-[#6B8A9B] text-white hover:bg-[#5C7A8A] cursor-pointer';
+      case 'member':
+        return 'bg-[#8A8A8A] text-white hover:bg-[#7A7A7A] cursor-pointer';
       default:
         return 'bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer';
     }
   };
 
-  const getNextRole = (currentRole: string) => {
-    switch(currentRole) {
-      case 'user':
-        return 'organizer';
-      case 'organizer':
-        return 'admin';
-      default:
-        return 'user';
-    }
+  const getNextRole = (currentRole: UserRole): UserRole => {
+    const idx = ROLE_ORDER.indexOf(currentRole);
+    if (idx === -1) return 'user';
+    const nextIdx = (idx + 1) % ROLE_ORDER.length;
+    return ROLE_ORDER[nextIdx];
   };
+
+  const getRoleDisplayName = (role: string) => ROLE_DISPLAY_NAMES[(role || 'user') as UserRole] ?? role;
 
   const handleDeleteClick = (user: UserProfile) => {
     setUserToDelete(user);
@@ -367,7 +374,7 @@ export default function UserManagement() {
                         onClick={() => handleRoleClick(user)}
                         className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
                       >
-                        {user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'User'}
+                        {getRoleDisplayName(user.role || 'user')}
                       </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
@@ -490,8 +497,8 @@ export default function UserManagement() {
         }}
         onConfirm={handleConfirmRoleChange}
         title="Change User Role"
-        message={selectedUser ? `Are you sure you want to change ${selectedUser.displayName || selectedUser.email || 'this user'}'s role from ${selectedUser.role || 'user'} to ${getNextRole(selectedUser.role || 'user')}?` : ''}
-        confirmText={`Change to ${selectedUser ? getNextRole(selectedUser.role || 'user') : ''}`}
+        message={selectedUser ? `Are you sure you want to change ${selectedUser.displayName || selectedUser.email || 'this user'}'s role from ${getRoleDisplayName(selectedUser.role || 'user')} to ${getRoleDisplayName(getNextRole((selectedUser.role || 'user') as UserRole))}?` : ''}
+        confirmText={selectedUser ? `Change to ${getRoleDisplayName(getNextRole((selectedUser.role || 'user') as UserRole))}` : ''}
         cancelText="Cancel"
       />
 
