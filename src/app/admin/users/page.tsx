@@ -1,20 +1,17 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
+import { useState, useEffect } from 'react';
 import { collection, query, getDocs, doc, updateDoc, orderBy } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { UserPlusIcon, CheckCircleIcon, XCircleIcon } from '@heroicons/react/24/outline';
 import BackButton from '@/components/BackButton';
-import { CheckIcon, XMarkIcon, TrashIcon, ChevronDownIcon } from '@heroicons/react/24/outline';
+import { CheckIcon, XMarkIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { UserProfile } from '@/types';
 import { ROLE_DISPLAY_NAMES, type UserRole } from '@/types/roles';
 import { Users } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
-
-const ROLE_ORDER: UserRole[] = ['user', 'member', 'lifeGroupLeader', 'lifeGroupOrganizer', 'organizer', 'admin'];
 
 export default function UserManagement() {
   useEffect(() => {
@@ -27,32 +24,10 @@ export default function UserManagement() {
   const { userProfile } = useAuth();
   const router = useRouter();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
-  const [pendingNewRole, setPendingNewRole] = useState<UserRole | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  const [roleDropdownOpenForUid, setRoleDropdownOpenForUid] = useState<string | null>(null);
-  const [dropdownAnchorRect, setDropdownAnchorRect] = useState<{ top: number; left: number; height: number; width: number } | null>(null);
-  const roleDropdownPanelRef = useRef<HTMLDivElement>(null);
-  const roleTriggerRef = useRef<HTMLButtonElement | null>(null);
   const [userToDelete, setUserToDelete] = useState<UserProfile | null>(null);
   const [isFirstDeleteConfirmationOpen, setIsFirstDeleteConfirmationOpen] = useState(false);
   const [isSecondDeleteConfirmationOpen, setIsSecondDeleteConfirmationOpen] = useState(false);
-
-  // Close role dropdown when clicking outside (only when dropdown is open)
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (roleDropdownOpenForUid == null) return;
-      const target = event.target as Node;
-      const inPanel = roleDropdownPanelRef.current?.contains(target);
-      const inTrigger = roleTriggerRef.current?.contains(target);
-      if (!inPanel && !inTrigger) {
-        setRoleDropdownOpenForUid(null);
-        setDropdownAnchorRect(null);
-        roleTriggerRef.current = null;
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [roleDropdownOpenForUid]);
 
   // Redirect if not admin
   useEffect(() => {
@@ -219,31 +194,26 @@ export default function UserManagement() {
     }
   };
 
-  const handleRoleSelect = (user: UserProfile, newRole: UserRole) => {
-    const currentRole = (user.role || 'user') as UserRole;
-    if (currentRole === newRole) {
-      setRoleDropdownOpenForUid(null);
-      return;
-    }
+  const handleRoleClick = (user: UserProfile) => {
     setSelectedUser(user);
-    setPendingNewRole(newRole);
-    setRoleDropdownOpenForUid(null);
     setIsConfirmationOpen(true);
   };
 
   const handleConfirmRoleChange = async () => {
-    if (!selectedUser || pendingNewRole === null) return;
+    if (!selectedUser) return;
 
-    const newRole = pendingNewRole;
     try {
       const userRef = doc(db, 'users', selectedUser.uid);
+      const currentRole = (selectedUser.role || 'user') as UserRole;
+      const newRole = getNextRole(currentRole);
+      
       await updateDoc(userRef, {
         role: newRole,
         isAdmin: newRole === 'admin', // Keep isAdmin for backward compatibility
         updatedAt: new Date()
       });
 
-      setUsers(users.map(u =>
+      setUsers(users.map(u => 
         u.uid === selectedUser.uid ? { ...u, role: newRole, isAdmin: newRole === 'admin' } : u
       ));
     } catch (error) {
@@ -252,9 +222,10 @@ export default function UserManagement() {
     } finally {
       setIsConfirmationOpen(false);
       setSelectedUser(null);
-      setPendingNewRole(null);
     }
   };
+
+  const ROLE_ORDER: UserRole[] = ['user', 'member', 'lifeGroupLeader', 'lifeGroupOrganizer', 'organizer', 'admin'];
 
   const getRoleStyle = (role: string) => {
     switch(role) {
@@ -271,6 +242,13 @@ export default function UserManagement() {
       default:
         return 'bg-gray-100 text-gray-600 hover:bg-gray-200 cursor-pointer';
     }
+  };
+
+  const getNextRole = (currentRole: UserRole): UserRole => {
+    const idx = ROLE_ORDER.indexOf(currentRole);
+    if (idx === -1) return 'user';
+    const nextIdx = (idx + 1) % ROLE_ORDER.length;
+    return ROLE_ORDER[nextIdx];
   };
 
   const getRoleDisplayName = (role: string) => ROLE_DISPLAY_NAMES[(role || 'user') as UserRole] ?? role;
@@ -342,9 +320,9 @@ export default function UserManagement() {
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
         </div>
       ) : (
-        <div className="bg-card rounded-lg shadow overflow-visible">
+        <div className="bg-card rounded-lg shadow overflow-hidden">
           {/* Desktop view */}
-          <div className="hidden sm:block overflow-x-auto">
+          <div className="hidden sm:block">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
@@ -391,32 +369,13 @@ export default function UserManagement() {
                         {(user.approvalStatus || 'approved').charAt(0).toUpperCase() + (user.approvalStatus || 'approved').slice(1)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 align-top">
-                      <div className="relative inline-block">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (roleDropdownOpenForUid === user.uid) {
-                              setRoleDropdownOpenForUid(null);
-                              setDropdownAnchorRect(null);
-                              roleTriggerRef.current = null;
-                            } else {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              setDropdownAnchorRect(rect);
-                              roleTriggerRef.current = e.currentTarget;
-                              setRoleDropdownOpenForUid(user.uid);
-                            }
-                          }}
-                          className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-sm font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
-                          aria-haspopup="listbox"
-                          aria-expanded={roleDropdownOpenForUid === user.uid}
-                        >
-                          {getRoleDisplayName(user.role || 'user')}
-                          <ChevronDownIcon className="h-4 w-4 opacity-80 shrink-0" />
-                        </button>
-                      </div>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                      <button
+                        onClick={() => handleRoleClick(user)}
+                        className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
+                      >
+                        {getRoleDisplayName(user.role || 'user')}
+                      </button>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                       <div className="flex items-center justify-end space-x-2">
@@ -481,33 +440,6 @@ export default function UserManagement() {
                         {(user.approvalStatus || 'approved').charAt(0).toUpperCase() + (user.approvalStatus || 'approved').slice(1)}
                       </span>
                     </div>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="relative inline-block">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            if (roleDropdownOpenForUid === user.uid) {
-                              setRoleDropdownOpenForUid(null);
-                              setDropdownAnchorRect(null);
-                              roleTriggerRef.current = null;
-                            } else {
-                              const rect = e.currentTarget.getBoundingClientRect();
-                              setDropdownAnchorRect(rect);
-                              roleTriggerRef.current = e.currentTarget;
-                              setRoleDropdownOpenForUid(user.uid);
-                            }
-                          }}
-                          className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium transition-colors ${getRoleStyle(user.role || 'user')}`}
-                          aria-haspopup="listbox"
-                          aria-expanded={roleDropdownOpenForUid === user.uid}
-                        >
-                          {getRoleDisplayName(user.role || 'user')}
-                          <ChevronDownIcon className="h-3 w-3 opacity-80 shrink-0" />
-                        </button>
-                      </div>
-                    </div>
                     <div className="flex items-center justify-between">
                       <div className="text-xs text-gray-500">
                         Created: {user.createdAt.toLocaleDateString()}
@@ -557,60 +489,16 @@ export default function UserManagement() {
         </div>
       )}
 
-      {/* Role dropdown rendered in portal so it is not clipped by table overflow */}
-      {typeof document !== 'undefined' &&
-        roleDropdownOpenForUid != null &&
-        dropdownAnchorRect != null &&
-        (() => {
-          const openUser = users.find((u) => u.uid === roleDropdownOpenForUid);
-          if (!openUser) return null;
-          return createPortal(
-            <div
-              ref={roleDropdownPanelRef}
-              role="listbox"
-              className="fixed z-[9999] min-w-[180px] py-1 bg-white border border-border rounded-lg shadow-lg"
-              style={{
-                top: dropdownAnchorRect.top + dropdownAnchorRect.height + 4,
-                left: dropdownAnchorRect.left,
-              }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {ROLE_ORDER.map((role) => {
-                const isCurrent = (openUser.role || 'user') === role;
-                return (
-                  <button
-                    key={role}
-                    type="button"
-                    role="option"
-                    aria-selected={isCurrent}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleRoleSelect(openUser, role);
-                    }}
-                    className={`w-full text-left px-3 py-2 text-sm transition-colors ${getRoleStyle(role)} ${isCurrent ? 'ring-1 ring-inset ring-white/50' : ''} hover:opacity-90 first:rounded-t-lg last:rounded-b-lg`}
-                  >
-                    {ROLE_DISPLAY_NAMES[role]}
-                    {isCurrent && ' ✓'}
-                  </button>
-                );
-              })}
-            </div>,
-            document.body
-          );
-        })()}
-
       <ConfirmationModal
         isOpen={isConfirmationOpen}
         onClose={() => {
           setIsConfirmationOpen(false);
           setSelectedUser(null);
-          setPendingNewRole(null);
         }}
         onConfirm={handleConfirmRoleChange}
         title="Change User Role"
-        message={selectedUser && pendingNewRole !== null ? `Are you sure you want to change ${selectedUser.displayName || selectedUser.email || 'this user'}'s role from ${getRoleDisplayName(selectedUser.role || 'user')} to ${getRoleDisplayName(pendingNewRole)}?` : ''}
-        confirmText={pendingNewRole !== null ? `Change to ${getRoleDisplayName(pendingNewRole)}` : 'Confirm'}
+        message={selectedUser ? `Are you sure you want to change ${selectedUser.displayName || selectedUser.email || 'this user'}'s role from ${getRoleDisplayName(selectedUser.role || 'user')} to ${getRoleDisplayName(getNextRole((selectedUser.role || 'user') as UserRole))}?` : ''}
+        confirmText={selectedUser ? `Change to ${getRoleDisplayName(getNextRole((selectedUser.role || 'user') as UserRole))}` : ''}
         cancelText="Cancel"
       />
 
