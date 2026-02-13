@@ -12,7 +12,7 @@ import {
   AdminAnnouncementItem,
   AnnouncementType,
 } from '@/hooks/useAnnouncementsAdmin';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 
 const ANNOUNCEMENT_TYPES: AnnouncementType[] = [
@@ -51,6 +51,7 @@ export default function ManageAnnouncementsPage() {
     status: 'active',
   });
   const [itemToDelete, setItemToDelete] = useState<AdminAnnouncementItem | null>(null);
+  const [itemToArchive, setItemToArchive] = useState<AdminAnnouncementItem | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   const canManage =
@@ -106,6 +107,20 @@ export default function ManageAnnouncementsPage() {
       setItemToDelete(null);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to delete');
+    }
+  };
+
+  const handleArchiveClick = (item: AdminAnnouncementItem) => {
+    setItemToArchive(item);
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (!itemToArchive) return;
+    try {
+      await updateAnnouncement(itemToArchive.id, { status: 'archived' });
+      setItemToArchive(null);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to archive');
     }
   };
 
@@ -269,6 +284,16 @@ export default function ManageAnnouncementsPage() {
                       >
                         <PencilIcon className="h-5 w-5" />
                       </button>
+                      {item.status === 'active' && (
+                        <button
+                          type="button"
+                          onClick={() => handleArchiveClick(item)}
+                          className="p-2 text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
+                          title="Archive"
+                        >
+                          <ArchiveBoxIcon className="h-5 w-5" />
+                        </button>
+                      )}
                       <button
                         type="button"
                         onClick={() => handleDeleteClick(item)}
@@ -288,6 +313,19 @@ export default function ManageAnnouncementsPage() {
         </div>
       )}
 
+      <ConfirmationModal
+        isOpen={!!itemToArchive}
+        onClose={() => setItemToArchive(null)}
+        onConfirm={handleArchiveConfirm}
+        title="Archive announcement?"
+        message={
+          itemToArchive
+            ? `Archive "${itemToArchive.title}"? It will no longer appear on the public announcements page.`
+            : ''
+        }
+        confirmText="Archive"
+        cancelText="Cancel"
+      />
       <ConfirmationModal
         isOpen={!!itemToDelete}
         onClose={() => setItemToDelete(null)}

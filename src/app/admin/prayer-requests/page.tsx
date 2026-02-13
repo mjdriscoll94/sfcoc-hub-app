@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import BackButton from '@/components/BackButton';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { usePrayerPraise, PrayerPraiseItem } from '@/hooks/usePrayerPraise';
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
 
 export default function PrayerRequestsManagement() {
   useEffect(() => {
@@ -34,6 +34,7 @@ export default function PrayerRequestsManagement() {
     approvalStatus: 'approved',
   });
   const [itemToDelete, setItemToDelete] = useState<PrayerPraiseItem | null>(null);
+  const [itemToArchive, setItemToArchive] = useState<PrayerPraiseItem | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -87,6 +88,20 @@ export default function PrayerRequestsManagement() {
       setItemToDelete(null);
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Failed to delete');
+    }
+  };
+
+  const handleArchiveClick = (item: PrayerPraiseItem) => {
+    setItemToArchive(item);
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (!itemToArchive) return;
+    try {
+      await updatePrayerRequest(itemToArchive.id, { status: 'archived' });
+      setItemToArchive(null);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to archive');
     }
   };
 
@@ -285,6 +300,14 @@ export default function PrayerRequestsManagement() {
                             </button>
                             <button
                               type="button"
+                              onClick={() => handleArchiveClick(item)}
+                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
+                              title="Archive"
+                            >
+                              <ArchiveBoxIcon className="h-5 w-5" />
+                            </button>
+                            <button
+                              type="button"
                               onClick={() => handleDeleteClick(item)}
                               className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
                               title="Delete"
@@ -302,6 +325,19 @@ export default function PrayerRequestsManagement() {
         </div>
       )}
 
+      <ConfirmationModal
+        isOpen={!!itemToArchive}
+        onClose={() => setItemToArchive(null)}
+        onConfirm={handleArchiveConfirm}
+        title="Archive prayer request?"
+        message={
+          itemToArchive
+            ? `Archive "${itemToArchive.title}"? It will no longer appear on the prayer board.`
+            : ''
+        }
+        confirmText="Archive"
+        cancelText="Cancel"
+      />
       <ConfirmationModal
         isOpen={!!itemToDelete}
         onClose={() => setItemToDelete(null)}
