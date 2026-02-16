@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useCallback, useContext, useEffect, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
 import { ShepherdJourneyProvider, useShepherd } from 'react-shepherd';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { getOnboardingSteps } from '@/lib/tour/onboardingSteps';
@@ -30,22 +30,39 @@ function TourInner({ children }: { children: React.ReactNode }) {
   const Shepherd = useShepherd();
   const { user, userProfile, markOnboardingTourCompleted } = useAuth();
   const [mounted, setMounted] = useState(false);
+  const tourRef = useRef<InstanceType<typeof import('shepherd.js').Tour> | null>(null);
 
   const hasCompletedTour = !!userProfile?.onboardingTourCompletedAt;
 
   const startTour = useCallback(() => {
     if (!Shepherd?.Tour) return;
+
+    // Cancel any existing tour before starting a new one (prevents stacking overlays)
+    if (tourRef.current) {
+      tourRef.current.cancel();
+      tourRef.current = null;
+    }
+
     const tour = new Shepherd.Tour({
       useModalOverlay: true,
       defaultStepOptions: {
         cancelIcon: { enabled: true },
         scrollTo: { behavior: 'smooth', block: 'center' }
-      }
+      },
+      exitOnEsc: true,
+      stepsContainer: typeof document !== 'undefined' ? document.body : undefined
     });
+    tourRef.current = tour;
+
     const steps = getOnboardingSteps(!!user);
     tour.addSteps(steps);
-    tour.on('complete', () => markOnboardingTourCompleted());
-    tour.on('cancel', () => {});
+    tour.on('complete', () => {
+      markOnboardingTourCompleted();
+      tourRef.current = null;
+    });
+    tour.on('cancel', () => {
+      tourRef.current = null;
+    });
     tour.start();
   }, [Shepherd, user, markOnboardingTourCompleted]);
 

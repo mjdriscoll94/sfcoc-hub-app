@@ -210,22 +210,12 @@ textarea {
   color: var(--on-primary);
 }
 
-/* Ensure tour modal fits viewport and Next/Back buttons are always visible */
 .shepherd-element {
   border-radius: 0.5rem;
   box-shadow: var(--shadow-lg);
-  max-height: min(400px, 85vh);
-  display: flex;
-  flex-direction: column;
+  z-index: 10000 !important;
 }
 
-.shepherd-element .shepherd-content {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-}
-
-.shepherd-element .shepherd-footer {
-  flex-shrink: 0;
-  margin-top: auto;
+.shepherd-modal-overlay-container {
+  z-index: 9999 !important;
 }

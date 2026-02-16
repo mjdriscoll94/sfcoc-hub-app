@@ -29,6 +29,7 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
       id: 'welcome',
       title: 'Welcome to SFCOC Hub',
       text: "Let's take a quick tour. We'll show you the navigation menu and where to find events and gatherings.",
+      attachTo: { element: 'main', on: 'top' },
       buttons: (tour) => navButtons(tour),
       scrollTo: false
     },
