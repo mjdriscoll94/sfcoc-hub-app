@@ -10,7 +10,11 @@ function attachToIfVisible(
   selector: string,
   on: 'top' | 'bottom' | 'left' | 'right'
 ): Partial<StepOptions> {
-  return isElementVisible(selector) ? { attachTo: { element: selector, on } } : {};
+  if (!isElementVisible(selector)) return {};
+  return {
+    attachTo: { element: selector, on },
+    arrow: true
+  };
 }
 
 const navButtons = (tour: { next: () => void; back: () => void }) => [
@@ -29,9 +33,9 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
       id: 'welcome',
       title: 'Welcome to SFCOC Hub',
       text: "Let's take a quick tour. We'll show you the navigation menu and where to find events and gatherings.",
-      attachTo: { element: 'main', on: 'top' },
       buttons: (tour) => navButtons(tour),
-      scrollTo: false
+      scrollTo: false,
+      arrow: false
     },
     {
       id: 'nav-home',
@@ -85,12 +89,13 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
       scrollTo: { behavior: 'smooth', block: 'center' }
     });
   } else {
-    steps.push({
+    steps.push(    {
       id: 'sign-in',
       title: 'Sign In for More',
       text: "Sign in to access Prayer Board, Announcements, Volunteer opportunities, and more. You can retake this tour from Settings anytime.",
       buttons: (tour) => finishButtons(tour),
-      scrollTo: false
+      scrollTo: false,
+      arrow: false
     });
   }
 

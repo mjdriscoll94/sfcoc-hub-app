@@ -47,7 +47,8 @@ function TourInner({ children }: { children: React.ReactNode }) {
       useModalOverlay: true,
       defaultStepOptions: {
         cancelIcon: { enabled: true },
-        scrollTo: { behavior: 'smooth', block: 'center' }
+        scrollTo: { behavior: 'smooth', block: 'center' },
+        arrow: true
       },
       exitOnEsc: true,
       stepsContainer: typeof document !== 'undefined' ? document.body : undefined

@@ -214,6 +214,22 @@ textarea {
   border-radius: 0.5rem;
   box-shadow: var(--shadow-lg);
   z-index: 10000 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: min(420px, 90vh) !important;
+}
+
+.shepherd-element .shepherd-content {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.shepherd-element .shepherd-footer {
+  flex-shrink: 0;
+  padding: 0.75rem 0.75rem 0.75rem !important;
+  border-bottom-left-radius: 0.5rem;
+  border-bottom-right-radius: 0.5rem;
 }
 
 .shepherd-modal-overlay-container {
