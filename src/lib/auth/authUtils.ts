@@ -64,19 +64,25 @@ async function ensureUserProfileFields(uid: string, data: Partial<UserProfile>):
   if (needsUpdate) {
     const userRef = doc(db, 'users', uid);
     await updateDoc(userRef, updates);
-    return {
-      ...data,
-      ...updates,
-      createdAt: convertToDate(updates.createdAt || data.createdAt),
-      updatedAt: convertToDate(updates.updatedAt || data.updatedAt),
-      photoURL: data.photoURL || null
-    } as UserProfile;
+  return {
+    ...data,
+    ...updates,
+    createdAt: convertToDate(updates.createdAt || data.createdAt),
+    updatedAt: convertToDate(updates.updatedAt || data.updatedAt),
+    onboardingTourCompletedAt: data.onboardingTourCompletedAt
+      ? convertToDate(data.onboardingTourCompletedAt)
+      : undefined,
+    photoURL: data.photoURL || null
+  } as UserProfile;
   }
 
   return {
     ...data,
     createdAt: convertToDate(data.createdAt),
     updatedAt: convertToDate(data.updatedAt),
+    onboardingTourCompletedAt: data.onboardingTourCompletedAt
+      ? convertToDate(data.onboardingTourCompletedAt)
+      : undefined,
     photoURL: data.photoURL || null
   } as UserProfile;
 }

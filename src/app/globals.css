@@ -198,3 +198,19 @@ textarea {
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
+
+/* Shepherd onboarding tour - match app theme */
+.shepherd-button.shepherd-button-primary {
+  background: var(--primary);
+  color: var(--on-primary);
+}
+
+.shepherd-button.shepherd-button-primary:not(:disabled):hover {
+  background: var(--primary-hover);
+  color: var(--on-primary);
+}
+
+.shepherd-element {
+  border-radius: 0.5rem;
+  box-shadow: var(--shadow-lg);
+}

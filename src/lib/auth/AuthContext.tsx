@@ -24,6 +24,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   updateUserProfile: (profile: UserProfile) => void;
+  markOnboardingTourCompleted: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   signUp: async () => {},
   updateUserProfile: () => {},
+  markOnboardingTourCompleted: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -139,6 +141,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               ...data,
               createdAt: convertToDate(data.createdAt),
               updatedAt: convertToDate(data.updatedAt),
+              onboardingTourCompletedAt: data.onboardingTourCompletedAt
+                ? convertToDate(data.onboardingTourCompletedAt)
+                : undefined,
               emailSubscriptions: {
                 announcements: data.emailSubscriptions?.announcements ?? true,
                 events: data.emailSubscriptions?.events ?? true,
@@ -266,6 +271,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const markOnboardingTourCompleted = async () => {
+    if (!user?.uid) return;
+    const now = new Date();
+    try {
+      await updateDoc(doc(db, 'users', user.uid), {
+        onboardingTourCompletedAt: now,
+        updatedAt: now
+      });
+      setUserProfile(prev =>
+        prev ? { ...prev, onboardingTourCompletedAt: now, updatedAt: now } : null
+      );
+    } catch (error) {
+      console.error('Error marking onboarding tour completed:', error);
+    }
+  };
+
   const value = {
     user,
     userProfile,
@@ -275,6 +296,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signOut,
     signUp,
     updateUserProfile,
+    markOnboardingTourCompleted
   };
 
   return (

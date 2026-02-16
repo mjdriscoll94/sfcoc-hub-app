@@ -342,6 +342,7 @@ const Navigation = () => {
                 item.dropdown ? (
                   <div key={item.name} className="relative inline-flex items-center">
                     <button
+                      data-tour={item.name === 'Resources' ? 'nav-resources' : item.name === 'Connect' ? 'nav-connect' : undefined}
                       ref={el => {
                         dropdownButtonRefs.current[item.name] = el;
                       }}
@@ -427,6 +428,7 @@ const Navigation = () => {
                 ) : (
                   <Link
                     key={item.name}
+                    data-tour={item.name === 'Home' ? 'nav-home' : item.name === 'Give' ? 'nav-give' : undefined}
                     href={item.href || '#'}
                     className={`${
                       pathname === item.href
@@ -448,7 +450,7 @@ const Navigation = () => {
               <Menu as="div" className="relative">
                 {({ open }) => (
                   <>
-                    <Menu.Button className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#E88B5F] focus:ring-black">
+                    <Menu.Button data-tour="nav-user" className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#E88B5F] focus:ring-black">
                       <span className="sr-only">Open user menu</span>
                       <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-black font-semibold">
                         {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
