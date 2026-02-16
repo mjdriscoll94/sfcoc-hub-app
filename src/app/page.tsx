@@ -5,11 +5,13 @@ import Link from "next/link";
 import { useState, useEffect } from "react";
 import BuildStatus from '@/components/BuildStatus';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useOnboardingTour } from '@/components/OnboardingTour';
 import { useHomePageEvents } from '@/hooks/useHomePageEvents';
 import EventIcon from '@/components/EventIcon';
 
 export default function Home() {
   const { user } = useAuth();
+  const { startTour } = useOnboardingTour();
   const { categories, loading } = useHomePageEvents();
   useEffect(() => {
     document.title = 'Home | Sioux Falls Church of Christ';
@@ -52,8 +54,14 @@ export default function Home() {
             <p className="text-xl md:text-2xl mb-8 uppercase tracking-wide">
               One body. Many members. United and serving together.
             </p>
-            {user && (
-              <div className="flex justify-center">
+            <div className="flex flex-col sm:flex-row justify-center gap-4">
+              <button
+                onClick={startTour}
+                className="px-6 py-3 rounded-lg font-medium border-2 border-white text-white hover:bg-white hover:text-charcoal transition-colors uppercase tracking-wide"
+              >
+                Take a tour
+              </button>
+              {user && (
                 <Link
                   href="/calendar"
                   className="bg-primary text-on-primary px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity inline-flex items-center space-x-2 focus-ring uppercase tracking-wide"
@@ -63,8 +71,8 @@ export default function Home() {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
                   </svg>
                 </Link>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       </section>
