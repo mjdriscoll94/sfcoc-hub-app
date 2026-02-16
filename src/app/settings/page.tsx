@@ -7,7 +7,6 @@ import { db } from '@/lib/firebase/config';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
-import { useOnboardingTour } from '@/components/OnboardingTour';
 
 export default function SettingsPage() {
   useEffect(() => {
@@ -15,7 +14,6 @@ export default function SettingsPage() {
   }, []);
 
   const { userProfile, user } = useAuth();
-  const { startTour } = useOnboardingTour();
   const [isSaving, setIsSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [error, setError] = useState('');
@@ -134,19 +132,6 @@ export default function SettingsPage() {
               Notifications
             </Link>
           </nav>
-        </div>
-
-        {/* Take a Tour */}
-        <div className="mb-8">
-          <button
-            onClick={startTour}
-            className="inline-flex items-center gap-2 px-4 py-2 text-primary hover:text-primary/80 font-medium uppercase tracking-wide transition-colors"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Take a site tour
-          </button>
         </div>
 
         {/* Role Information */}

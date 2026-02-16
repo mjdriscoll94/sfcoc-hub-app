@@ -74,7 +74,7 @@ export default function Home() {
       <BuildStatus />
 
       {/* Regular Events Section */}
-      <section className="py-16 bg-gradient-to-b from-bg-secondary to-bg" data-tour="events-section">
+      <section className="py-16 bg-gradient-to-b from-bg-secondary to-bg">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold text-charcoal uppercase tracking-wide">Events</h2>

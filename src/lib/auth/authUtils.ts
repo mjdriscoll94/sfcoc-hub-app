@@ -69,9 +69,6 @@ async function ensureUserProfileFields(uid: string, data: Partial<UserProfile>):
     ...updates,
     createdAt: convertToDate(updates.createdAt || data.createdAt),
     updatedAt: convertToDate(updates.updatedAt || data.updatedAt),
-    onboardingTourCompletedAt: data.onboardingTourCompletedAt
-      ? convertToDate(data.onboardingTourCompletedAt)
-      : undefined,
     photoURL: data.photoURL || null
   } as UserProfile;
   }
@@ -80,9 +77,6 @@ async function ensureUserProfileFields(uid: string, data: Partial<UserProfile>):
     ...data,
     createdAt: convertToDate(data.createdAt),
     updatedAt: convertToDate(data.updatedAt),
-    onboardingTourCompletedAt: data.onboardingTourCompletedAt
-      ? convertToDate(data.onboardingTourCompletedAt)
-      : undefined,
     photoURL: data.photoURL || null
   } as UserProfile;
 }
