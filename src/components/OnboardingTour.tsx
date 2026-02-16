@@ -17,7 +17,6 @@ export function useOnboardingTour(): OnboardingTourContextValue {
   if (!ctx) {
     return {
       startTour: () => {
-        // If called outside provider, navigate to home with tour param
         if (typeof window !== 'undefined') {
           window.location.href = '/?tour=1';
         }
@@ -35,7 +34,7 @@ function TourInner({ children }: { children: React.ReactNode }) {
   const hasCompletedTour = !!userProfile?.onboardingTourCompletedAt;
 
   const startTour = useCallback(() => {
-    if (!Shepherd) return;
+    if (!Shepherd?.Tour) return;
     const tour = new Shepherd.Tour({
       useModalOverlay: true,
       defaultStepOptions: {
@@ -54,12 +53,10 @@ function TourInner({ children }: { children: React.ReactNode }) {
     setMounted(true);
   }, []);
 
-  // Auto-start for first-time visitors on home page (logged-in users only)
   useEffect(() => {
     if (!mounted || typeof window === 'undefined') return;
     const isHome = window.location.pathname === '/';
-    const urlParams = new URLSearchParams(window.location.search);
-    const forceTour = urlParams.get('tour') === '1';
+    const forceTour = new URLSearchParams(window.location.search).get('tour') === '1';
     if (isHome && user && (forceTour || !hasCompletedTour)) {
       const timer = setTimeout(startTour, 800);
       return () => clearTimeout(timer);
