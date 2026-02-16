@@ -1,5 +1,22 @@
 import type { StepOptions } from 'shepherd.js';
 
+/** Check if element exists and is visible (not in a display:none parent) */
+function isElementVisible(selector: string): boolean {
+  if (typeof document === 'undefined') return false;
+  const el = document.querySelector(selector);
+  return !!(el && (el as HTMLElement).offsetParent !== null);
+}
+
+/** Attach to element only if visible (e.g. desktop nav); otherwise step will be centered (mobile) */
+function attachToIfVisible(
+  selector: string,
+  on: 'top' | 'bottom' | 'left' | 'right'
+): { attachTo?: { element: string; on: string } } {
+  return isElementVisible(selector)
+    ? { attachTo: { element: selector, on } }
+    : {};
+}
+
 const defaultButtons = (
   tour: { next: () => void; back: () => void; complete: () => void },
   options?: { showBack?: boolean }
@@ -43,8 +60,10 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
     {
       id: 'nav-home',
       title: 'Home',
-      text: 'Start here to see church events and announcements on the homepage.',
-      attachTo: { element: '[data-tour="nav-home"]', on: 'bottom' },
+      text: isElementVisible('[data-tour="nav-home"]')
+        ? 'Start here to see church events and announcements on the homepage.'
+        : 'Start at Home to see church events and announcements. On mobile, tap the menu icon (☰) at the top to access navigation.',
+      ...attachToIfVisible('[data-tour="nav-home"]', 'bottom'),
       buttons: (tour) => defaultButtons(tour, { showBack: true }),
       scrollTo: { behavior: 'smooth', block: 'center' }
     },
@@ -52,7 +71,7 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
       id: 'nav-resources',
       title: 'Resources',
       text: 'Access lesson notes, bulletins, and our podcast. Click to expand and see all options.',
-      attachTo: { element: '[data-tour="nav-resources"]', on: 'bottom' },
+      ...attachToIfVisible('[data-tour="nav-resources"]', 'bottom'),
       buttons: (tour) => defaultButtons(tour, { showBack: true }),
       scrollTo: { behavior: 'smooth', block: 'center' }
     },
@@ -60,7 +79,7 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
       id: 'nav-give',
       title: 'Give',
       text: 'Give online to support the church. Secure giving is available anytime.',
-      attachTo: { element: '[data-tour="nav-give"]', on: 'bottom' },
+      ...attachToIfVisible('[data-tour="nav-give"]', 'bottom'),
       buttons: (tour) => defaultButtons(tour, { showBack: true }),
       scrollTo: { behavior: 'smooth', block: 'center' }
     }
@@ -71,7 +90,7 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
       id: 'nav-connect',
       title: 'Connect',
       text: 'Prayer Board, Announcements, Volunteer opportunities, Calendar, and Life Groups—all in one place.',
-      attachTo: { element: '[data-tour="nav-connect"]', on: 'bottom' },
+      ...attachToIfVisible('[data-tour="nav-connect"]', 'bottom'),
       buttons: (tour) => defaultButtons(tour, { showBack: true }),
       scrollTo: { behavior: 'smooth', block: 'center' }
     });
@@ -79,7 +98,7 @@ export function getOnboardingSteps(hasUser: boolean): StepOptions[] {
       id: 'nav-user',
       title: 'Your Account',
       text: 'Access Settings, Service Roles, and sign out from your profile menu.',
-      attachTo: { element: '[data-tour="nav-user"]', on: 'left' },
+      ...attachToIfVisible('[data-tour="nav-user"]', 'left'),
       buttons: (tour) => lastStepButtons(tour),
       scrollTo: { behavior: 'smooth', block: 'center' }
     });
