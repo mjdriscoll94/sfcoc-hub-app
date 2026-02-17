@@ -274,34 +274,46 @@ export default function PrayerBoard() {
 
       {/* Modal Overlay */}
       {isFormOpen && (
-        <div 
-          className="fixed inset-0 backdrop-blur-sm bg-black/30 z-50 flex items-center justify-center p-4"
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'var(--overlay)' }}
           onClick={(e) => {
             if (e.target === e.currentTarget) {
               setIsFormOpen(false);
             }
           }}
         >
-          {/* Modal Content */}
-          <div 
-            className="bg-white rounded-lg shadow-xl w-full max-w-lg relative border border-sage/20"
-            onClick={e => e.stopPropagation()}
+          {/* Modal Content - card style to match site */}
+          <div
+            className="w-full max-w-lg relative rounded-lg border shadow-lg bg-card"
+            style={{
+              borderColor: 'var(--border)',
+              boxShadow: 'var(--shadow-lg)',
+            }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
-            <div className="flex justify-between items-center p-6 border-b border-sage/20">
-              <h3 className="text-lg font-medium text-text uppercase tracking-wide">
+            {/* Modal Header - coral gradient like nav/sections */}
+            <div
+              className="flex justify-between items-center px-6 py-4 rounded-t-lg"
+              style={{
+                background: 'linear-gradient(135deg, var(--coral-light) 0%, var(--coral) 100%)',
+              }}
+            >
+              <h3 className="text-lg font-semibold uppercase tracking-wide text-on-primary">
                 New Prayer Request or Praise
               </h3>
               <button
+                type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="text-text/40 hover:text-text/60 focus:outline-none focus:ring-2 focus:ring-primary"
+                className="text-on-primary/90 hover:text-charcoal focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal rounded p-1"
+                aria-label="Close"
               >
-                <span className="text-2xl">✕</span>
+                <span className="text-2xl leading-none">✕</span>
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="p-6">
+            <div className="p-6 bg-card border-t border-border rounded-b-lg">
               <PrayerRequestForm onSubmit={handleSubmit} />
             </div>
           </div>

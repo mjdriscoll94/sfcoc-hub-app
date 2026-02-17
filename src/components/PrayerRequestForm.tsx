@@ -71,23 +71,34 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {submitMessage && (
-        <div className={`rounded-md p-4 ${
-          submitMessage.type === 'success' 
-            ? 'bg-green-50 text-green-800' 
-            : submitMessage.type === 'info'
-            ? 'bg-blue-50 text-blue-800'
-            : 'bg-red-50 text-red-800'
-        }`}>
-          <p className="text-sm">{submitMessage.text}</p>
+        <div
+          className="rounded-lg p-4 text-sm"
+          style={{
+            backgroundColor:
+              submitMessage.type === 'success'
+                ? 'var(--success-bg)'
+                : submitMessage.type === 'info'
+                  ? 'var(--info-bg)'
+                  : 'var(--error-bg)',
+            color:
+              submitMessage.type === 'success'
+                ? 'var(--success)'
+                : submitMessage.type === 'info'
+                  ? 'var(--info)'
+                  : 'var(--error)',
+          }}
+        >
+          <p>{submitMessage.text}</p>
         </div>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-[#2F3437] dark:text-white">Type</label>
+        <label className="block text-sm font-medium text-text">Type</label>
         <select
           value={formData.type}
           onChange={(e) => setFormData({ ...formData, type: e.target.value as 'prayer' | 'praise' })}
-          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-[#2F3437] dark:bg-white dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-[#2F3437]/40 px-3 py-2"
+          className="mt-1 block w-full rounded-md border bg-card text-text placeholder:text-text-muted px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          style={{ borderColor: 'var(--border)' }}
         >
           <option value="prayer">Prayer Request</option>
           <option value="praise">Praise Report</option>
@@ -95,27 +106,29 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#2F3437] dark:text-white">Title</label>
+        <label className="block text-sm font-medium text-text">Title</label>
         <input
           type="text"
           required
           value={formData.title}
           onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-[#2F3437] dark:bg-white dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-[#2F3437]/40 px-3 py-2"
-          placeholder={formData.type === 'prayer' 
-            ? "e.g., Healing for my grandmother" 
+          className="mt-1 block w-full rounded-md border bg-card text-text placeholder:text-text-muted px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          style={{ borderColor: 'var(--border)' }}
+          placeholder={formData.type === 'prayer'
+            ? "e.g., Healing for my grandmother"
             : "e.g., Answered prayer for new job"}
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-[#2F3437] dark:text-white">Description</label>
+        <label className="block text-sm font-medium text-text">Description</label>
         <textarea
           required
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
           rows={4}
-          className="mt-1 block w-full rounded-md border-[#8BAF95]/20 shadow-sm focus:border-[#FF6B6B] focus:ring-[#FF6B6B] text-[#2F3437] dark:text-[#2F3437] dark:bg-white dark:border-white/10 placeholder:text-[#2F3437]/40 dark:placeholder:text-[#2F3437]/40 px-3 py-2"
+          className="mt-1 block w-full rounded-md border bg-card text-text placeholder:text-text-muted px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+          style={{ borderColor: 'var(--border)' }}
           placeholder={formData.type === 'prayer'
             ? "Please share the details of your prayer request. What specifically would you like others to pray for?"
             : "Share how God has blessed you or answered your prayers. Your testimony can encourage others!"}
@@ -129,9 +142,9 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
             id="anonymous"
             checked={formData.isAnonymous}
             onChange={(e) => setFormData({ ...formData, isAnonymous: e.target.checked })}
-            className="h-4 w-4 rounded border-[#8BAF95]/20 text-[#FF6B6B] focus:ring-[#FF6B6B] dark:border-white/10 dark:bg-white"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
           />
-          <label htmlFor="anonymous" className="ml-2 block text-sm text-[#2F3437] dark:text-white">
+          <label htmlFor="anonymous" className="ml-2 block text-sm text-text">
             Submit anonymously
           </label>
         </div>
@@ -142,9 +155,9 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
             id="adminOnly"
             checked={formData.isAdminOnly}
             onChange={(e) => setFormData({ ...formData, isAdminOnly: e.target.checked })}
-            className="h-4 w-4 rounded border-[#8BAF95]/20 text-[#FF6B6B] focus:ring-[#FF6B6B] dark:border-white/10 dark:bg-white"
+            className="h-4 w-4 rounded border-border text-primary focus:ring-primary focus:ring-offset-0"
           />
-          <label htmlFor="adminOnly" className="ml-2 block text-sm text-[#2F3437] dark:text-white">
+          <label htmlFor="adminOnly" className="ml-2 block text-sm text-text">
             Only admins can see this request
           </label>
         </div>
@@ -153,7 +166,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#FF6B6B] hover:bg-[#FF6B6B]/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FF6B6B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md text-sm font-medium text-on-primary bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? 'Submitting...' : 'Submit'}
       </button>
