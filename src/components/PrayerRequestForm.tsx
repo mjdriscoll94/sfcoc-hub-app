@@ -166,7 +166,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       <button
         type="submit"
         disabled={isSubmitting}
-        className="w-full flex justify-center py-2.5 px-4 border border-transparent rounded-md text-sm font-medium text-on-primary bg-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+        className="w-full flex justify-center py-2.5 px-4 border-2 border-black rounded-md text-sm font-medium text-charcoal bg-white hover:bg-primary hover:text-on-primary hover:border-primary focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
       >
         {isSubmitting ? 'Submitting...' : 'Submit'}
       </button>
