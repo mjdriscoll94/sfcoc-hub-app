@@ -90,6 +90,43 @@ const newSteps: StepOptions[] = [
       },
     ],
   },
+  {
+        id: "fifth",
+        title: "Open extra menu options",
+        text: ["Click here to open extra menu options"],
+        attachTo: { element: "#nav-resources", on: "right" },
+        scrollTo: true,
+        canClickTarget: true,
+        buttons: [
+          {
+            classes: "shepherd-button-secondary",
+            text: "Exit",
+            action() {
+              this.cancel();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Back",
+            action() {
+              this.back();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Next",
+            action() {
+              this.next();
+            },
+          },
+        ],
+        when: {
+          show: () => {
+            document.getElementById("nav-resources")?.click();
+          },
+          hide: () => {},
+        },
+      }
   //   {
   //     id: "third",
   //     title: "Navigate to the dashboard",

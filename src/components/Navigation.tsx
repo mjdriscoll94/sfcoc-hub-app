@@ -23,6 +23,8 @@ type NavItem = {
   icon: React.ReactNode;
   dropdown?: boolean;
   items?: SubItem[];
+  /** Optional id for the nav element (e.g. for tour attachTo: "#nav-resources") */
+  id?: string;
 };
 
 const SPOTIFY_PODCAST_URL = 'https://open.spotify.com/show/6BUbTQmZOpUZ9KvpOLPtwy';
@@ -125,6 +127,7 @@ const Navigation = () => {
     },
     {
       name: 'Resources',
+      id: 'nav-resources',
       icon: (
         <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
@@ -317,9 +320,10 @@ const Navigation = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex">
-            {/* Mobile menu button */}
+            {/* Mobile menu button - id for tour (e.g. attachTo #nav-menu, when.show click to open) */}
             <div className="flex items-center md:hidden">
               <button
+                id="nav-menu"
                 onClick={() => setIsOpen(!isOpen)}
                 className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-black focus:outline-none"
               >
@@ -342,6 +346,7 @@ const Navigation = () => {
                 item.dropdown ? (
                   <div key={item.name} className="relative inline-flex items-center">
                     <button
+                      id={item.id}
                       ref={el => {
                         dropdownButtonRefs.current[item.name] = el;
                       }}
@@ -448,7 +453,7 @@ const Navigation = () => {
               <Menu as="div" className="relative">
                 {({ open }) => (
                   <>
-                    <Menu.Button className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#E88B5F] focus:ring-black">
+                    <Menu.Button id="nav-profile" className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#E88B5F] focus:ring-black">
                       <span className="sr-only">Open user menu</span>
                       <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-black font-semibold">
                         {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
@@ -536,6 +541,7 @@ const Navigation = () => {
                 {({ open }) => (
                   <>
                     <Disclosure.Button
+                      id={item.id}
                       className={`${
                         item.items?.some(subItem => pathname === subItem.href)
                           ? 'text-white bg-black/10 font-semibold'
