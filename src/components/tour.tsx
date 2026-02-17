@@ -56,31 +56,30 @@ const newSteps: StepOptions[] = [
       },
     ],
   },
-  // ,
-  //   {
-  //     id: "second",
-  //     title: "App navigation bar",
-  //     text: ["Explore how you can easily navigate through the app"],
-  //     attachTo: { element: "#navigation", on: "bottom" },
-  //     scrollTo: true,
-  //     buttons: [
-  //       {
-  //         classes: "shepherd-button-secondary",
-  //         text: "Exit",
-  //         type: "cancel",
-  //       },
-  //       {
-  //         classes: "shepherd-button-primary",
-  //         text: "Back",
-  //         type: "back",
-  //       },
-  //       {
-  //         classes: "shepherd-button-primary",
-  //         text: "Next",
-  //         type: "next",
-  //       },
-  //     ],
-  //   },
+  {
+    id: "second",
+    title: "App navigation bar",
+    text: ["Explore how you can easily navigate through the app"],
+    attachTo: { element: "#navigation", on: "bottom" },
+    scrollTo: true,
+    buttons: [
+      {
+        classes: "shepherd-button-secondary",
+        text: "Exit",
+        type: "cancel",
+      },
+      {
+        classes: "shepherd-button-primary",
+        text: "Back",
+        type: "back",
+      },
+      {
+        classes: "shepherd-button-primary",
+        text: "Next",
+        type: "next",
+      },
+    ],
+  },
   //   {
   //     id: "third",
   //     title: "Navigate to the dashboard",
