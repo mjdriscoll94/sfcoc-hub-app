@@ -47,12 +47,16 @@ const newSteps: StepOptions[] = [
       {
         classes: "shepherd-button-secondary",
         text: "Exit",
-        type: "cancel",
+        action() {
+          this.cancel();
+        },
       },
       {
         classes: "shepherd-button-primary",
         text: "Next",
-        type: "next",
+        action() {
+          this.next();
+        },
       },
     ],
   },
@@ -66,17 +70,23 @@ const newSteps: StepOptions[] = [
       {
         classes: "shepherd-button-secondary",
         text: "Exit",
-        type: "cancel",
+        action() {
+          this.cancel();
+        },
       },
       {
         classes: "shepherd-button-primary",
         text: "Back",
-        type: "back",
+        action() {
+          this.back();
+        },
       },
       {
         classes: "shepherd-button-primary",
         text: "Next",
-        type: "next",
+        action() {
+          this.next();
+        },
       },
     ],
   },
