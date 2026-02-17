@@ -91,9 +91,9 @@ const newSteps: StepOptions[] = [
     ],
   },
   {
-        id: "fifth",
-        title: "Open extra menu options",
-        text: ["Click here to open extra menu options"],
+        id: "third",
+        title: "Find extra resources here",
+        text: ["Notes, Bulletins, and Podcasts"],
         attachTo: { element: "#nav-resources", on: "right" },
         scrollTo: true,
         canClickTarget: true,
@@ -126,31 +126,44 @@ const newSteps: StepOptions[] = [
           },
           hide: () => {},
         },
-      }
-  //   {
-  //     id: "third",
-  //     title: "Navigate to the dashboard",
-  //     text: ["Click here to quickly navigate to the dashboard index"],
-  //     attachTo: { element: "#nav-dashboard", on: "bottom" },
-  //     scrollTo: true,
-  //     buttons: [
-  //       {
-  //         classes: "shepherd-button-secondary",
-  //         text: "Exit",
-  //         type: "cancel",
-  //       },
-  //       {
-  //         classes: "shepherd-button-primary",
-  //         text: "Back",
-  //         type: "back",
-  //       },
-  //       {
-  //         classes: "shepherd-button-primary",
-  //         text: "Next",
-  //         type: "next",
-  //       },
-  //     ],
-  //   },
+      },
+      {
+        id: "fourth",
+        title: "More ways to connect and grow here",
+        text: ["Prayer Requests, Announcements, Events, and more."],
+        attachTo: { element: "#nav-connect", on: "right" },
+        scrollTo: true,
+        canClickTarget: true,
+        buttons: [
+          {
+            classes: "shepherd-button-secondary",
+            text: "Exit",
+            action() {
+              this.cancel();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Back",
+            action() {
+              this.back();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Next",
+            action() {
+              this.next();
+            },
+          },
+        ],
+        when: {
+          show: () => {
+            document.getElementById("nav-connect")?.click();
+          },
+          hide: () => {},
+        },
+      },
   //   {
   //     id: "fourth",
   //     title: "Navigate to about page",
