@@ -6,6 +6,7 @@ import { AuthProvider } from '@/lib/auth/AuthContext';
 import RouteGuard from '@/components/RouteGuard';
 import FaviconDevRefresh from '@/components/FaviconDevRefresh';
 import { ThemeProvider } from '@/components/theme-provider';
+import { TourWrapper } from '@/components/tour';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -28,16 +29,18 @@ export default function RootLayout({
         <ThemeProvider>
           <FaviconDevRefresh />
           <AuthProvider>
-            <RouteGuard>
+            <TourWrapper>
+              <RouteGuard>
                 <div className="relative">
-                <div className="fixed top-0 left-0 right-0 z-50">
-                  <Navigation />
-                </div>
-                <main className="relative top-16">
-                  {children}
-                </main>
+                  <div className="fixed top-0 left-0 right-0 z-50">
+                    <Navigation />
+                  </div>
+                  <main className="relative top-16">
+                    {children}
+                  </main>
                 </div>
               </RouteGuard>
+            </TourWrapper>
           </AuthProvider>
         </ThemeProvider>
       </body>

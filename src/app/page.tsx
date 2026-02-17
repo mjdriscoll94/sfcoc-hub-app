@@ -2,18 +2,39 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
+import { usePathname } from "next/navigation";
 import BuildStatus from '@/components/BuildStatus';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useHomePageEvents } from '@/hooks/useHomePageEvents';
 import EventIcon from '@/components/EventIcon';
+import { useOnboardingTour } from '@/components/tour';
 
 export default function Home() {
-  const { user } = useAuth();
+  const pathname = usePathname();
+  const { user, userProfile, markOnboardingTourSeen } = useAuth();
+  const startTour = useOnboardingTour();
+  const tourStartedRef = useRef(false);
   const { categories, loading } = useHomePageEvents();
+
   useEffect(() => {
     document.title = 'Home | Sioux Falls Church of Christ';
   }, []);
+
+  // Start onboarding tour once when a logged-in user lands on home for the first time
+  useEffect(() => {
+    if (
+      pathname !== "/" ||
+      !user ||
+      !userProfile ||
+      userProfile.hasSeenOnboardingTour === true ||
+      tourStartedRef.current
+    ) {
+      return;
+    }
+    tourStartedRef.current = true;
+    startTour(markOnboardingTourSeen);
+  }, [pathname, user, userProfile, startTour, markOnboardingTourSeen]);
 
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set([0])); // Start with first category expanded
 

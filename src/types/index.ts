@@ -21,6 +21,8 @@ export interface UserProfile {
     events: boolean;
     newsletter: boolean;
   };
+  /** Set to true after user completes or dismisses the onboarding tour (e.g. on first login). */
+  hasSeenOnboardingTour?: boolean;
 }
 
 export type Quarter = 'Fall' | 'Winter' | 'Spring' | 'Summer';

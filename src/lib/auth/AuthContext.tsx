@@ -24,6 +24,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   signUp: (email: string, password: string, displayName: string) => Promise<void>;
   updateUserProfile: (profile: UserProfile) => void;
+  markOnboardingTourSeen: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -35,6 +36,7 @@ const AuthContext = createContext<AuthContextType>({
   signOut: async () => {},
   signUp: async () => {},
   updateUserProfile: () => {},
+  markOnboardingTourSeen: async () => {},
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -266,6 +268,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
   };
 
+  const markOnboardingTourSeen = async () => {
+    if (!user?.uid || !userProfile) return;
+    try {
+      const userRef = doc(db, 'users', user.uid);
+      await updateDoc(userRef, {
+        hasSeenOnboardingTour: true,
+        updatedAt: new Date().toISOString()
+      });
+      setUserProfile((prev) =>
+        prev ? { ...prev, hasSeenOnboardingTour: true } : null
+      );
+    } catch (err) {
+      console.error('Failed to mark onboarding tour seen:', err);
+    }
+  };
+
   const value = {
     user,
     userProfile,
@@ -274,7 +292,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     signUp,
-    updateUserProfile
+    updateUserProfile,
+    markOnboardingTourSeen
   };
 
   return (
