@@ -285,10 +285,11 @@ export default function PrayerBoard() {
         >
           {/* Modal Content - card style to match site */}
           <div
-            className="w-full max-w-lg relative rounded-lg border shadow-lg bg-card"
+            className="w-full max-w-lg relative rounded-lg border shadow-lg bg-white"
             style={{
               borderColor: 'var(--border)',
               boxShadow: 'var(--shadow-lg)',
+              backgroundColor: '#FFFFFF',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -313,7 +314,7 @@ export default function PrayerBoard() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 bg-card border-t border-border rounded-b-lg">
+            <div className="p-6 bg-white border-t border-border rounded-b-lg" style={{ backgroundColor: '#FFFFFF' }}>
               <PrayerRequestForm onSubmit={handleSubmit} />
             </div>
           </div>
