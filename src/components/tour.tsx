@@ -164,6 +164,80 @@ const newSteps: StepOptions[] = [
           hide: () => {},
         },
       },
+      {
+        id: "third",
+        title: "Find extra resources here",
+        text: ["Notes, Bulletins, and Podcasts"],
+        attachTo: { element: "#nav-resources", on: "right" },
+        scrollTo: true,
+        canClickTarget: true,
+        buttons: [
+          {
+            classes: "shepherd-button-secondary",
+            text: "Exit",
+            action() {
+              this.cancel();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Back",
+            action() {
+              this.back();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Next",
+            action() {
+              this.next();
+            },
+          },
+        ],
+        when: {
+          show: () => {
+            document.getElementById("nav-resources")?.click();
+          },
+          hide: () => {},
+        },
+      },
+      {
+        id: "sixth",
+        title: "Manage your profile here",
+        text: ["Access your profile settings and preferences, such as notifications and email subscriptions."],
+        attachTo: { element: "#nav-profile", on: "left" },
+        scrollTo: true,
+        canClickTarget: true,
+        buttons: [
+          {
+            classes: "shepherd-button-secondary",
+            text: "Exit",
+            action() {
+              this.cancel();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Back",
+            action() {
+              this.back();
+            },
+          },
+          {
+            classes: "shepherd-button-primary",
+            text: "Next",
+            action() {
+              this.next();
+            },
+          },
+        ],
+        when: {
+          show: () => {
+            document.getElementById("nav-profile")?.click();
+          },
+          hide: () => {},
+        },
+      }
   //   {
   //     id: "fourth",
   //     title: "Navigate to about page",
