@@ -45,14 +45,14 @@ const newSteps: StepOptions[] = [
     arrow: false,
     buttons: [
       {
-        classes: "shepherd-button-secondary",
+        classes: "shepherd-custom-button-secondary",
         text: "Exit",
         action() {
           this.cancel();
         },
       },
       {
-        classes: "shepherd-button-primary",
+        classes: "shepherd-custom-button-primary",
         text: "Next",
         action() {
           this.next();
@@ -68,21 +68,21 @@ const newSteps: StepOptions[] = [
     scrollTo: true,
     buttons: [
       {
-        classes: "shepherd-button-secondary",
+        classes: "shepherd-custom-button-secondary",
         text: "Exit",
         action() {
           this.cancel();
         },
       },
       {
-        classes: "shepherd-button-primary",
+        classes: "shepherd-custom-button-primary",
         text: "Back",
         action() {
           this.back();
         },
       },
       {
-        classes: "shepherd-button-primary",
+        classes: "shepherd-custom-button-primary",
         text: "Next",
         action() {
           this.next();
@@ -99,21 +99,21 @@ const newSteps: StepOptions[] = [
         canClickTarget: true,
         buttons: [
           {
-            classes: "shepherd-button-secondary",
+            classes: "shepherd-custom-button-secondary",
             text: "Exit",
             action() {
               this.cancel();
             },
           },
           {
-            classes: "shepherd-button-primary",
+            classes: "shepherd-custom-button-primary",
             text: "Back",
             action() {
               this.back();
             },
           },
           {
-            classes: "shepherd-button-primary",
+            classes: "shepherd-custom-button-primary",
             text: "Next",
             action() {
               this.next();
@@ -136,21 +136,21 @@ const newSteps: StepOptions[] = [
         canClickTarget: true,
         buttons: [
           {
-            classes: "shepherd-button-secondary",
+            classes: "shepherd-custom-button-secondary",
             text: "Exit",
             action() {
               this.cancel();
             },
           },
           {
-            classes: "shepherd-button-primary",
+            classes: "shepherd-custom-button-primary",
             text: "Back",
             action() {
               this.back();
             },
           },
           {
-            classes: "shepherd-button-primary",
+            classes: "shepherd-custom-button-primary",
             text: "Next",
             action() {
               this.next();
@@ -165,43 +165,6 @@ const newSteps: StepOptions[] = [
         },
       },
       {
-        id: "third",
-        title: "Find extra resources here",
-        text: ["Notes, Bulletins, and Podcasts"],
-        attachTo: { element: "#nav-resources", on: "right" },
-        scrollTo: true,
-        canClickTarget: true,
-        buttons: [
-          {
-            classes: "shepherd-button-secondary",
-            text: "Exit",
-            action() {
-              this.cancel();
-            },
-          },
-          {
-            classes: "shepherd-button-primary",
-            text: "Back",
-            action() {
-              this.back();
-            },
-          },
-          {
-            classes: "shepherd-button-primary",
-            text: "Next",
-            action() {
-              this.next();
-            },
-          },
-        ],
-        when: {
-          show: () => {
-            document.getElementById("nav-resources")?.click();
-          },
-          hide: () => {},
-        },
-      },
-      {
         id: "sixth",
         title: "Manage your profile here",
         text: ["Access your profile settings and preferences, such as notifications and email subscriptions."],
@@ -210,21 +173,21 @@ const newSteps: StepOptions[] = [
         canClickTarget: true,
         buttons: [
           {
-            classes: "shepherd-button-secondary",
+            classes: "shepherd-custom-button-primary",
             text: "Exit",
             action() {
               this.cancel();
             },
           },
           {
-            classes: "shepherd-button-primary",
+            classes: "shepherd-custom-button-primary",
             text: "Back",
             action() {
               this.back();
             },
           },
           {
-            classes: "shepherd-button-primary",
+            classes: "shepherd-custom-button-primary",
             text: "Next",
             action() {
               this.next();

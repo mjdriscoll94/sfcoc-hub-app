@@ -199,3 +199,12 @@ textarea {
   background-clip: text;
 }
 
+.shepherd-custom-button-primary {
+  background-color: var(--primary);
+  color: var(--on-primary);
+}
+
+.shepherd-custom-button-secondary {
+  background-color: var(--secondary);
+  color: var(--on-secondary);
+}
