@@ -1,5 +1,5 @@
 "use client";
-import { PropsWithChildren, useCallback, useMemo } from "react";
+import { PropsWithChildren, useCallback } from "react";
 import { ShepherdJourneyProvider, useShepherd } from "react-shepherd";
 import type { StepOptions } from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
@@ -34,29 +34,28 @@ export function useOnboardingTour() {
   );
 }
 
-const newSteps: StepOptions[] = useMemo(() => {
-  return [
-    {
-      id: "first",
-      title: "Welcome to the SFCOC Information Hub",
-      text: [
-        "Let us take you on a journey to explore the most important features of our site",
-      ],
-      scrollTo: false,
-      arrow: false,
-      buttons: [
-        {
-          classes: "shepherd-button-secondary",
-          text: "Exit",
-          type: "cancel",
-        },
-        {
-          classes: "shepherd-button-primary",
-          text: "Next",
-          type: "next",
-        },
-      ],
-    }
+const newSteps: StepOptions[] = [
+  {
+    id: "first",
+    title: "Welcome to the SFCOC Information Hub",
+    text: [
+      "Let us take you on a journey to explore the most important features of our site",
+    ],
+    scrollTo: false,
+    arrow: false,
+    buttons: [
+      {
+        classes: "shepherd-button-secondary",
+        text: "Exit",
+        type: "cancel",
+      },
+      {
+        classes: "shepherd-button-primary",
+        text: "Next",
+        type: "next",
+      },
+    ],
+  },
   // ,
   //   {
   //     id: "second",
@@ -330,7 +329,6 @@ const newSteps: StepOptions[] = useMemo(() => {
   //   },
   // },
 ];
-}, []);
 
 /** Wrap your app (e.g. in layout) so the tour is available site-wide. */
 export function TourWrapper({ children }: { children: React.ReactNode }) {

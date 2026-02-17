@@ -2,24 +2,16 @@ import { NextResponse } from 'next/server';
 import webpush, { PushSubscription } from 'web-push';
 import { getSubscriptionsForTopic } from '@/lib/notifications/subscriptionStore';
 
-// Configure web-push with VAPID details
-const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
-const vapidEmail = process.env.VAPID_EMAIL;
-
-if (!vapidPublicKey || !vapidPrivateKey || !vapidEmail) {
-  console.error('Missing VAPID configuration:', {
-    hasPublicKey: !!vapidPublicKey,
-    hasPrivateKey: !!vapidPrivateKey,
-    hasEmail: !!vapidEmail
-  });
+/** Set VAPID details at request time so build does not require env vars. */
+function ensureVapidDetails() {
+  const vapidPublicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+  const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY;
+  const vapidEmail = process.env.VAPID_EMAIL;
+  if (!vapidPublicKey || !vapidPrivateKey || !vapidEmail) {
+    throw new Error('Missing VAPID configuration (NEXT_PUBLIC_VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_EMAIL)');
+  }
+  webpush.setVapidDetails('mailto:' + vapidEmail, vapidPublicKey, vapidPrivateKey);
 }
-
-webpush.setVapidDetails(
-  'mailto:' + (vapidEmail || ''),
-  vapidPublicKey || '',
-  vapidPrivateKey || ''
-);
 
 interface NotificationData {
   topic: string;
@@ -39,8 +31,9 @@ interface SendResult {
 
 export async function POST(request: Request) {
   try {
+    ensureVapidDetails();
     console.log('[API] Received notification send request');
-    
+
     const data = await request.json() as NotificationData;
     console.log('[API] Notification data:', {
       topic: data.topic,

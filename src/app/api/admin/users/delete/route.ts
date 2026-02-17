@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { initAdmin } from '@/lib/firebase/admin';
+import { getAdminApp, getAdminDb } from '@/lib/firebase/admin';
 import { getAuth } from 'firebase-admin/auth';
-import { adminDb } from '@/lib/firebase/admin';
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize admin
-    const { app } = initAdmin();
+    const app = getAdminApp();
     const auth = getAuth(app);
+    const adminDb = getAdminDb();
 
     const { uid } = await request.json();
 

@@ -48,6 +48,13 @@ export const initAdmin = () => {
   }
 };
 
-// Initialize admin and get Firestore instance
-initAdmin();
-export const adminDb = getFirestore(); 
+/** Lazy app reference — avoids requiring FIREBASE_SERVICE_ACCOUNT_KEY at build time (e.g. Vercel). */
+export function getAdminApp() {
+  initAdmin();
+  return getApps()[0];
+}
+
+/** Lazy Firestore instance. */
+export function getAdminDb() {
+  return getFirestore(getAdminApp());
+} 

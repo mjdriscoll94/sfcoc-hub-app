@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebase/admin';
+import { getAdminDb } from '@/lib/firebase/admin';
 import { format } from 'date-fns';
 import { transporter } from '@/lib/email/config';
 
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     }
 
     // Get user details using admin SDK
+    const adminDb = getAdminDb();
     const userDoc = await adminDb.collection('users').doc(userId).get();
     if (!userDoc.exists) {
       console.error('User not found:', userId);
