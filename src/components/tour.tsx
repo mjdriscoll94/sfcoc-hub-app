@@ -3,6 +3,7 @@ import { PropsWithChildren, useCallback } from "react";
 import { ShepherdJourneyProvider, useShepherd } from "react-shepherd";
 import type { StepOptions } from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
+import "./shepherd-overrides.css";
 
 export const tourOptions = {
   defaultStepOptions: {
