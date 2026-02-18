@@ -137,14 +137,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         unsubscribeProfile = onSnapshot(userRef, (snapshot) => {
           if (snapshot.exists()) {
             const data = snapshot.data();
+            const subs = data.emailSubscriptions ?? {};
             const updatedProfile = {
               ...data,
               createdAt: convertToDate(data.createdAt),
               updatedAt: convertToDate(data.updatedAt),
               emailSubscriptions: {
-                announcements: data.emailSubscriptions?.announcements ?? true,
-                events: data.emailSubscriptions?.events ?? true,
-                newsletter: data.emailSubscriptions?.newsletter ?? true
+                announcements: subs.announcements ?? true,
+                events: subs.events ?? true,
+                newsletter: subs.newsletter ?? true,
+                prayerRequests: subs.prayerRequests ?? false,
+                praiseReports: subs.praiseReports ?? false
               }
             } as UserProfile;
             setUserProfile(updatedProfile);

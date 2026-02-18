@@ -26,34 +26,33 @@ export default function SettingsPage() {
     praiseReports: false
   });
 
-  // Initialize local state from userProfile and localStorage
+  // Sync local state from userProfile (source of truth from Firestore) so mobile and desktop match
   useEffect(() => {
     if (!user) {
-      console.log('Settings: No user found, redirecting to signin');
       router.push('/auth/signin');
       return;
     }
 
-    // Load notification preferences from localStorage
+    if (userProfile?.emailSubscriptions) {
+      const subs = userProfile.emailSubscriptions;
+      setLocalSubscriptions({
+        announcements: subs.announcements ?? true,
+        events: subs.events ?? true,
+        newsletter: subs.newsletter ?? true,
+        prayerRequests: subs.prayerRequests ?? false,
+        praiseReports: subs.praiseReports ?? false
+      });
+      return;
+    }
+
+    // Fallback: load prayer/praise from localStorage only before profile has loaded
     const storedPreferences = localStorage.getItem('notificationPreferences');
     if (storedPreferences) {
       const preferences = JSON.parse(storedPreferences);
       setLocalSubscriptions(prev => ({
         ...prev,
-        prayerRequests: preferences.prayerRequests || false,
-        praiseReports: preferences.praiseReports || false
-      }));
-    }
-
-    if (userProfile?.emailSubscriptions) {
-      console.log('Settings: Updating local subscriptions from profile:', userProfile.emailSubscriptions);
-      setLocalSubscriptions(prev => ({
-        ...prev,
-        announcements: userProfile.emailSubscriptions.announcements || prev.announcements,
-        events: userProfile.emailSubscriptions.events || prev.events,
-        newsletter: userProfile.emailSubscriptions.newsletter || prev.newsletter,
-        prayerRequests: prev.prayerRequests,
-        praiseReports: prev.praiseReports
+        prayerRequests: preferences.prayerRequests ?? false,
+        praiseReports: preferences.praiseReports ?? false
       }));
     }
   }, [userProfile, user, router]);

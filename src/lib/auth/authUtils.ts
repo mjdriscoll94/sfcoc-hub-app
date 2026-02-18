@@ -37,11 +37,12 @@ async function ensureUserProfileFields(uid: string, data: Partial<UserProfile>):
     updates.emailSubscriptions = DEFAULT_EMAIL_SUBSCRIPTIONS;
     needsUpdate = true;
   } else {
-    const currentSubs = data.emailSubscriptions;
+    const currentSubs = data.emailSubscriptions as Record<string, boolean>;
     if (typeof currentSubs.announcements !== 'boolean' ||
         typeof currentSubs.events !== 'boolean' ||
         typeof currentSubs.newsletter !== 'boolean') {
       updates.emailSubscriptions = {
+        ...currentSubs,
         announcements: currentSubs.announcements ?? true,
         events: currentSubs.events ?? true,
         newsletter: currentSubs.newsletter ?? true

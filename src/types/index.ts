@@ -20,6 +20,8 @@ export interface UserProfile {
     announcements: boolean;
     events: boolean;
     newsletter: boolean;
+    prayerRequests?: boolean;
+    praiseReports?: boolean;
   };
   /** Set to true after user completes or dismisses the onboarding tour (e.g. on first login). */
   hasSeenOnboardingTour?: boolean;

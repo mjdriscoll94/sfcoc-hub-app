@@ -66,7 +66,7 @@ export default function Home() {
         </div>
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-full flex items-center justify-center">
           <div className="text-white max-w-2xl text-center">
-            <h1 className="text-3xl md:text-5xl font-bold mb-4 uppercase tracking-wide">
+            <h1 className="text-2xl md:text-4xl font-bold mb-4 uppercase tracking-wide">
               Sioux Falls Church of Christ
             </h1>
             <p className="text-xl md:text-2xl mb-8 uppercase tracking-wide">
