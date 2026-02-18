@@ -109,7 +109,7 @@ export default function VolunteerPage() {
           {user && (
             <button
               onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center justify-center p-2 sm:px-4 sm:py-2 bg-secondary text-on-secondary font-semibold rounded-lg hover:bg-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors"
+              className="inline-flex items-center justify-center p-2 sm:px-4 sm:py-2 !bg-secondary !text-on-secondary font-semibold rounded-lg hover:!bg-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors"
               aria-label="Create opportunity"
             >
               <svg className="w-5 h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
