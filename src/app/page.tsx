@@ -4,7 +4,6 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState, useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import BuildStatus from '@/components/BuildStatus';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useHomePageEvents } from '@/hooks/useHomePageEvents';
 import EventIcon from '@/components/EventIcon';
@@ -89,10 +88,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      
-      
-      <BuildStatus />
 
       {/* Regular Events Section */}
       <section className="py-16 bg-gradient-to-b from-bg-secondary to-bg">
