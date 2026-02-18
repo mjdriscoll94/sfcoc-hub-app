@@ -49,21 +49,22 @@ export default function SignInPage() {
   };
 
   return (
-    <div className="flex flex-col items-center px-4 sm:px-6 lg:px-8 pt-8">
-      <div className="max-w-md w-full space-y-6">
-        <div className="flex flex-col items-center">
-          <Image
-            src="/images/logo_white.svg"
-            alt="Sioux Falls Church of Christ"
-            width={80}
-            height={80}
-            className="mb-6 dark:opacity-100 opacity-80"
-          />
-          <h2 className="text-center text-3xl font-bold text-text uppercase tracking-wide">
-            Sign in to your account
-          </h2>
-        </div>
-        <form className="space-y-6" onSubmit={handleSubmit}>
+    <div className="flex flex-col items-center px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-md w-full">
+        <div className="card p-8 space-y-6">
+          <div className="flex flex-col items-center">
+            <Image
+              src="/images/logo_colored.svg"
+              alt="Sioux Falls Church of Christ"
+              width={80}
+              height={80}
+              className="mb-6"
+            />
+            <h2 className="text-center text-3xl font-bold text-text uppercase tracking-wide">
+              Sign in to your account
+            </h2>
+          </div>
+          <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md shadow-sm -space-y-px">
             <div>
               <label htmlFor="email-address" className="sr-only">
@@ -132,6 +133,7 @@ export default function SignInPage() {
             </Link>
           </div>
         </form>
+        </div>
       </div>
     </div>
   );
