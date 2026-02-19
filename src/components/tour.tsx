@@ -19,6 +19,25 @@ const TourInstance: React.FC<PropsWithChildren> = ({ children }) => {
   return <>{children}</>;
 };
 
+const MOBILE_BREAKPOINT = 768;
+
+/** True when viewport is small (e.g. phone). Use when starting the tour. */
+function isMobile(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.innerWidth < MOBILE_BREAKPOINT;
+}
+
+/** On mobile, use floating steps (no attachTo) so the tour fits the small screen. */
+function stepsForViewport(steps: StepOptions[]): StepOptions[] {
+  if (!isMobile()) return steps;
+  return steps.map((step) => ({
+    ...step,
+    attachTo: undefined,
+    scrollTo: false,
+    arrow: false,
+  }));
+}
+
 /** Wait for an element to exist in the DOM (poll until found or timeout). */
 function waitForElement(selector: string, timeoutMs = 5000): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -168,7 +187,10 @@ export function useOnboardingTour() {
   return useCallback(
     (onComplete?: () => void) => {
       const tour = new Shepherd.Tour(tourOptions);
-      const steps = [...homeSteps, ...makePrayerBoardSteps(router)];
+      const steps = stepsForViewport([
+        ...homeSteps,
+        ...makePrayerBoardSteps(router),
+      ]);
       steps.forEach((step) => tour.addStep(step));
       if (onComplete) {
         tour.on("complete", onComplete);
