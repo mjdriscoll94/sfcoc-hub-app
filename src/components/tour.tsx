@@ -43,13 +43,15 @@ function stepsForViewport(steps: StepOptions[]): StepOptions[] {
   });
 }
 
+const HIDE_STEP_BODY_CLASS = "shepherd-hide-step-until-positioned";
+const HIDE_STEP_DELAY_MS = 320;
+
 /** Hide the step briefly after show so it doesn't flash in the top-left before Floating UI positions it (e.g. after nav to home). */
-function hideStepUntilPositioned(this: { el?: HTMLElement | null }) {
-  const el = this?.el;
-  if (el) {
-    el.classList.add("shepherd-hide-until-positioned");
-    setTimeout(() => el.classList.remove("shepherd-hide-until-positioned"), 120);
-  }
+function hideStepUntilPositioned() {
+  document.body.classList.add(HIDE_STEP_BODY_CLASS);
+  setTimeout(() => {
+    document.body.classList.remove(HIDE_STEP_BODY_CLASS);
+  }, HIDE_STEP_DELAY_MS);
 }
 
 /** Wait for an element to exist in the DOM (poll until found or timeout). */
