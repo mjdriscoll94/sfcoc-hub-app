@@ -15,6 +15,8 @@ type SubItem = {
   href?: string;
   icon?: React.ReactNode;
   action?: 'podcast-modal';
+  /** Optional id for the element (e.g. for tour attachTo) */
+  id?: string;
 };
 
 type NavItem = {
@@ -188,6 +190,7 @@ const Navigation = () => {
       items: [
         {
           name: 'Prayer Board',
+          id: 'nav-prayer-board',
           href: '/prayer-board',
           icon: (
             <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">

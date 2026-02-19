@@ -4,6 +4,7 @@ import { ShepherdJourneyProvider, useShepherd } from "react-shepherd";
 import type { StepOptions } from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
 import "./shepherd-overrides.css";
+import router from "next/router";
 
 export const tourOptions = {
   defaultStepOptions: {
@@ -165,43 +166,84 @@ const newSteps: StepOptions[] = [
           hide: () => {},
         },
       },
-      {
-        id: "sixth",
-        title: "Manage your profile here",
-        text: ["Access your profile settings and preferences, such as notifications and email subscriptions."],
-        attachTo: { element: "#nav-profile", on: "left" },
-        scrollTo: true,
-        canClickTarget: true,
-        buttons: [
           {
-            classes: "shepherd-custom-button-primary",
-            text: "Exit",
-            action() {
-              this.cancel();
+          id: "fifth",
+          title: "Prayer Board",
+          text: ["Let's take a look at the Prayer Board page and see how it works"],
+          attachTo: { element: "#nav-prayer-board", on: "top" },
+          scrollTo: true,
+          canClickTarget: true,
+          buttons: [
+            {
+              classes: "shepherd-button-secondary",
+              text: "Restart",
+              action() {
+                this.cancel();
+                router.push("/dashboard");
+                this.start();
+              },
             },
-          },
-          {
-            classes: "shepherd-custom-button-primary",
-            text: "Back",
-            action() {
-              this.back();
+            {
+              classes: "shepherd-button-primary",
+              text: "Done",
+              action() {
+                this.cancel();
+              },
             },
-          },
-          {
-            classes: "shepherd-custom-button-primary",
-            text: "Next",
-            action() {
-              this.next();
+          ],
+          when: {
+            show: () => {
+              // document.getElementById("nav-prayer-board")?.click();
+              
             },
+            hide: () => {},
           },
-        ],
-        when: {
-          show: () => {
-            document.getElementById("nav-profile")?.click();
+          beforeShowPromise: function () {
+            return new Promise(function (resolve: any) {
+              setTimeout(function () {
+                router.push("/prayer-board");
+                resolve();
+              }, 200);
+            });
           },
-          hide: () => {},
         },
-      }
+      // {
+      //   id: "sixth",
+      //   title: "Manage your profile here",
+      //   text: ["Access your profile settings and preferences, such as notifications and email subscriptions."],
+      //   attachTo: { element: "#nav-profile", on: "left" },
+      //   scrollTo: true,
+      //   canClickTarget: true,
+      //   buttons: [
+      //     {
+      //       classes: "shepherd-custom-button-primary",
+      //       text: "Exit",
+      //       action() {
+      //         this.cancel();
+      //       },
+      //     },
+      //     {
+      //       classes: "shepherd-custom-button-primary",
+      //       text: "Back",
+      //       action() {
+      //         this.back();
+      //       },
+      //     },
+      //     {
+      //       classes: "shepherd-custom-button-primary",
+      //       text: "Next",
+      //       action() {
+      //         this.next();
+      //       },
+      //     },
+      //   ],
+      //   when: {
+      //     show: () => {
+      //       document.getElementById("nav-profile")?.click();
+      //     },
+      //     hide: () => {},
+      //   },
+      // }
   //   {
   //     id: "fourth",
   //     title: "Navigate to about page",
