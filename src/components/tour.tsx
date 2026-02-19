@@ -43,6 +43,15 @@ function stepsForViewport(steps: StepOptions[]): StepOptions[] {
   });
 }
 
+/** Hide the step briefly after show so it doesn't flash in the top-left before Floating UI positions it (e.g. after nav to home). */
+function hideStepUntilPositioned(this: { el?: HTMLElement | null }) {
+  const el = this?.el;
+  if (el) {
+    el.classList.add("shepherd-hide-until-positioned");
+    setTimeout(() => el.classList.remove("shepherd-hide-until-positioned"), 120);
+  }
+}
+
 /** Wait for an element to exist in the DOM (poll until found or timeout). */
 function waitForElement(selector: string, timeoutMs = 5000): Promise<void> {
   return new Promise((resolve, reject) => {
@@ -211,6 +220,10 @@ function makePrayerBoardStepsMobile(
           },
         },
       ],
+      when: {
+        show: hideStepUntilPositioned,
+        hide: () => {},
+      },
     },
   ];
 }
@@ -324,6 +337,7 @@ function makePrayerBoardSteps(
       text: ["Thanks for taking the tour. Explore the hub anytime from the navigation."],
       attachTo: { element: "#tour-home-hero", on: "bottom" },
       scrollTo: true,
+      arrow: false,
       beforeShowPromise: () => waitForElement("#tour-home-hero", 3000),
       buttons: [
         {
@@ -334,6 +348,10 @@ function makePrayerBoardSteps(
           },
         },
       ],
+      when: {
+        show: hideStepUntilPositioned,
+        hide: () => {},
+      },
     },
   ];
 }

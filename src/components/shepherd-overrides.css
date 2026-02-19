@@ -9,6 +9,11 @@
   max-width: 400px;
 }
 
+.shepherd-element.shepherd-hide-until-positioned {
+  opacity: 0;
+  transition: opacity 0.12s ease-out;
+}
+
 .shepherd-header {
   background: linear-gradient(135deg, var(--coral-light) 0%, var(--coral) 100%);
   border-top-left-radius: 0.5rem;
