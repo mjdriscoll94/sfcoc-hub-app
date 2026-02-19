@@ -338,12 +338,11 @@ function makePrayerBoardSteps(
   ];
 }
 
-const ONBOARDING_TOUR_ACTIVE_KEY = "sfcoc-onboarding-tour-active";
+let _onboardingTourActive = false;
 
-/** Whether the onboarding tour is currently running (e.g. we navigated to home for the last step). */
+/** Whether the onboarding tour is currently running (e.g. we navigated to home for the last step). In-memory only so a refresh or new tab can start the tour. */
 export function isOnboardingTourActive(): boolean {
-  if (typeof sessionStorage === "undefined") return false;
-  return sessionStorage.getItem(ONBOARDING_TOUR_ACTIVE_KEY) === "1";
+  return _onboardingTourActive;
 }
 
 /** Call from a page (e.g. home) to start the onboarding tour. Invoke onComplete when tour is finished or cancelled. */
@@ -362,13 +361,13 @@ export function useOnboardingTour() {
       steps.forEach((step) => tour.addStep(step));
       if (onComplete) {
         const wrappedComplete = () => {
-          sessionStorage.removeItem(ONBOARDING_TOUR_ACTIVE_KEY);
+          _onboardingTourActive = false;
           onComplete();
         };
         tour.on("complete", wrappedComplete);
         tour.on("cancel", wrappedComplete);
       }
-      sessionStorage.setItem(ONBOARDING_TOUR_ACTIVE_KEY, "1");
+      _onboardingTourActive = true;
       tour.start();
     },
     [Shepherd, router]
