@@ -19,23 +19,25 @@ const TourInstance: React.FC<PropsWithChildren> = ({ children }) => {
   return <>{children}</>;
 };
 
-const MOBILE_BREAKPOINT = 768;
+const MOBILE_MEDIA_QUERY = "(max-width: 767px)";
 
 /** True when viewport is small (e.g. phone). Use when starting the tour. */
 function isMobile(): boolean {
-  if (typeof window === "undefined") return false;
-  return window.innerWidth < MOBILE_BREAKPOINT;
+  if (typeof window === "undefined" || !window.matchMedia) return false;
+  return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 }
 
 /** On mobile, use floating steps (no attachTo) so the tour fits the small screen. */
 function stepsForViewport(steps: StepOptions[]): StepOptions[] {
   if (!isMobile()) return steps;
-  return steps.map((step) => ({
-    ...step,
-    attachTo: undefined,
-    scrollTo: false,
-    arrow: false,
-  }));
+  return steps.map((step) => {
+    const { attachTo: _attachTo, scrollTo: _scrollTo, ...rest } = step;
+    return {
+      ...rest,
+      scrollTo: false,
+      arrow: false,
+    } as StepOptions;
+  });
 }
 
 /** Wait for an element to exist in the DOM (poll until found or timeout). */
@@ -82,8 +84,8 @@ function makePrayerBoardSteps(
           text: "Next",
           action() {
             router.push("/prayer-board");
-            waitForElement("#prayer-board-filters", 6000).then(() => {
-              this.next();
+            waitForElement("#prayer-board-filters", 8000).then(() => {
+              setTimeout(() => this.next(), 400);
             });
           },
         },
@@ -153,8 +155,8 @@ function makePrayerBoardSteps(
           text: "Next",
           action() {
             router.push("/");
-            waitForElement("#tour-home-hero", 6000).then(() => {
-              this.next();
+            waitForElement("#tour-home-hero", 8000).then(() => {
+              setTimeout(() => this.next(), 400);
             });
           },
         },
@@ -180,6 +182,14 @@ function makePrayerBoardSteps(
   ];
 }
 
+const ONBOARDING_TOUR_ACTIVE_KEY = "sfcoc-onboarding-tour-active";
+
+/** Whether the onboarding tour is currently running (e.g. we navigated to home for the last step). */
+export function isOnboardingTourActive(): boolean {
+  if (typeof sessionStorage === "undefined") return false;
+  return sessionStorage.getItem(ONBOARDING_TOUR_ACTIVE_KEY) === "1";
+}
+
 /** Call from a page (e.g. home) to start the onboarding tour. Invoke onComplete when tour is finished or cancelled. */
 export function useOnboardingTour() {
   const Shepherd = useShepherd();
@@ -193,9 +203,14 @@ export function useOnboardingTour() {
       ]);
       steps.forEach((step) => tour.addStep(step));
       if (onComplete) {
-        tour.on("complete", onComplete);
-        tour.on("cancel", onComplete);
+        const wrappedComplete = () => {
+          sessionStorage.removeItem(ONBOARDING_TOUR_ACTIVE_KEY);
+          onComplete();
+        };
+        tour.on("complete", wrappedComplete);
+        tour.on("cancel", wrappedComplete);
       }
+      sessionStorage.setItem(ONBOARDING_TOUR_ACTIVE_KEY, "1");
       tour.start();
     },
     [Shepherd, router]

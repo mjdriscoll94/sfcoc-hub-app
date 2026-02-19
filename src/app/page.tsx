@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useHomePageEvents } from '@/hooks/useHomePageEvents';
 import EventIcon from '@/components/EventIcon';
-import { useOnboardingTour } from '@/components/tour';
+import { useOnboardingTour, isOnboardingTourActive } from '@/components/tour';
 
 export default function Home() {
   const pathname = usePathname();
@@ -27,7 +27,8 @@ export default function Home() {
       !user ||
       !userProfile ||
       userProfile.hasSeenOnboardingTour === true ||
-      tourStartedRef.current
+      tourStartedRef.current ||
+      isOnboardingTourActive()
     ) {
       return;
     }
