@@ -1,10 +1,10 @@
 "use client";
 import { PropsWithChildren, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { ShepherdJourneyProvider, useShepherd } from "react-shepherd";
 import type { StepOptions } from "shepherd.js";
 import "shepherd.js/dist/css/shepherd.css";
 import "./shepherd-overrides.css";
-import router from "next/router";
 
 export const tourOptions = {
   defaultStepOptions: {
@@ -19,24 +19,148 @@ const TourInstance: React.FC<PropsWithChildren> = ({ children }) => {
   return <>{children}</>;
 };
 
+/** Wait for an element to exist in the DOM (poll until found or timeout). */
+function waitForElement(selector: string, timeoutMs = 5000): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const start = Date.now();
+    const check = () => {
+      if (document.querySelector(selector)) {
+        resolve();
+        return;
+      }
+      if (Date.now() - start >= timeoutMs) {
+        resolve(); // resolve anyway so tour doesn't hang
+        return;
+      }
+      setTimeout(check, 50);
+    };
+    check();
+  });
+}
+
+/** Build steps that need the router (fifth = navigate to prayer board, then steps on prayer board). */
+function makePrayerBoardSteps(
+  router: ReturnType<typeof useRouter>
+): StepOptions[] {
+  return [
+    {
+      id: "fifth",
+      title: "Prayer Board",
+      text: ["Let's go to the Prayer Board and see how it works. Click Next to continue."],
+      attachTo: { element: "#nav-prayer-board", on: "top" },
+      scrollTo: true,
+      canClickTarget: true,
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            router.push("/prayer-board");
+            waitForElement("#prayer-board-filters", 6000).then(() => {
+              this.next();
+            });
+          },
+        },
+      ],
+      when: {
+        show: () => {
+          document.getElementById("nav-connect")?.click();
+        },
+        hide: () => {},
+      },
+    },
+    {
+      id: "sixth",
+      title: "Filter by type",
+      text: ["Use these buttons to view All, Prayers only, or Praises only."],
+      attachTo: { element: "#prayer-board-filters", on: "bottom" },
+      scrollTo: true,
+      beforeShowPromise: () => waitForElement("#prayer-board-filters", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            this.next();
+          },
+        },
+      ],
+    },
+    {
+      id: "seventh",
+      title: "Add a request or praise",
+      text: ["Click here to submit a new prayer request or praise report."],
+      attachTo: { element: "#prayer-board-add", on: "left" },
+      scrollTo: true,
+      beforeShowPromise: () => waitForElement("#prayer-board-add", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Done",
+          action() {
+            this.complete();
+          },
+        },
+      ],
+    },
+  ];
+}
+
 /** Call from a page (e.g. home) to start the onboarding tour. Invoke onComplete when tour is finished or cancelled. */
 export function useOnboardingTour() {
   const Shepherd = useShepherd();
+  const router = useRouter();
   return useCallback(
     (onComplete?: () => void) => {
       const tour = new Shepherd.Tour(tourOptions);
-      newSteps.forEach((step) => tour.addStep(step));
+      const steps = [...homeSteps, ...makePrayerBoardSteps(router)];
+      steps.forEach((step) => tour.addStep(step));
       if (onComplete) {
         tour.on("complete", onComplete);
         tour.on("cancel", onComplete);
       }
       tour.start();
     },
-    [Shepherd]
+    [Shepherd, router]
   );
 }
 
-const newSteps: StepOptions[] = [
+const homeSteps: StepOptions[] = [
   {
     id: "first",
     title: "Welcome to the SFCOC Information Hub",
@@ -166,47 +290,6 @@ const newSteps: StepOptions[] = [
           hide: () => {},
         },
       },
-          {
-          id: "fifth",
-          title: "Prayer Board",
-          text: ["Let's take a look at the Prayer Board page and see how it works"],
-          attachTo: { element: "#nav-prayer-board", on: "top" },
-          scrollTo: true,
-          canClickTarget: true,
-          buttons: [
-            {
-              classes: "shepherd-button-secondary",
-              text: "Restart",
-              action() {
-                this.cancel();
-                router.push("/dashboard");
-                this.start();
-              },
-            },
-            {
-              classes: "shepherd-button-primary",
-              text: "Done",
-              action() {
-                this.cancel();
-              },
-            },
-          ],
-          when: {
-            show: () => {
-              // document.getElementById("nav-prayer-board")?.click();
-              
-            },
-            hide: () => {},
-          },
-          beforeShowPromise: function () {
-            return new Promise(function (resolve: any) {
-              setTimeout(function () {
-                router.push("/prayer-board");
-                resolve();
-              }, 200);
-            });
-          },
-        },
       // {
       //   id: "sixth",
       //   title: "Manage your profile here",

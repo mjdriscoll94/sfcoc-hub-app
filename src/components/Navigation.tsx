@@ -399,6 +399,7 @@ const Navigation = () => {
                               return isExternal ? (
                                 <a
                                   key={subItem.name}
+                                  id={subItem.id}
                                   href={subItem.href}
                                   target="_blank"
                                   rel="noopener noreferrer"
@@ -415,6 +416,7 @@ const Navigation = () => {
                               ) : (
                                 <Link
                                   key={subItem.name}
+                                  id={subItem.id}
                                   href={subItem.href!}
                                   className={`${
                                     pathname === subItem.href
@@ -581,6 +583,7 @@ const Navigation = () => {
                         return isExternal ? (
                           <a
                             key={subItem.name}
+                            id={subItem.id}
                             href={subItem.href}
                             target="_blank"
                             rel="noopener noreferrer"
@@ -600,6 +603,7 @@ const Navigation = () => {
                         ) : (
                           <Link
                             key={subItem.name}
+                            id={subItem.id}
                             href={subItem.href!}
                             className={`${
                               pathname === subItem.href

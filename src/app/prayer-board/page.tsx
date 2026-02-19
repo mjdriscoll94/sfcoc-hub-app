@@ -76,8 +76,8 @@ export default function PrayerBoard() {
       </div>
 
       {/* Filter Toggle Group and Add Button */}
-      <div className="flex justify-center items-center gap-4 mb-8">
-        <div className="inline-flex rounded-lg p-1 bg-sage/10">
+      <div className="flex justify-center items-center gap-4 mb-8" id="prayer-board-toolbar">
+        <div className="inline-flex rounded-lg p-1 bg-sage/10" id="prayer-board-filters">
           <button
             onClick={() => setActiveFilter('all')}
             className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
@@ -119,8 +119,9 @@ export default function PrayerBoard() {
           </button>
         </div>
         
-        <div className="inline-flex rounded-lg p-1">
+        <div className="inline-flex rounded-lg p-1" id="prayer-board-add-wrap">
           <button
+            id="prayer-board-add"
             onClick={() => setIsFormOpen(true)}
             className="px-4 py-2 flex items-center justify-center rounded-md text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors uppercase tracking-wide"
             style={{
