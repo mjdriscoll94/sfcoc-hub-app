@@ -59,6 +59,158 @@ function waitForElement(selector: string, timeoutMs = 5000): Promise<void> {
   });
 }
 
+/** Mobile-only: step that attaches to the hamburger menu and opens it. */
+const mobileNavMenuStep: StepOptions = {
+  id: "mobile-nav-menu",
+  title: "Menu",
+  text: [
+    "Tap the menu icon to open it. You can reach Prayer Board, Resources, and more from here.",
+  ],
+  attachTo: { element: "#nav-menu", on: "top" },
+  scrollTo: true,
+  canClickTarget: true,
+  buttons: [
+    {
+      classes: "shepherd-custom-button-secondary",
+      text: "Exit",
+      action() {
+        this.cancel();
+      },
+    },
+    {
+      classes: "shepherd-custom-button-primary",
+      text: "Next",
+      action() {
+        this.next();
+      },
+    },
+  ],
+  when: {
+    show: () => {
+      document.getElementById("nav-menu")?.click();
+    },
+    hide: () => {},
+  },
+};
+
+/** Mobile-only: prayer board steps (all floating, no attachTo) + back to home. */
+function makePrayerBoardStepsMobile(
+  router: ReturnType<typeof useRouter>
+): StepOptions[] {
+  return [
+    {
+      id: "mobile-prayer-go",
+      title: "Prayer Board",
+      text: [
+        "Tap Prayer Board in the menu above, or click Next to go to the Prayer Board.",
+      ],
+      scrollTo: false,
+      arrow: false,
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            router.push("/prayer-board");
+            waitForElement("#prayer-board-filters", 8000).then(() => {
+              setTimeout(() => this.next(), 400);
+            });
+          },
+        },
+      ],
+    },
+    {
+      id: "mobile-prayer-filter",
+      title: "Filter by type",
+      text: ["Use these buttons to view All, Prayers only, or Praises only."],
+      scrollTo: false,
+      arrow: false,
+      beforeShowPromise: () => waitForElement("#prayer-board-filters", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            this.next();
+          },
+        },
+      ],
+    },
+    {
+      id: "mobile-prayer-add",
+      title: "Add a request or praise",
+      text: ["Click here to submit a new prayer request or praise report."],
+      scrollTo: false,
+      arrow: false,
+      beforeShowPromise: () => waitForElement("#prayer-board-add", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            router.push("/");
+            waitForElement("#tour-home-hero", 8000).then(() => {
+              setTimeout(() => this.next(), 400);
+            });
+          },
+        },
+      ],
+    },
+    {
+      id: "mobile-prayer-done",
+      title: "You're all set!",
+      text: ["Thanks for taking the tour. Explore the hub anytime from the menu."],
+      scrollTo: false,
+      arrow: false,
+      beforeShowPromise: () => waitForElement("#tour-home-hero", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Done",
+          action() {
+            this.complete();
+          },
+        },
+      ],
+    },
+  ];
+}
+
 /** Build steps that need the router (fifth = navigate to prayer board, then steps on prayer board). */
 function makePrayerBoardSteps(
   router: ReturnType<typeof useRouter>
@@ -197,10 +349,12 @@ export function useOnboardingTour() {
   return useCallback(
     (onComplete?: () => void) => {
       const tour = new Shepherd.Tour(tourOptions);
-      const steps = stepsForViewport([
-        ...homeSteps,
-        ...makePrayerBoardSteps(router),
-      ]);
+      const steps = isMobile()
+        ? [homeSteps[0], mobileNavMenuStep, ...makePrayerBoardStepsMobile(router)]
+        : stepsForViewport([
+            ...homeSteps,
+            ...makePrayerBoardSteps(router),
+          ]);
       steps.forEach((step) => tour.addStep(step));
       if (onComplete) {
         const wrappedComplete = () => {
