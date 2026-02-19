@@ -52,7 +52,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       {/* Hero Section */}
-      <section className="relative h-[600px]">
+      <section className="relative h-[600px]" id="tour-home-hero">
         <div className="absolute inset-0">
           <Image
             src="/images/church-interior.jpg"

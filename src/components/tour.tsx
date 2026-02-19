@@ -131,6 +131,26 @@ function makePrayerBoardSteps(
         },
         {
           classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            router.push("/");
+            waitForElement("#tour-home-hero", 6000).then(() => {
+              this.next();
+            });
+          },
+        },
+      ],
+    },
+    {
+      id: "eighth",
+      title: "You're all set!",
+      text: ["Thanks for taking the tour. Explore the hub anytime from the navigation."],
+      attachTo: { element: "#tour-home-hero", on: "bottom" },
+      scrollTo: true,
+      beforeShowPromise: () => waitForElement("#tour-home-hero", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-primary",
           text: "Done",
           action() {
             this.complete();
