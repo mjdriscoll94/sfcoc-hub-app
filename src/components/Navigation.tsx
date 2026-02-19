@@ -61,6 +61,13 @@ const Navigation = () => {
     console.log('pathname:', pathname);
   }, [isOpen, openDropdown, pathname]);
 
+  // Close mobile menu when tour (or other code) navigates away (e.g. to prayer board)
+  useEffect(() => {
+    const handleCloseMobileMenu = () => setIsOpen(false);
+    window.addEventListener('sfcoc-close-mobile-menu', handleCloseMobileMenu);
+    return () => window.removeEventListener('sfcoc-close-mobile-menu', handleCloseMobileMenu);
+  }, []);
+
   // Handle clicks outside dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {

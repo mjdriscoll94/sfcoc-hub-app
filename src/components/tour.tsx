@@ -20,10 +20,13 @@ const TourInstance: React.FC<PropsWithChildren> = ({ children }) => {
 };
 
 const MOBILE_MEDIA_QUERY = "(max-width: 767px)";
+const MOBILE_MAX_WIDTH = 767;
 
 /** True when viewport is small (e.g. phone). Use when starting the tour. */
 function isMobile(): boolean {
   if (typeof window === "undefined" || !window.matchMedia) return false;
+  const w = window.innerWidth;
+  if (w === 0 || w > MOBILE_MAX_WIDTH) return false;
   return window.matchMedia(MOBILE_MEDIA_QUERY).matches;
 }
 
@@ -118,6 +121,7 @@ function makePrayerBoardStepsMobile(
           classes: "shepherd-custom-button-primary",
           text: "Next",
           action() {
+            window.dispatchEvent(new CustomEvent("sfcoc-close-mobile-menu"));
             router.push("/prayer-board");
             waitForElement("#prayer-board-filters", 8000).then(() => {
               setTimeout(() => this.next(), 400);
