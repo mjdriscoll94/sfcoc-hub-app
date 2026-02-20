@@ -44,7 +44,7 @@ function stepsForViewport(steps: StepOptions[]): StepOptions[] {
 }
 
 const HIDE_STEP_BODY_CLASS = "shepherd-hide-step-until-positioned";
-const HIDE_STEP_DELAY_MS = 400;
+const HIDE_STEP_DELAY_MS = 600;
 
 /** Hide the step briefly after show so it doesn't flash in the top-left before Floating UI positions it (e.g. after nav to home). */
 function hideStepUntilPositioned() {
@@ -52,6 +52,12 @@ function hideStepUntilPositioned() {
   setTimeout(() => {
     document.body.classList.remove(HIDE_STEP_BODY_CLASS);
   }, HIDE_STEP_DELAY_MS);
+}
+
+/** Ensure hide class is on before the last step is shown (called from beforeShowPromise). */
+function ensureHideUntilPositioned(): Promise<void> {
+  document.body.classList.add(HIDE_STEP_BODY_CLASS);
+  return Promise.resolve();
 }
 
 /** Wait for an element to exist in the DOM (poll until found or timeout). */
@@ -213,7 +219,10 @@ function makePrayerBoardStepsMobile(
       text: ["Thanks for taking the tour. Explore the hub anytime from the menu."],
       scrollTo: false,
       arrow: false,
-      beforeShowPromise: () => waitForElement("#tour-home-hero", 3000),
+      beforeShowPromise: () =>
+        ensureHideUntilPositioned().then(() =>
+          waitForElement("#tour-home-hero", 3000)
+        ),
       buttons: [
         {
           classes: "shepherd-custom-button-primary",
@@ -342,7 +351,10 @@ function makePrayerBoardSteps(
       attachTo: { element: "#tour-home-hero", on: "bottom" },
       scrollTo: true,
       arrow: false,
-      beforeShowPromise: () => waitForElement("#tour-home-hero", 3000),
+      beforeShowPromise: () =>
+        ensureHideUntilPositioned().then(() =>
+          waitForElement("#tour-home-hero", 3000)
+        ),
       buttons: [
         {
           classes: "shepherd-custom-button-primary",
