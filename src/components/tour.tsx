@@ -533,10 +533,7 @@ function makePrayerBoardSteps(
           classes: "shepherd-custom-button-primary",
           text: "Next",
           action() {
-            router.push("/announcements");
-            waitForElement("#announcements-filters", 8000).then(() => {
-              setTimeout(() => this.next(), 400);
-            });
+            this.cancel();
           },
         },
       ],
