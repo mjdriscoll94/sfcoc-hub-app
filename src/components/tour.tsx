@@ -540,40 +540,7 @@ function makePrayerBoardSteps(
           },
         },
       ],
-    },
-    {
-      id: "eighth",
-      title: "Filter announcements",
-      text: [
-        "Use these filters to show All announcements or narrow by type: Weekly, KFC, General, Youth, or Young Adult.",
-      ],
-      attachTo: { element: "#announcements-filters", on: "bottom" },
-      scrollTo: true,
-      beforeShowPromise: () => waitForElement("#announcements-filters", 3000),
-      buttons: [
-        {
-          classes: "shepherd-custom-button-secondary",
-          text: "Exit",
-          action() {
-            this.cancel();
-          },
-        },
-        {
-          classes: "shepherd-custom-button-primary",
-          text: "Back",
-          action() {
-            this.back();
-          },
-        },
-        {
-          classes: "shepherd-custom-button-primary",
-          text: "Done",
-          action() {
-            this.cancel()
-          },
-        },
-      ],
-    },
+    }
   ];
 }
 
