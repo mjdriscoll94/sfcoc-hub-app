@@ -300,6 +300,43 @@ function makePrayerBoardStepsMobile(
           text: "Next",
           action() {
             document.body.classList.add(HIDE_STEP_BODY_CLASS);
+            router.push("/announcements");
+            waitForElement("#announcements-filters", 8000).then(() => {
+              setTimeout(() => this.next(), 400);
+            });
+          },
+        },
+      ],
+    },
+    {
+      id: "mobile-announcements-filter",
+      title: "Filter announcements",
+      text: [
+        "Use these filters to show All announcements or narrow by type: Weekly, KFC, General, Youth, or Young Adult.",
+      ],
+      scrollTo: false,
+      arrow: false,
+      beforeShowPromise: () => waitForElement("#announcements-filters", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            document.body.classList.add(HIDE_STEP_BODY_CLASS);
             router.push("/");
             waitForElement("#tour-home-hero", 8000).then(() => {
               setTimeout(() => this.next(), 400);
@@ -496,7 +533,44 @@ function makePrayerBoardSteps(
           classes: "shepherd-custom-button-primary",
           text: "Next",
           action() {
+            router.push("/announcements");
+            waitForElement("#announcements-filters", 8000).then(() => {
+              setTimeout(() => this.next(), 400);
+            });
+          },
+        },
+      ],
+    },
+    {
+      id: "eighth",
+      title: "Filter announcements",
+      text: [
+        "Use these filters to show All announcements or narrow by type: Weekly, KFC, General, Youth, or Young Adult.",
+      ],
+      attachTo: { element: "#announcements-filters", on: "bottom" },
+      scrollTo: true,
+      beforeShowPromise: () => waitForElement("#announcements-filters", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
             this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Done",
+          action() {
+            router.push("/");
+            this.complete();
           },
         },
       ],

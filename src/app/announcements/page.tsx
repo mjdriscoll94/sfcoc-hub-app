@@ -220,7 +220,7 @@ export default function AnnouncementsPage() {
         </div>
 
         {/* Type Filter */}
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2" id="announcements-filters">
           {ANNOUNCEMENT_TYPES.map((type) => (
             <button
               key={type}
