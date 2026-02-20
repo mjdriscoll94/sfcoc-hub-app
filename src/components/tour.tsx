@@ -1,5 +1,11 @@
 "use client";
-import { PropsWithChildren, useCallback } from "react";
+import {
+  createContext,
+  useContext,
+  PropsWithChildren,
+  useCallback,
+  useState,
+} from "react";
 import { useRouter } from "next/navigation";
 import { ShepherdJourneyProvider, useShepherd } from "react-shepherd";
 import type { StepOptions } from "shepherd.js";
@@ -18,6 +24,29 @@ export const tourOptions = {
 const TourInstance: React.FC<PropsWithChildren> = ({ children }) => {
   return <>{children}</>;
 };
+
+/** Context so pages (e.g. prayer board) can show tour-only content while the tour is running. */
+type TourActiveContextValue = {
+  tourActive: boolean;
+  setTourActive: (active: boolean) => void;
+};
+const TourActiveContext = createContext<TourActiveContextValue>({
+  tourActive: false,
+  setTourActive: () => {},
+});
+
+export function useTourActive(): TourActiveContextValue {
+  return useContext(TourActiveContext);
+}
+
+function TourActiveProvider({ children }: PropsWithChildren) {
+  const [tourActive, setTourActive] = useState(false);
+  return (
+    <TourActiveContext.Provider value={{ tourActive, setTourActive }}>
+      {children}
+    </TourActiveContext.Provider>
+  );
+}
 
 const MOBILE_MEDIA_QUERY = "(max-width: 767px)";
 const MOBILE_MAX_WIDTH = 767;
@@ -179,6 +208,72 @@ function makePrayerBoardStepsMobile(
       ],
     },
     {
+      id: "mobile-prayer-toggle",
+      title: "Expand or collapse",
+      text: [
+        "Tap or click the caret to expand a request and read the full description, or collapse it to save space.",
+      ],
+      scrollTo: false,
+      arrow: false,
+      beforeShowPromise: () => waitForElement("#tour-demo-caret", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            this.next();
+          },
+        },
+      ],
+    },
+    {
+      id: "mobile-prayer-prayed",
+      title: "I prayed counter",
+      text: [
+        "Tap \"I prayed\" (or \"I gave thanks\" for praises) to add your support. The number shows how many people have responded.",
+      ],
+      scrollTo: false,
+      arrow: false,
+      beforeShowPromise: () => waitForElement("#tour-demo-i-prayed", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            this.next();
+          },
+        },
+      ],
+    },
+    {
       id: "mobile-prayer-add",
       title: "Add a request or praise",
       text: ["Click here to submit a new prayer request or praise report."],
@@ -285,6 +380,72 @@ function makePrayerBoardSteps(
       attachTo: { element: "#prayer-board-filters", on: "bottom" },
       scrollTo: true,
       beforeShowPromise: () => waitForElement("#prayer-board-filters", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            this.next();
+          },
+        },
+      ],
+    },
+    {
+      id: "sixth-toggle",
+      title: "Expand or collapse",
+      text: [
+        "Tap or click the caret to expand a request and read the full description, or collapse it to save space.",
+      ],
+      attachTo: { element: "#tour-demo-caret", on: "left" },
+      scrollTo: true,
+      beforeShowPromise: () => waitForElement("#tour-demo-caret", 3000),
+      buttons: [
+        {
+          classes: "shepherd-custom-button-secondary",
+          text: "Exit",
+          action() {
+            this.cancel();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Back",
+          action() {
+            this.back();
+          },
+        },
+        {
+          classes: "shepherd-custom-button-primary",
+          text: "Next",
+          action() {
+            this.next();
+          },
+        },
+      ],
+    },
+    {
+      id: "sixth-prayed",
+      title: "I prayed counter",
+      text: [
+        "Tap \"I prayed\" (or \"I gave thanks\" for praises) to add your support. The number shows how many people have responded.",
+      ],
+      attachTo: { element: "#tour-demo-i-prayed", on: "left" },
+      scrollTo: true,
+      beforeShowPromise: () => waitForElement("#tour-demo-i-prayed", 3000),
       buttons: [
         {
           classes: "shepherd-custom-button-secondary",
@@ -778,7 +939,9 @@ const homeSteps: StepOptions[] = [
 export function TourWrapper({ children }: { children: React.ReactNode }) {
   return (
     <ShepherdJourneyProvider>
-      <TourInstance>{children}</TourInstance>
+      <TourActiveProvider>
+        <TourInstance>{children}</TourInstance>
+      </TourActiveProvider>
     </ShepherdJourneyProvider>
   );
 }

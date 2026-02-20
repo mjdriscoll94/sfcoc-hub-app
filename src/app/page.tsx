@@ -7,12 +7,13 @@ import { usePathname } from "next/navigation";
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useHomePageEvents } from '@/hooks/useHomePageEvents';
 import EventIcon from '@/components/EventIcon';
-import { useOnboardingTour, isOnboardingTourActive } from '@/components/tour';
+import { useOnboardingTour, isOnboardingTourActive, useTourActive } from '@/components/tour';
 
 export default function Home() {
   const pathname = usePathname();
   const { user, userProfile, markOnboardingTourSeen } = useAuth();
   const startTour = useOnboardingTour();
+  const { setTourActive } = useTourActive();
   const tourStartedRef = useRef(false);
   const { categories, loading } = useHomePageEvents();
 
@@ -33,8 +34,12 @@ export default function Home() {
       return;
     }
     tourStartedRef.current = true;
-    startTour(markOnboardingTourSeen);
-  }, [pathname, user, userProfile, startTour, markOnboardingTourSeen]);
+    setTourActive(true);
+    startTour(() => {
+      setTourActive(false);
+      markOnboardingTourSeen();
+    });
+  }, [pathname, user, userProfile, startTour, markOnboardingTourSeen, setTourActive]);
 
   const [expandedCategories, setExpandedCategories] = useState<Set<number>>(new Set([0])); // Start with first category expanded
 

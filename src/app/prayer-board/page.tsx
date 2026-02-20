@@ -1,12 +1,29 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { usePrayerPraise } from '@/hooks/usePrayerPraise';
+import { useState, useEffect, useMemo } from 'react';
+import { usePrayerPraise, type PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import PrayerRequestForm from '@/components/PrayerRequestForm';
 import { addPrayerPraise } from '@/lib/firebase/utils';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { useTourActive } from '@/components/tour';
 
 type FilterType = 'all' | 'prayer' | 'praise';
+
+/** Fake prayer request shown only during the onboarding tour so steps can reference it. */
+export const TOUR_DEMO_REQUEST_ID = 'tour-demo-request';
+const TOUR_DEMO_REQUEST: PrayerPraiseItem = {
+  id: TOUR_DEMO_REQUEST_ID,
+  type: 'prayer',
+  title: 'Example prayer request',
+  description: 'This is an example. You can tap "I prayed" to support a request, or use the filters above to switch between All, Prayers, and Praises.',
+  author: { id: 'tour-demo', name: 'Tour' },
+  dateCreated: new Date(),
+  prayerCount: 0,
+  isAnonymous: false,
+  isAdminOnly: false,
+  status: 'active',
+  approvalStatus: 'approved',
+};
 
 export default function PrayerBoard() {
   useEffect(() => {
@@ -17,11 +34,19 @@ export default function PrayerBoard() {
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const { userProfile } = useAuth();
-  
+  const { tourActive } = useTourActive();
+
   // Use the Firestore hook with the active filter
   const { items: requests, loading, error, isIndexBuilding, incrementPrayerCount } = usePrayerPraise(
     activeFilter === 'all' ? undefined : activeFilter
   );
+
+  // When tour is active, prepend a fake request so the tour can reference it; it never touches Firestore
+  const displayRequests = useMemo(() => {
+    if (!tourActive || (activeFilter !== 'all' && activeFilter !== 'prayer')) return requests;
+    const rest = requests.filter((r) => r.id !== TOUR_DEMO_REQUEST_ID);
+    return [TOUR_DEMO_REQUEST, ...rest];
+  }, [tourActive, activeFilter, requests]);
 
   // Log any errors from the hook
   useEffect(() => {
@@ -180,8 +205,12 @@ export default function PrayerBoard() {
       {/* Prayer Requests List */}
       {!loading && !error && !isIndexBuilding && (
         <div className="space-y-6">
-          {requests.map((request) => (
-            <div key={request.id} className="bg-card rounded-lg shadow border border-sage/20">
+          {displayRequests.map((request) => (
+            <div
+              key={request.id}
+              id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-request' : undefined}
+              className="bg-card rounded-lg shadow border border-sage/20"
+            >
               <div 
                 className="p-6 cursor-pointer"
                 onClick={() => toggleCard(request.id)}
@@ -208,27 +237,43 @@ export default function PrayerBoard() {
                       <h3 className="text-lg font-medium text-text">
                         {request.title}
                       </h3>
-                      <svg
-                        className={`w-5 h-5 text-text/60 transition-transform ${
-                          expandedCards.has(request.id) ? 'transform rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
+                      <span id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-caret' : undefined}>
+                        <svg
+                          className={`w-5 h-5 text-text/60 transition-transform ${
+                            expandedCards.has(request.id) ? 'transform rotate-180' : ''
+                          }`}
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 9l-7 7-7-7"
+                          />
+                        </svg>
+                      </span>
                     </div>
                   </div>
                 </div>
                 
                 <div className="flex justify-between items-center text-sm mt-4">
                   <span className="text-text font-medium">{request.isAnonymous ? 'Anonymous' : request.author.name}</span>
+                  {request.id === TOUR_DEMO_REQUEST_ID ? (
+                    <span
+                      id="tour-demo-i-prayed"
+                      className="flex items-center space-x-2"
+                      style={{ color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0' }}
+                    >
+                      <span className="text-sm font-medium uppercase tracking-wide" style={{ color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0' }}>
+                        {request.type === 'prayer' ? 'I prayed' : 'I gave thanks'}
+                      </span>
+                      <span className="text-white px-2 py-0.5 rounded-full text-sm" style={{ backgroundColor: request.type === 'prayer' ? '#E88B5F' : '#70A8A0' }}>
+                        {request.prayerCount}
+                      </span>
+                    </span>
+                  ) : (
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
@@ -252,6 +297,7 @@ export default function PrayerBoard() {
                       {request.prayerCount}
                     </span>
                   </button>
+                  )}
                 </div>
               </div>
               
@@ -265,7 +311,7 @@ export default function PrayerBoard() {
             </div>
           ))}
 
-          {requests.length === 0 && (
+          {displayRequests.length === 0 && (
             <div className="text-center p-8 text-text/50">
               No prayer requests or praises yet.
             </div>
