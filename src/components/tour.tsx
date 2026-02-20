@@ -569,8 +569,7 @@ function makePrayerBoardSteps(
           classes: "shepherd-custom-button-primary",
           text: "Done",
           action() {
-            router.push("/");
-            this.complete();
+            this.complete(); // Complete the tour
           },
         },
       ],
