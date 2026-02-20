@@ -343,31 +343,6 @@ function makePrayerBoardSteps(
         },
       ],
     },
-    {
-      id: "eighth",
-      title: "You're all set!",
-      text: ["Thanks for taking the tour. Explore the hub anytime from the navigation."],
-      attachTo: { element: "#tour-home-hero", on: "bottom" },
-      scrollTo: true,
-      arrow: false,
-      beforeShowPromise: () =>
-        ensureHideUntilPositioned().then(() =>
-          waitForElement("#tour-home-hero", 3000)
-        ),
-      buttons: [
-        {
-          classes: "shepherd-custom-button-primary",
-          text: "Done",
-          action() {
-            this.complete();
-          },
-        },
-      ],
-      when: {
-        show: hideStepUntilPositioned,
-        hide: () => {},
-      },
-    },
   ];
 }
 
