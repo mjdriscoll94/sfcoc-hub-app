@@ -335,7 +335,6 @@ function makePrayerBoardSteps(
           classes: "shepherd-custom-button-primary",
           text: "Next",
           action() {
-            document.body.classList.add(HIDE_STEP_BODY_CLASS);
             router.push("/");
             waitForElement("#tour-home-hero", 8000).then(() => {
               setTimeout(() => this.next(), 400);
