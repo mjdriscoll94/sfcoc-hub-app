@@ -78,19 +78,6 @@ export default function Home() {
             <p className="text-xl md:text-2xl mb-8 uppercase tracking-wide">
               One body. Many members. United and serving together.
             </p>
-            {user && (
-              <div className="flex justify-center">
-                <Link
-                  href="/calendar"
-                  className="bg-primary text-on-primary px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity inline-flex items-center space-x-2 focus-ring uppercase tracking-wide"
-                >
-                  <span>View Calendar</span>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
-                  </svg>
-                </Link>
-              </div>
-            )}
           </div>
         </div>
       </section>

@@ -29,12 +29,6 @@ export default function RespondToAssignmentPage() {
   useEffect(() => {
     if (authLoading) return;
 
-    if (!user) {
-      // Redirect to sign in with return URL
-      router.push(`/auth/signin?returnUrl=/service-roles/respond?id=${assignmentId}&action=${action}`);
-      return;
-    }
-
     if (!assignmentId || !action) {
       setError('Invalid request: Missing assignment ID or action');
       setLoading(false);
@@ -47,11 +41,12 @@ export default function RespondToAssignmentPage() {
       return;
     }
 
+    // Allow responding with or without login (participants use email link and may not have an account)
     handleResponse();
   }, [user, authLoading, assignmentId, action]);
 
   const handleResponse = async () => {
-    if (!user || !assignmentId || !action) return;
+    if (!assignmentId || !action) return;
 
     try {
       setLoading(true);
@@ -81,24 +76,13 @@ export default function RespondToAssignmentPage() {
         return;
       }
 
-      // Verify user is the assignee
-      if (assignment.userId !== user.uid) {
-        setError('You are not authorized to respond to this assignment');
-        setLoading(false);
-        return;
-      }
-
-      // Call API to update status
+      // Assignees are always from service role participants; anyone with the link can respond (no login required)
       const response = await fetch('/api/service-roles/respond', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          assignmentId,
-          action,
-          userId: user.uid
-        }),
+        body: JSON.stringify({ assignmentId, action }),
       });
 
       const data = await response.json();

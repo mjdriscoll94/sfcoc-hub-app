@@ -34,4 +34,12 @@ export interface ServiceAssignment {
   assignedBy: string;
   assignedAt: Date;
   respondedAt?: Date;
+}
+
+/** Person who can be assigned to service roles (name, email, role preferences). Stored in Firestore serviceRoleParticipants. */
+export interface ServiceRoleParticipant {
+  id: string;
+  name: string;
+  email: string;
+  rolePreferences: ServiceRole[];
 } 

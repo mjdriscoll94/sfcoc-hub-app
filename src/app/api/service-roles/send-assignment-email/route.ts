@@ -16,24 +16,24 @@ export async function POST(request: Request) {
       );
     }
 
-    // Get user details using admin SDK
+    // Assignees are always from serviceRoleParticipants (not the users collection)
     const adminDb = getAdminDb();
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    if (!userDoc.exists) {
-      console.error('User not found:', userId);
+    const participantDoc = await adminDb.collection('serviceRoleParticipants').doc(userId).get();
+
+    if (!participantDoc.exists) {
       return NextResponse.json(
-        { error: 'User not found' },
+        { error: 'Assignee not found in service role participants.' },
         { status: 404 }
       );
     }
 
-    const userData = userDoc.data();
-    const userEmail = userData?.email;
-    const userName = userData?.displayName || userEmail;
+    const data = participantDoc.data();
+    const userEmail = data?.email ?? null;
+    const userName = data?.name || userEmail;
 
     if (!userEmail) {
       return NextResponse.json(
-        { error: 'User has no email address' },
+        { error: 'This participant has no email address.' },
         { status: 400 }
       );
     }

@@ -5,13 +5,13 @@ import admin from 'firebase-admin';
 export async function POST(request: Request) {
   try {
     const adminDb = getAdminDb();
-    const { assignmentId, action, userId } = await request.json();
+    const { assignmentId, action, userId: bodyUserId } = await request.json();
 
-    console.log('Received respond request:', { assignmentId, action, userId });
+    console.log('Received respond request:', { assignmentId, action, userId: bodyUserId });
 
-    if (!assignmentId || !action || !userId) {
+    if (!assignmentId || !action) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields: assignmentId and action' },
         { status: 400 }
       );
     }
@@ -36,11 +36,10 @@ export async function POST(request: Request) {
 
     const assignmentData = assignmentDoc.data();
 
-    // Verify the user is the one assigned
-    if (assignmentData?.userId !== userId) {
-      console.error('Unauthorized: user mismatch', { expected: assignmentData?.userId, actual: userId });
+    // Assignees are always from serviceRoleParticipants; respond via email link only (no login)
+    if (bodyUserId) {
       return NextResponse.json(
-        { error: 'Unauthorized: You can only respond to your own assignments' },
+        { error: 'Use the link from your assignment email to respond.' },
         { status: 403 }
       );
     }

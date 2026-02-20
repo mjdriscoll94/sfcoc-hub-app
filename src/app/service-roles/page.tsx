@@ -2,19 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { ServiceRole, SERVICE_ROLES, ServiceAssignment } from '@/types/serviceRoles';
+import { ServiceRole, SERVICE_ROLES, ServiceAssignment, type ServiceRoleParticipant } from '@/types/serviceRoles';
 import { db } from '@/lib/firebase/config';
 import { collection, query, getDocs, addDoc, Timestamp, where, deleteDoc, doc } from 'firebase/firestore';
-import { CheckCircle, XCircle, Clock, ChevronDown, ChevronRight } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, ChevronDown, ChevronRight, UserPlus } from 'lucide-react';
 import { format, nextSunday, addWeeks } from 'date-fns';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 import Link from 'next/link';
-
-interface UserProfile {
-  id: string;
-  displayName: string | null;
-  email: string | null;
-}
 
 interface RoleAssignment {
   role: ServiceRole;
@@ -37,8 +31,14 @@ export default function ServiceRolesPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [users, setUsers] = useState<UserProfile[]>([]);
+  const [participants, setParticipants] = useState<ServiceRoleParticipant[]>([]);
   const [weeks, setWeeks] = useState<WeekData[]>([]);
+  const [showAddParticipant, setShowAddParticipant] = useState(false);
+  const [addParticipantName, setAddParticipantName] = useState('');
+  const [addParticipantEmail, setAddParticipantEmail] = useState('');
+  const [addParticipantRoles, setAddParticipantRoles] = useState<ServiceRole[]>([]);
+  const [addParticipantSaving, setAddParticipantSaving] = useState(false);
+  const [addParticipantError, setAddParticipantError] = useState<string | null>(null);
 
   // Update permission check to handle both role-based and legacy permissions
   const canAssignRoles = userProfile && (
@@ -73,22 +73,27 @@ export default function ServiceRolesPage() {
       
       try {
         setLoading(true);
-        // Fetch users if can assign roles
+        // Fetch service role participants (dropdown list) if can assign roles
         if (canAssignRoles) {
-          const usersRef = collection(db, 'users');
-          const usersSnapshot = await getDocs(usersRef);
-          const fetchedUsers = usersSnapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data()
-          })) as UserProfile[];
-          setUsers(fetchedUsers);
+          const participantsRef = collection(db, 'serviceRoleParticipants');
+          const participantsSnapshot = await getDocs(participantsRef);
+          const fetchedParticipants = participantsSnapshot.docs.map(d => ({
+            id: d.id,
+            name: d.data().name ?? '',
+            email: d.data().email ?? '',
+            rolePreferences: (d.data().rolePreferences as ServiceRole[]) ?? []
+          })) as ServiceRoleParticipant[];
+          setParticipants(fetchedParticipants.sort((a, b) => a.name.localeCompare(b.name)));
         }
 
         // Fetch assignments for all weeks
         const firstSunday = weeks[0]?.date;
         const lastSunday = weeks[weeks.length - 1]?.date;
 
-        if (!firstSunday || !lastSunday) return;
+        if (!firstSunday || !lastSunday) {
+          setLoading(false);
+          return;
+        }
 
         const startDate = new Date(firstSunday);
         startDate.setHours(0, 0, 0, 0);
@@ -276,9 +281,47 @@ export default function ServiceRolesPage() {
     );
   };
 
-  const getUserName = (userId: string) => {
-    const user = users.find(u => u.id === userId);
-    return user?.displayName || user?.email || 'Unknown User';
+  const getParticipantName = (participantId: string) => {
+    const p = participants.find(x => x.id === participantId);
+    return p ? (p.name || p.email || 'Unknown') : 'Unknown';
+  };
+
+  const toggleAddParticipantRole = (role: ServiceRole) => {
+    setAddParticipantRoles(prev =>
+      prev.includes(role) ? prev.filter(r => r !== role) : [...prev, role]
+    );
+  };
+
+  const handleAddParticipant = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!addParticipantName.trim() || !addParticipantEmail.trim()) {
+      setAddParticipantError('Name and email are required.');
+      return;
+    }
+    setAddParticipantError(null);
+    setAddParticipantSaving(true);
+    try {
+      const docRef = await addDoc(collection(db, 'serviceRoleParticipants'), {
+        name: addParticipantName.trim(),
+        email: addParticipantEmail.trim().toLowerCase(),
+        rolePreferences: addParticipantRoles,
+      });
+      setParticipants(prev => [...prev, {
+        id: docRef.id,
+        name: addParticipantName.trim(),
+        email: addParticipantEmail.trim().toLowerCase(),
+        rolePreferences: addParticipantRoles,
+      }].sort((a, b) => a.name.localeCompare(b.name)));
+      setAddParticipantName('');
+      setAddParticipantEmail('');
+      setAddParticipantRoles([]);
+      setShowAddParticipant(false);
+    } catch (err) {
+      console.error('Failed to add participant:', err);
+      setAddParticipantError('Failed to add person. Please try again.');
+    } finally {
+      setAddParticipantSaving(false);
+    }
   };
 
   const getStatusStyles = (status?: string) => {
@@ -307,20 +350,103 @@ export default function ServiceRolesPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-8">
         <div className="pb-12">
-          <div className="flex justify-between items-center">
+          <div className="flex flex-wrap justify-between items-center gap-4">
             <h1 className="text-3xl font-bold text-charcoal">Sunday Service Roles List</h1>
-            <Link
-              href="/service-roles/history"
-              className="inline-flex items-center px-6 py-3 border-2 border-[#70A8A0] text-sm font-semibold rounded-lg text-white bg-[#70A8A0] hover:bg-[#5A8A83] shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#70A8A0]"
-            >
-              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              Service History
-            </Link>
+            <div className="flex items-center gap-3">
+              {canAssignRoles && (
+                <button
+                  type="button"
+                  onClick={() => setShowAddParticipant(true)}
+                  className="inline-flex items-center px-4 py-2 border-2 border-charcoal text-sm font-semibold rounded-lg text-charcoal bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
+                >
+                  <UserPlus className="w-5 h-5 mr-2" />
+                  Add person
+                </button>
+              )}
+              <Link
+                href="/service-roles/history"
+                className="inline-flex items-center px-6 py-3 border-2 border-[#70A8A0] text-sm font-semibold rounded-lg text-white bg-[#70A8A0] hover:bg-[#5A8A83] shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#70A8A0]"
+              >
+                <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Service History
+              </Link>
+            </div>
           </div>
         </div>
-        
+
+        {canAssignRoles && showAddParticipant && (
+          <div className="bg-white rounded-lg border border-border p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-charcoal mb-4">Add person to assignment list</h2>
+            <form onSubmit={handleAddParticipant} className="space-y-4">
+              <div>
+                <label htmlFor="add-name" className="block text-sm font-medium text-charcoal mb-1">Name</label>
+                <input
+                  id="add-name"
+                  type="text"
+                  value={addParticipantName}
+                  onChange={(e) => setAddParticipantName(e.target.value)}
+                  className="block w-full max-w-md rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+                  placeholder="Full name"
+                />
+              </div>
+              <div>
+                <label htmlFor="add-email" className="block text-sm font-medium text-charcoal mb-1">Email</label>
+                <input
+                  id="add-email"
+                  type="email"
+                  value={addParticipantEmail}
+                  onChange={(e) => setAddParticipantEmail(e.target.value)}
+                  className="block w-full max-w-md rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div>
+                <span className="block text-sm font-medium text-charcoal mb-2">Role preferences (optional)</span>
+                <div className="flex flex-wrap gap-3">
+                  {SERVICE_ROLES.map((role) => (
+                    <label key={role} className="inline-flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={addParticipantRoles.includes(role)}
+                        onChange={() => toggleAddParticipantRole(role)}
+                        className="rounded border-border text-primary focus:ring-primary"
+                      />
+                      <span className="text-sm text-charcoal">{role}</span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+              {addParticipantError && (
+                <p className="text-sm text-error">{addParticipantError}</p>
+              )}
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={addParticipantSaving}
+                  className="px-4 py-2 bg-[#E88B5F] text-white text-sm font-semibold rounded-lg hover:bg-[#D6714A] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F]"
+                >
+                  {addParticipantSaving ? 'Adding…' : 'Add person'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddParticipant(false);
+                    setAddParticipantError(null);
+                    setAddParticipantName('');
+                    setAddParticipantEmail('');
+                    setAddParticipantRoles([]);
+                  }}
+                  className="px-4 py-2 border border-border text-charcoal text-sm font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
+                >
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        )}
+
         {error && (
           <div className="bg-error-bg border border-error rounded-md p-4 text-error">
             {error}
@@ -386,9 +512,9 @@ export default function ServiceRolesPage() {
                                     className="mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base text-charcoal border-border bg-card focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
                                   >
                                     <option value="">Select a person</option>
-                                    {users.map((user) => (
-                                      <option key={user.id} value={user.id}>
-                                        {user.displayName || user.email}
+                                    {participants.map((p) => (
+                                      <option key={p.id} value={p.id}>
+                                        {p.name || p.email}
                                       </option>
                                     ))}
                                   </select>
@@ -396,7 +522,7 @@ export default function ServiceRolesPage() {
                                   <div>
                                     {assignment?.userId || week.pendingAssignments[role] ? (
                                       <span className="text-charcoal font-semibold">
-                                        {getUserName(assignment?.userId || week.pendingAssignments[role] || '')}
+                                        {getParticipantName(assignment?.userId || week.pendingAssignments[role] || '')}
                                       </span>
                                     ) : (
                                       <span className="text-text-muted italic">Not assigned</span>
