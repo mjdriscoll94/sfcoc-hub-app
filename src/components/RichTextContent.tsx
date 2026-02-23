@@ -27,6 +27,13 @@ export default function RichTextContent({ content }: RichTextContentProps) {
     <>
       <style>
         {`
+          .rich-text-content.prose,
+          .rich-text-content.prose * {
+            color: #000 !important;
+          }
+          .rich-text-content.prose a {
+            color: #E88B5F !important;
+          }
           .rich-text-content.prose :where(h1):not(:where([class~="not-prose"] *)) {
             font-size: 2.25rem !important;
             line-height: 1.2 !important;
