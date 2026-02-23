@@ -977,5 +977,5 @@ export function TourWrapper({ children }: { children: React.ReactNode }) {
         <TourInstance>{children}</TourInstance>
       </TourActiveProvider>
     </ShepherdJourneyProvider>
-  );
+  ); 
 }
