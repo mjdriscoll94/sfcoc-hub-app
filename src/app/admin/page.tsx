@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
-import BuildInfo from '@/components/BuildInfo';
 import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
@@ -273,9 +272,6 @@ export default function AdminDashboard() {
           )}
           </div>
         </div>
-
-        {/* Build Information */}
-        <BuildInfo />
       </div>
     </div>
   );
