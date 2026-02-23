@@ -66,6 +66,9 @@ export default function LifeGroupsPage() {
     lifeGroups.some(group => group.leaderId === userProfile.uid)
   );
 
+  // Any logged-in user (including user/member) can expand and see who is in each group (names only)
+  const canExpandAndSeeMembers = !!userProfile;
+
   // Phone numbers and call/text: life group leader, Life Group Organizer, Service Organizer, admin, or leader of a group (NOT standard user or member)
   const canSeeContactInfo = userProfile && (
     userProfile.role === 'lifeGroupLeader' ||
@@ -292,12 +295,12 @@ export default function LifeGroupsPage() {
                 </div>
               </div>
 
-              {/* Family Units Section - only show expandable list with phone/call/text to roles that can see contact info */}
+              {/* Family Units Section - logged-in users (including user/member) can expand and see names; phone/call/text only for canSeeContactInfo */}
               {(group.familyUnitIds || []).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
                     <h4 className="text-sm font-semibold text-charcoal">Family Units</h4>
-                    {canSeeContactInfo && (
+                    {canExpandAndSeeMembers && (
                       <button
                         onClick={() => toggleAllFamiliesForGroup(group)}
                         className="text-sm text-coral hover:text-[#D6714A] font-medium transition-colors"
@@ -306,7 +309,7 @@ export default function LifeGroupsPage() {
                       </button>
                     )}
                   </div>
-                  {canSeeContactInfo ? (
+                  {canExpandAndSeeMembers ? (
                     <div className="space-y-2">
                       {(group.familyUnitIds || []).map((familyUnitId) => {
                         const family = familyUnits.find(f => f.id === familyUnitId);
@@ -339,7 +342,7 @@ export default function LifeGroupsPage() {
                                     return (
                                       <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                                         {member.firstName} {member.lastName}
-                                        {member.phoneNumber && (
+                                        {canSeeContactInfo && member.phoneNumber && (
                                           <span className="ml-1">
                                             · {member.phoneNumber}
                                             {telNumber && (

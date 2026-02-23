@@ -23,7 +23,8 @@ export default function SermonsPage() {
   // Simple search without affecting video list structure
   const filteredVideos = searchTerm.trim() === '' ? videos : videos.filter(video =>
     video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.description.toLowerCase().includes(searchTerm.toLowerCase())
+    video.description.toLowerCase().includes(searchTerm.toLowerCase()
+  )
   );
 
   const groupVideosByMonth = useCallback((videos: any[]): GroupedSermons => {
