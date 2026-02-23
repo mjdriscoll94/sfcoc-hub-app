@@ -545,8 +545,8 @@ const Navigation = () => {
         </div>
       </div>
 
-      {/* Mobile menu */}
-      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#E88B5F]`}>
+      {/* Mobile menu - scrollable when content exceeds viewport */}
+      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#E88B5F] max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain`}>
         <div className="pt-2 pb-3 space-y-1">
           {activeNavItems.map((item) => (
             item.dropdown ? (
