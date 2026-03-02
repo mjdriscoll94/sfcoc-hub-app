@@ -7,7 +7,6 @@ import RouteGuard from '@/components/RouteGuard';
 import FaviconDevRefresh from '@/components/FaviconDevRefresh';
 import { ThemeProvider } from '@/components/theme-provider';
 import { TourWrapper } from '@/components/tour';
-import ServiceNoticeBanner from '@/components/ServiceNoticeBanner';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -36,12 +35,9 @@ export default function RootLayout({
                   <div className="fixed top-0 left-0 right-0 z-50">
                     <Navigation />
                   </div>
-                  <div className="pt-16">
-                    <ServiceNoticeBanner />
-                    <main>
-                      {children}
-                    </main>
-                  </div>
+                  <main className="relative top-16">
+                    {children}
+                  </main>
                 </div>
               </RouteGuard>
             </TourWrapper>

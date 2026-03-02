@@ -3,38 +3,17 @@
 import { useState, useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 
-const BANNER_STORAGE_KEY = 'sfcoc-banner-mar29-2026-dismissed';
 const CUTOFF_DATE = new Date('2026-03-29T14:45:00.000Z'); // 9:45am Central
 
 export default function ServiceNoticeBanner() {
-  const [visible, setVisible] = useState(false);
-  const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(true);
+  const [pastCutoff, setPastCutoff] = useState(false);
 
   useEffect(() => {
-    const now = new Date();
-    if (now >= CUTOFF_DATE) {
-      setMounted(true);
-      return;
-    }
-    try {
-      const dismissed = localStorage.getItem(BANNER_STORAGE_KEY) === 'true';
-      setVisible(!dismissed);
-    } catch {
-      setVisible(true);
-    }
-    setMounted(true);
+    setPastCutoff(new Date() >= CUTOFF_DATE);
   }, []);
 
-  const handleClose = () => {
-    try {
-      localStorage.setItem(BANNER_STORAGE_KEY, 'true');
-    } catch {
-      // ignore
-    }
-    setVisible(false);
-  };
-
-  if (!mounted || !visible) return null;
+  if (pastCutoff || !visible) return null;
 
   return (
     <div
@@ -46,7 +25,7 @@ export default function ServiceNoticeBanner() {
       </p>
       <button
         type="button"
-        onClick={handleClose}
+        onClick={() => setVisible(false)}
         className="flex-shrink-0 p-1 rounded hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/50"
         aria-label="Dismiss banner"
       >
