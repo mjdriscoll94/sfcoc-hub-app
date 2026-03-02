@@ -52,11 +52,27 @@ export default function PendingUserQueue() {
   }, []);
 
   const handleApproval = async (uid: string, status: 'approved' | 'rejected') => {
+    const targetUser = users.find(u => u.uid === uid);
+    const email = targetUser?.email;
+    const displayName = targetUser?.displayName ?? null;
+
     try {
       await updateDoc(doc(db, 'users', uid), {
         approvalStatus: status,
         updatedAt: new Date()
       });
+
+      if (email?.trim()) {
+        try {
+          await fetch('/api/auth/account-status-notification', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: email.trim(), displayName, status }),
+          });
+        } catch (emailErr) {
+          console.error('Failed to send account status email:', emailErr);
+        }
+      }
     } catch (error) {
       console.error('Failed to update user status:', error);
       setError('Failed to update user status');
