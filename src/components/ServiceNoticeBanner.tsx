@@ -39,7 +39,7 @@ export default function ServiceNoticeBanner() {
   return (
     <div
       role="banner"
-      className="bg-[#E88B5F] text-white px-4 py-3 flex items-center justify-center gap-4 text-center flex-wrap"
+      className="bg-secondary text-on-secondary px-4 py-3 flex items-center justify-center gap-4 text-center flex-wrap"
     >
       <p className="text-sm md:text-base flex-1 min-w-0">
         <strong>Service location update:</strong> On March 29th, 2026, service will be held at the Ramkota Hotel on the west side of Sioux Falls. We will not be having service at the church building. We are planning to stream this service online as well.
