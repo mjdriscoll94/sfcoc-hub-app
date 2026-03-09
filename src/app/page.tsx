@@ -8,7 +8,6 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useHomePageEvents } from '@/hooks/useHomePageEvents';
 import EventIcon from '@/components/EventIcon';
 import { useOnboardingTour, isOnboardingTourActive, useTourActive } from '@/components/tour';
-import ServiceNoticeBanner from '@/components/ServiceNoticeBanner';
 
 export default function Home() {
   const pathname = usePathname();
@@ -58,7 +57,6 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <ServiceNoticeBanner />
       {/* Hero Section */}
       <section className="relative h-[600px]" id="tour-home-hero">
         <div className="absolute inset-0">
