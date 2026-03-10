@@ -180,6 +180,19 @@ export default function AdminDashboard() {
             <div>
               <h2 className="text-lg font-semibold text-charcoal mb-3">Service & Events</h2>
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                <Link
+                  href="/admin/calendar"
+                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                >
+                  <div className="flex-shrink-0">
+                    <CalendarDays className="h-6 w-6 text-coral" aria-hidden="true" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="absolute inset-0" aria-hidden="true" />
+                    <p className="text-sm font-medium text-charcoal">Calendar</p>
+                    <p className="text-sm text-text-light">Add and manage church calendar events</p>
+                  </div>
+                </Link>
                 {canAssignServiceRoles && (
                   <Link
                     href="/service-roles"

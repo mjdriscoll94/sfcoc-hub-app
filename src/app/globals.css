@@ -1,5 +1,29 @@
 @import "tailwindcss";
 
+/* Tailwind v4: expose theme colors so utilities like bg-coral work */
+@theme {
+  --color-coral: #E88B5F;
+  --color-coral-light: #F4A881;
+  --color-coral-dark: #D6714A;
+  --color-primary: #E88B5F;
+  --color-charcoal: #2F3E46;
+}
+
+/* Calendar: force coral buttons and day cells (override any plugin/base styles) */
+.admin-calendar-btn-coral {
+  background-color: var(--coral) !important;
+  border-color: var(--coral) !important;
+  color: #2F3E46 !important;
+}
+.admin-calendar-btn-coral:hover {
+  background-color: var(--coral-dark) !important;
+  border-color: var(--coral-dark) !important;
+}
+.admin-calendar-day-has-events {
+  background-color: var(--coral) !important;
+  color: #2F3E46 !important;
+}
+
 /* Unified Brand Color Scheme - Vibrant & Modern */
 :root {
   /* Brand Colors */

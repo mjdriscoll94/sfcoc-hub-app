@@ -67,4 +67,25 @@ export interface DirectoryEntry {
   submittedAt: Date;
   status: 'pending' | 'approved' | 'rejected';
   photoURL?: string;
+}
+
+export interface CalendarCategory {
+  id?: string;
+  name: string;
+  color: string; // hex, e.g. #E88B5F
+}
+
+export interface CalendarEvent {
+  id?: string;
+  title: string;
+  description?: string;
+  startDate: Date;
+  endDate?: Date;
+  allDay?: boolean;
+  location?: string;
+  categoryId?: string;
+  categoryName?: string;
+  categoryColor?: string;
+  createdAt?: Date;
+  createdBy?: string;
 } 
