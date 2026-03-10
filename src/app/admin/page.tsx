@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
-import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone } from 'lucide-react';
+import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
@@ -141,6 +141,32 @@ export default function AdminDashboard() {
                         <span className="absolute inset-0" aria-hidden="true" />
                         <p className="text-sm font-medium text-charcoal">Upload Sermon Notes</p>
                         <p className="text-sm text-text-light">Manage and upload lesson notes</p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/send-email"
+                      className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                    >
+                      <div className="flex-shrink-0">
+                        <Mail className="h-6 w-6 text-coral" aria-hidden="true" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="absolute inset-0" aria-hidden="true" />
+                        <p className="text-sm font-medium text-charcoal">Send Email</p>
+                        <p className="text-sm text-text-light">Email members (replaces Mailchimp)</p>
+                      </div>
+                    </Link>
+                    <Link
+                      href="/admin/send-email/lists"
+                      className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
+                    >
+                      <div className="flex-shrink-0">
+                        <Users className="h-6 w-6 text-coral" aria-hidden="true" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="absolute inset-0" aria-hidden="true" />
+                        <p className="text-sm font-medium text-charcoal">Email Lists</p>
+                        <p className="text-sm text-text-light">Create and manage custom email lists and groups</p>
                       </div>
                     </Link>
                   </>

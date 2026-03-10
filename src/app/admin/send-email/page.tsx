@@ -1,0 +1,221 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
+import { ArrowLeftIcon } from '@heroicons/react/24/outline';
+import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
+
+type Audience = 'all' | 'announcements' | 'events' | 'newsletter' | 'list';
+
+type EmailListSummary = { id: string; name: string; emailCount: number };
+
+export default function AdminSendEmailPage() {
+  const { userProfile } = useAuth();
+  const router = useRouter();
+  const [subject, setSubject] = useState('');
+  const [body, setBody] = useState('');
+  const [audience, setAudience] = useState<Audience>('all');
+  const [listId, setListId] = useState('');
+  const [emailLists, setEmailLists] = useState<EmailListSummary[]>([]);
+  const [sending, setSending] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<{ count: number } | null>(null);
+
+  const canAccessAdmin =
+    userProfile?.isAdmin ||
+    (userProfile?.role &&
+      (ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAnnouncements ||
+        ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups));
+
+  useEffect(() => {
+    document.title = 'Send Email | Admin | Sioux Falls Church of Christ';
+  }, []);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch('/api/admin/email-lists');
+        if (res.ok) {
+          const data = await res.json();
+          setEmailLists(data);
+        }
+      } catch {
+        // ignore
+      }
+    };
+    load();
+  }, []);
+
+  if (userProfile && !canAccessAdmin) {
+    router.push('/');
+    return null;
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    if (!subject.trim() || !body.trim()) {
+      setError('Subject and message are required.');
+      return;
+    }
+    if (audience === 'list' && !listId) {
+      setError('Please select an email list.');
+      return;
+    }
+    setSending(true);
+    try {
+      const res = await fetch('/api/admin/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: subject.trim(),
+          content: body.trim(),
+          audience,
+          ...(audience === 'list' && listId ? { listId } : {}),
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to send');
+      setSuccess({ count: data.recipientCount ?? 0 });
+      setSubject('');
+      setBody('');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to send email');
+    } finally {
+      setSending(false);
+    }
+  };
+
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <Link
+        href="/admin"
+        className="inline-flex items-center text-sm text-text-light hover:text-charcoal mb-6"
+      >
+        <ArrowLeftIcon className="h-4 w-4 mr-1" />
+        Back to Admin
+      </Link>
+
+      <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl font-bold text-charcoal mb-2">Send Email to Members</h1>
+          <p className="text-text-light">
+            Send an email to approved members, subscription groups, or a custom list.
+          </p>
+        </div>
+        <Link
+          href="/admin/send-email/lists"
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          Manage email lists
+        </Link>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg border border-border p-6 shadow-sm">
+        <div>
+          <label htmlFor="audience" className="block text-sm font-medium text-charcoal mb-1">
+            Audience
+          </label>
+          <select
+            id="audience"
+            value={audience}
+            onChange={(e) => setAudience(e.target.value as Audience)}
+            className="block w-full rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+          >
+            <option value="all">All approved members</option>
+            <option value="announcements">Announcements subscribers only</option>
+            <option value="events">Events subscribers only</option>
+            <option value="newsletter">Newsletter subscribers only</option>
+            <option value="list">Custom email list</option>
+          </select>
+        </div>
+        {audience === 'list' && (
+          <div>
+            <label htmlFor="listId" className="block text-sm font-medium text-charcoal mb-1">
+              Email list
+            </label>
+            <select
+              id="listId"
+              value={listId}
+              onChange={(e) => setListId(e.target.value)}
+              className="block w-full rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+            >
+              <option value="">Select a list</option>
+              {emailLists.map((list) => (
+                <option key={list.id} value={list.id}>
+                  {list.name} ({list.emailCount})
+                </option>
+              ))}
+            </select>
+            {emailLists.length === 0 && (
+              <p className="text-sm text-text-light mt-1">
+                No lists yet. <Link href="/admin/send-email/lists" className="text-primary hover:underline">Create one</Link>.
+              </p>
+            )}
+          </div>
+        )}
+
+        <div>
+          <label htmlFor="subject" className="block text-sm font-medium text-charcoal mb-1">
+            Subject
+          </label>
+          <input
+            id="subject"
+            type="text"
+            value={subject}
+            onChange={(e) => setSubject(e.target.value)}
+            className="block w-full rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+            placeholder="Email subject"
+            required
+          />
+        </div>
+
+        <div>
+          <label htmlFor="body" className="block text-sm font-medium text-charcoal mb-1">
+            Message
+          </label>
+          <textarea
+            id="body"
+            rows={12}
+            value={body}
+            onChange={(e) => setBody(e.target.value)}
+            className="block w-full rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+            placeholder="Write your message. You can use plain text; it will be wrapped in the church email template."
+            required
+          />
+        </div>
+
+        {error && (
+          <div className="rounded-md bg-error-bg border border-error/30 p-3 text-error text-sm">
+            {error}
+          </div>
+        )}
+
+        {success && (
+          <div className="rounded-md bg-success-bg border border-success/30 p-3 text-success text-sm">
+            Email sent successfully to {success.count} recipient{success.count !== 1 ? 's' : ''}.
+          </div>
+        )}
+
+        <div className="flex gap-3">
+          <button
+            type="submit"
+            disabled={sending}
+            className="px-4 py-2 bg-primary text-on-primary text-sm font-semibold rounded-lg hover:opacity-90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            {sending ? 'Sending…' : 'Send Email'}
+          </button>
+          <Link
+            href="/admin"
+            className="px-4 py-2 border border-border text-charcoal text-sm font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
+          >
+            Cancel
+          </Link>
+        </div>
+      </form>
+    </div>
+  );
+}
