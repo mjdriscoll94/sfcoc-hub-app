@@ -79,12 +79,16 @@
       ]
     },
     {
-      "collectionGroup": "lifegroupParticipants",
+      "collectionGroup": "lifeGroupResources",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "familyName",
+          "fieldPath": "type",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "createdAt",
+          "order": "DESCENDING"
         }
       ]
     }

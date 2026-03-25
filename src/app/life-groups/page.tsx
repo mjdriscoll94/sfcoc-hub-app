@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase/config';
-import { collection, query, orderBy, onSnapshot, Timestamp, getDocs } from 'firebase/firestore';
-import { LifeGroup, FamilyUnit } from '@/types';
+import { collection, query, where, orderBy, onSnapshot, Timestamp, getDocs } from 'firebase/firestore';
+import { LifeGroup, FamilyUnit, LifeGroupMemberFacingResource } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { canViewLifeGroupMemberResources } from '@/lib/auth/lifeGroupAccess';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 
 export default function LifeGroupsPage() {
@@ -20,6 +21,7 @@ export default function LifeGroupsPage() {
   const [curriculumFileName, setCurriculumFileName] = useState<string | null>(null);
   const [familyUnits, setFamilyUnits] = useState<FamilyUnit[]>([]);
   const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
+  const [memberFacingResources, setMemberFacingResources] = useState<LifeGroupMemberFacingResource[]>([]);
 
   useEffect(() => {
     const q = query(
@@ -69,6 +71,8 @@ export default function LifeGroupsPage() {
   // Any logged-in user (including user/member) can expand and see who is in each group (names only)
   const canExpandAndSeeMembers = !!userProfile;
 
+  const canSeeMemberResources = canViewLifeGroupMemberResources(userProfile);
+
   // Phone numbers and call/text: life group leader, Life Group Organizer, Service Organizer, admin, or leader of a group (NOT standard user or member)
   const canSeeContactInfo = userProfile && (
     userProfile.role === 'lifeGroupLeader' ||
@@ -101,6 +105,38 @@ export default function LifeGroupsPage() {
 
     fetchResources();
   }, [canSeeCurriculum]);
+
+  // Member-facing resources (member role and above, approved)
+  useEffect(() => {
+    if (!canSeeMemberResources) {
+      setMemberFacingResources([]);
+      return;
+    }
+    const q = query(
+      collection(db, 'lifeGroupResources'),
+      where('type', '==', 'memberResource'),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: LifeGroupMemberFacingResource[] = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            url: data.url,
+            fileName: data.fileName || 'Resource',
+            title: data.title,
+            createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+            createdBy: data.createdBy,
+          };
+        });
+        setMemberFacingResources(list);
+      },
+      (err) => console.error('Error fetching life group member resources:', err)
+    );
+    return () => unsubscribe();
+  }, [canSeeMemberResources]);
 
   // Fetch family units
   useEffect(() => {
@@ -195,6 +231,37 @@ export default function LifeGroupsPage() {
           Connect with others in small groups for fellowship, study, and support.
         </p>
       </div>
+
+      {/* Resources for members and above (approved) */}
+      {canSeeMemberResources && (
+        <div className="mb-8 bg-white rounded-lg border border-border p-6">
+          <h2 className="text-2xl font-bold text-charcoal mb-2">Life group resources</h2>
+          <p className="text-sm text-text-light mb-4">
+            Files shared for life group participants (members and leaders).
+          </p>
+          {memberFacingResources.length === 0 ? (
+            <p className="text-text-light">No resources have been posted yet.</p>
+          ) : (
+            <ul className="space-y-2">
+              {memberFacingResources.map((res) => (
+                <li key={res.id}>
+                  <a
+                    href={res.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-lg border border-border bg-gray-50 px-4 py-3 text-coral hover:bg-gray-100 font-medium w-full sm:w-auto"
+                  >
+                    <svg className="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                    <span>{res.title?.trim() || res.fileName}</span>
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
 
       {/* Curriculum - only for life group leader, Service Organizer, admin, or leader of a group (not Life Group Organizer) */}
       {canSeeCurriculum && (

@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, addDoc, Timestamp, getDocs, where } from 'firebase/firestore';
 import BackButton from '@/components/BackButton';
-import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember } from '@/types';
+import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember, LifeGroupMemberFacingResource } from '@/types';
 import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
@@ -30,6 +30,10 @@ export default function LifeGroupsManagement() {
   const [uploadingCurriculum, setUploadingCurriculum] = useState(false);
   const [curriculumUrl, setCurriculumUrl] = useState<string | null>(null);
   const [curriculumFileName, setCurriculumFileName] = useState<string | null>(null);
+  const [memberFacingResources, setMemberFacingResources] = useState<LifeGroupMemberFacingResource[]>([]);
+  const [memberResourceTitle, setMemberResourceTitle] = useState('');
+  const [memberResourceFile, setMemberResourceFile] = useState<File | null>(null);
+  const [uploadingMemberResource, setUploadingMemberResource] = useState(false);
   const [familyUnits, setFamilyUnits] = useState<FamilyUnit[]>([]);
   const [showFamilyForm, setShowFamilyForm] = useState(false);
   const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
@@ -123,6 +127,34 @@ export default function LifeGroupsManagement() {
     };
 
     fetchCurriculum();
+  }, []);
+
+  // Member-facing resources (multiple files for member+ on public page)
+  useEffect(() => {
+    const q = query(
+      collection(db, 'lifeGroupResources'),
+      where('type', '==', 'memberResource'),
+      orderBy('createdAt', 'desc')
+    );
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const list: LifeGroupMemberFacingResource[] = snapshot.docs.map((d) => {
+          const data = d.data();
+          return {
+            id: d.id,
+            url: data.url,
+            fileName: data.fileName || 'Resource',
+            title: data.title,
+            createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+            createdBy: data.createdBy,
+          };
+        });
+        setMemberFacingResources(list);
+      },
+      (err) => console.error('Error fetching member-facing resources:', err)
+    );
+    return () => unsubscribe();
   }, []);
 
   // Fetch family units
@@ -386,6 +418,41 @@ export default function LifeGroupsManagement() {
     } catch (err) {
       console.error('Error deleting curriculum:', err);
       setError('Failed to delete curriculum file');
+    }
+  };
+
+  const handleMemberResourceUpload = async () => {
+    if (!memberResourceFile || !userProfile) return;
+    setUploadingMemberResource(true);
+    setError(null);
+    try {
+      const fileUrl = await uploadLifeGroupResource(memberResourceFile);
+      await addDoc(collection(db, 'lifeGroupResources'), {
+        type: 'memberResource',
+        url: fileUrl,
+        fileName: memberResourceFile.name,
+        title: memberResourceTitle.trim() || null,
+        createdAt: Timestamp.now(),
+        createdBy: userProfile.uid,
+      });
+      setMemberResourceFile(null);
+      setMemberResourceTitle('');
+    } catch (err) {
+      console.error('Error uploading member resource:', err);
+      setError('Failed to upload resource');
+    } finally {
+      setUploadingMemberResource(false);
+    }
+  };
+
+  const handleDeleteMemberResource = async (id: string) => {
+    if (!window.confirm('Remove this resource from the life group page?')) return;
+    try {
+      await deleteDoc(doc(db, 'lifeGroupResources', id));
+      setError(null);
+    } catch (err) {
+      console.error('Error deleting member resource:', err);
+      setError('Failed to delete resource');
     }
   };
 
@@ -729,6 +796,93 @@ export default function LifeGroupsManagement() {
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Member-facing resources (shown to approved member+ on public life groups page) */}
+      <div className="mb-8 bg-white rounded-lg border border-border p-6">
+        <h2 className="text-2xl font-bold text-charcoal mb-2">Member resources</h2>
+        <p className="text-text-light mb-6">
+          Upload files visible to approved members, life group leaders, organizers, and admins on the public Life Groups page. (Basic &quot;user&quot; accounts do not see this section.)
+        </p>
+
+        {memberFacingResources.length > 0 && (
+          <ul className="space-y-2 mb-6">
+            {memberFacingResources.map((res) => (
+              <li
+                key={res.id}
+                className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-md border border-border"
+              >
+                <div className="min-w-0 flex-1">
+                  <a
+                    href={res.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-coral hover:underline font-medium truncate block"
+                  >
+                    {res.title?.trim() || res.fileName}
+                  </a>
+                  <p className="text-xs text-text-light truncate">{res.fileName}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => handleDeleteMemberResource(res.id)}
+                  className="p-2 text-red-600 hover:bg-red-50 rounded-md shrink-0"
+                  title="Remove resource"
+                >
+                  <TrashIcon className="h-5 w-5" />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <div className="border border-border rounded-lg p-4">
+          <h3 className="text-lg font-semibold text-charcoal mb-3">Add resource</h3>
+          <div className="space-y-3">
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">Display title (optional)</label>
+              <input
+                type="text"
+                value={memberResourceTitle}
+                onChange={(e) => setMemberResourceTitle(e.target.value)}
+                placeholder="e.g. Spring study guide"
+                className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">File</label>
+              <div className="flex flex-wrap items-center gap-2">
+                <input
+                  type="file"
+                  accept=".pdf,.doc,.docx,.txt,.png,.jpg,.jpeg"
+                  onChange={(e) => setMemberResourceFile(e.target.files?.[0] || null)}
+                  className="flex-1 min-w-[200px] px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
+                />
+                <button
+                  type="button"
+                  onClick={handleMemberResourceUpload}
+                  disabled={!memberResourceFile || uploadingMemberResource}
+                  className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                >
+                  {uploadingMemberResource ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      </svg>
+                      Uploading…
+                    </>
+                  ) : (
+                    <>
+                      <ArrowUpTrayIcon className="h-4 w-4 mr-2" />
+                      Upload
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>

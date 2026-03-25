@@ -76,6 +76,16 @@ export interface LifeGroupMember {
   addedBy: string;
 }
 
+/** Stored in Firestore `lifeGroupResources` with type `memberResource` (visible to member+ on public life groups page). */
+export interface LifeGroupMemberFacingResource {
+  id: string;
+  url: string;
+  fileName: string;
+  title?: string;
+  createdAt: Date;
+  createdBy?: string;
+}
+
 export interface LifeGroup {
   id: string;
   name: string;
