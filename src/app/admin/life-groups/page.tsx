@@ -34,6 +34,7 @@ export default function LifeGroupsManagement() {
   const [memberResourceTitle, setMemberResourceTitle] = useState('');
   const [memberResourceFile, setMemberResourceFile] = useState<File | null>(null);
   const [uploadingMemberResource, setUploadingMemberResource] = useState(false);
+  const [memberResourcesListError, setMemberResourcesListError] = useState<string | null>(null);
   const [familyUnits, setFamilyUnits] = useState<FamilyUnit[]>([]);
   const [showFamilyForm, setShowFamilyForm] = useState(false);
   const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
@@ -131,11 +132,8 @@ export default function LifeGroupsManagement() {
 
   // Member-facing resources (multiple files for member+ on public page)
   useEffect(() => {
-    const q = query(
-      collection(db, 'lifeGroupResources'),
-      where('type', '==', 'memberResource'),
-      orderBy('createdAt', 'desc')
-    );
+    // Equality-only query avoids needing a composite index (where + orderBy on another field).
+    const q = query(collection(db, 'lifeGroupResources'), where('type', '==', 'memberResource'));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -150,9 +148,14 @@ export default function LifeGroupsManagement() {
             createdBy: data.createdBy,
           };
         });
+        list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setMemberFacingResources(list);
+        setMemberResourcesListError(null);
       },
-      (err) => console.error('Error fetching member-facing resources:', err)
+      (err) => {
+        console.error('Error fetching member-facing resources:', err);
+        setMemberResourcesListError('Could not load member resources. See the browser console for details.');
+      }
     );
     return () => unsubscribe();
   }, []);
@@ -422,7 +425,11 @@ export default function LifeGroupsManagement() {
   };
 
   const handleMemberResourceUpload = async () => {
-    if (!memberResourceFile || !userProfile) return;
+    if (!memberResourceFile) return;
+    if (!userProfile) {
+      setError('You must be signed in to upload.');
+      return;
+    }
     setUploadingMemberResource(true);
     setError(null);
     try {
@@ -807,6 +814,12 @@ export default function LifeGroupsManagement() {
         <p className="text-text-light mb-6">
           Upload files visible to approved members, life group leaders, organizers, and admins on the public Life Groups page. (Basic &quot;user&quot; accounts do not see this section.)
         </p>
+
+        {memberResourcesListError && (
+          <p className="text-sm text-red-600 mb-4" role="alert">
+            {memberResourcesListError}
+          </p>
+        )}
 
         {memberFacingResources.length > 0 && (
           <ul className="space-y-2 mb-6">

@@ -112,11 +112,7 @@ export default function LifeGroupsPage() {
       setMemberFacingResources([]);
       return;
     }
-    const q = query(
-      collection(db, 'lifeGroupResources'),
-      where('type', '==', 'memberResource'),
-      orderBy('createdAt', 'desc')
-    );
+    const q = query(collection(db, 'lifeGroupResources'), where('type', '==', 'memberResource'));
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
@@ -131,6 +127,7 @@ export default function LifeGroupsPage() {
             createdBy: data.createdBy,
           };
         });
+        list.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
         setMemberFacingResources(list);
       },
       (err) => console.error('Error fetching life group member resources:', err)
