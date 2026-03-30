@@ -75,6 +75,17 @@ function eventColor(ev: CalendarEvent): string {
   return ev.categoryColor ?? DEFAULT_EVENT_COLOR;
 }
 
+/** Use origin only so NEXT_PUBLIC_BASE_URL values that include a path do not duplicate `/api/calendar/feed`. */
+function calendarFeedSiteOrigin(baseUrl: string): string {
+  const t = baseUrl.trim();
+  if (!t) return '';
+  try {
+    return new URL(t).origin;
+  } catch {
+    return t.replace(/\/$/, '');
+  }
+}
+
 export default function AdminCalendarPage() {
   const { userProfile } = useAuth();
   const router = useRouter();
@@ -241,7 +252,9 @@ export default function AdminCalendarPage() {
   const baseUrl =
     process.env.NEXT_PUBLIC_BASE_URL ||
     (typeof window !== 'undefined' ? window.location.origin : '');
-  const feedUrl = baseUrl ? `${baseUrl.replace(/\/$/, '')}/api/calendar/feed` : '';
+  const feedUrl = baseUrl
+    ? `${calendarFeedSiteOrigin(baseUrl)}/api/calendar/feed`
+    : '';
 
   const handleDownloadIcs = () => {
     const ics = toIcsString(events, 'SFCoC Church Calendar');
