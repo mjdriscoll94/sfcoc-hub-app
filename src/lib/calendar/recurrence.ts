@@ -15,6 +15,9 @@ export function calendarEventFromFirestore(id: string, d: Record<string, unknown
       ? (untilRaw as { toDate?: () => Date }).toDate?.() ?? new Date(untilRaw as string)
       : undefined;
   const rt = (d.recurrenceType as RecurrenceType | undefined) ?? 'none';
+  const monthlyMode = (d.recurrenceMonthlyMode as CalendarEvent['recurrenceMonthlyMode']) ?? 'sameDay';
+  const nth = d.recurrenceNthOccurrence;
+  const wd = d.recurrenceWeekday;
   return {
     id,
     title: (d.title as string) ?? '',
@@ -31,6 +34,9 @@ export function calendarEventFromFirestore(id: string, d: Record<string, unknown
     recurrenceType: rt,
     recurrenceUntil,
     hasRecurrence: (d.hasRecurrence as boolean | undefined) ?? rt !== 'none',
+    recurrenceMonthlyMode: monthlyMode,
+    recurrenceNthOccurrence: typeof nth === 'number' ? nth : undefined,
+    recurrenceWeekday: typeof wd === 'number' ? wd : undefined,
     parentEventId: undefined,
   };
 }
@@ -42,7 +48,45 @@ function toDateKey(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 }
 
-function nextOccurrence(from: Date, type: RecurrenceType): Date {
+/**
+ * Nth weekday of a calendar month. nth: 1–5 = first through fifth; -1 = last.
+ * Returns null if the nth weekday does not exist (e.g. fifth Tuesday).
+ */
+export function getNthWeekdayInMonth(
+  year: number,
+  monthIndex: number,
+  nth: number,
+  weekday: number
+): Date | null {
+  if (nth === -1) {
+    const lastDay = new Date(year, monthIndex + 1, 0);
+    for (let day = lastDay.getDate(); day >= 1; day--) {
+      const dt = new Date(year, monthIndex, day);
+      if (dt.getDay() === weekday) return dt;
+    }
+    return null;
+  }
+  const first = new Date(year, monthIndex, 1);
+  const firstDow = first.getDay();
+  const offset = (weekday - firstDow + 7) % 7;
+  const dayOfMonth = 1 + offset + 7 * (nth - 1);
+  const result = new Date(year, monthIndex, dayOfMonth);
+  if (result.getMonth() !== monthIndex) return null;
+  return result;
+}
+
+function applyTimeFrom(baseTime: Date, on: Date): Date {
+  const out = new Date(on);
+  out.setHours(
+    baseTime.getHours(),
+    baseTime.getMinutes(),
+    baseTime.getSeconds(),
+    baseTime.getMilliseconds()
+  );
+  return out;
+}
+
+function nextOccurrenceSimple(from: Date, type: RecurrenceType): Date {
   switch (type) {
     case 'daily':
       return addDays(from, 1);
@@ -55,6 +99,63 @@ function nextOccurrence(from: Date, type: RecurrenceType): Date {
     default:
       return addDays(from, 1);
   }
+}
+
+function advanceMonth(year: number, month: number): [number, number] {
+  let m = month + 1;
+  let y = year;
+  if (m > 11) {
+    m = 0;
+    y += 1;
+  }
+  return [y, m];
+}
+
+function expandMonthlyNthWeekday(
+  base: CalendarEvent,
+  rangeStart: Date,
+  rangeEnd: Date,
+  seriesEnd: Date,
+  durationMs: number
+): CalendarEvent[] {
+  const nth = base.recurrenceNthOccurrence ?? 1;
+  const weekday = base.recurrenceWeekday ?? 0;
+  const timeSrc = base.startDate;
+
+  const at = (year: number, month: number): Date | null => {
+    const d = getNthWeekdayInMonth(year, month, nth, weekday);
+    if (!d) return null;
+    return applyTimeFrom(timeSrc, d);
+  };
+
+  let y = base.startDate.getFullYear();
+  let m = base.startDate.getMonth();
+  const out: CalendarEvent[] = [];
+
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
+    const c = at(y, m);
+    if (!c) {
+      [y, m] = advanceMonth(y, m);
+      continue;
+    }
+    if (c > seriesEnd) break;
+    if (c >= rangeStart && c <= rangeEnd) {
+      const instStart = new Date(c);
+      const instEnd = new Date(instStart.getTime() + durationMs);
+      const dateKey = toDateKey(instStart.getFullYear(), instStart.getMonth(), instStart.getDate());
+      const parentId = base.id ?? 'event';
+      out.push({
+        ...base,
+        id: `${parentId}__${dateKey}`,
+        parentEventId: base.id,
+        startDate: instStart,
+        endDate: instEnd,
+      });
+    }
+    [y, m] = advanceMonth(y, m);
+  }
+
+  return out;
 }
 
 /**
@@ -81,11 +182,20 @@ export function expandEventToInstances(
     ? endOfDay(base.recurrenceUntil)
     : endOfDay(addYears(base.startDate, MAX_SERIES_YEARS));
 
+  if (
+    r === 'monthly' &&
+    base.recurrenceMonthlyMode === 'nthWeekday' &&
+    base.recurrenceNthOccurrence != null &&
+    base.recurrenceWeekday != null
+  ) {
+    return expandMonthlyNthWeekday(base, rangeStart, rangeEnd, seriesEnd, durationMs);
+  }
+
   let cursor = new Date(base.startDate);
   let iterations = 0;
 
   while (cursor < rangeStart && cursor <= seriesEnd && iterations < MAX_ITERATIONS) {
-    cursor = nextOccurrence(cursor, r);
+    cursor = nextOccurrenceSimple(cursor, r);
     iterations++;
   }
 
@@ -103,7 +213,7 @@ export function expandEventToInstances(
       startDate: instStart,
       endDate: instEnd,
     });
-    cursor = nextOccurrence(cursor, r);
+    cursor = nextOccurrenceSimple(cursor, r);
     iterations++;
   }
 

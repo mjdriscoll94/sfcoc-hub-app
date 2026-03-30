@@ -22,10 +22,16 @@ import {
 } from 'firebase/firestore';
 import Link from 'next/link';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
-import { CalendarEvent, CalendarCategory, type RecurrenceType } from '@/lib/firebase/models';
+import {
+  CalendarEvent,
+  CalendarCategory,
+  type RecurrenceType,
+  type RecurrenceMonthlyMode,
+} from '@/lib/firebase/models';
 import {
   calendarEventFromFirestore,
   expandAllEvents,
+  getNthWeekdayInMonth,
 } from '@/lib/calendar/recurrence';
 import { ArrowLeft, Download, Link2, ChevronDown, Check, Tags, X, Trash2, Plus } from 'lucide-react';
 
@@ -67,6 +73,25 @@ const MONTH_NAMES = [
 const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+const RECURRENCE_NTH_OPTIONS: { value: string; label: string }[] = [
+  { value: '1', label: 'First' },
+  { value: '2', label: 'Second' },
+  { value: '3', label: 'Third' },
+  { value: '4', label: 'Fourth' },
+  { value: '5', label: 'Fifth' },
+  { value: '-1', label: 'Last' },
+];
+
+const RECURRENCE_WEEKDAY_OPTIONS: { value: string; label: string }[] = [
+  { value: '0', label: 'Sunday' },
+  { value: '1', label: 'Monday' },
+  { value: '2', label: 'Tuesday' },
+  { value: '3', label: 'Wednesday' },
+  { value: '4', label: 'Thursday' },
+  { value: '5', label: 'Friday' },
+  { value: '6', label: 'Saturday' },
+];
 
 function getDaysInMonth(year: number, month: number) {
   const first = new Date(year, month, 1);
@@ -1025,6 +1050,11 @@ function DayModal({
 function toDateInput(d: Date): string {
   return d.toISOString().slice(0, 10);
 }
+
+/** Local calendar date for date inputs (avoids UTC shift from toISOString). */
+function toDateInputLocal(d: Date): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+}
 function toTimeInput(d: Date): string {
   return d.toTimeString().slice(0, 5);
 }
@@ -1065,6 +1095,9 @@ function AddEventForm({
         endTime: toTimeInput(end),
         recurrenceType: (initialEvent.recurrenceType ?? 'none') as RecurrenceType,
         recurrenceUntil: initialEvent.recurrenceUntil ? toDateInput(initialEvent.recurrenceUntil) : '',
+        recurrenceMonthlyMode: (initialEvent.recurrenceMonthlyMode ?? 'sameDay') as RecurrenceMonthlyMode,
+        recurrenceNthOccurrence: String(initialEvent.recurrenceNthOccurrence ?? 1),
+        recurrenceWeekday: String(initialEvent.recurrenceWeekday ?? 3),
       };
     }
     const d = toDateInput(initialDate);
@@ -1080,6 +1113,9 @@ function AddEventForm({
       endTime: '17:00',
       recurrenceType: 'none' as RecurrenceType,
       recurrenceUntil: '',
+      recurrenceMonthlyMode: 'sameDay' as RecurrenceMonthlyMode,
+      recurrenceNthOccurrence: '1',
+      recurrenceWeekday: '3',
     };
   });
 
@@ -1144,18 +1180,43 @@ function AddEventForm({
     setLoading(true);
     setError(null);
     try {
-      const start = form.allDay
+      let start = form.allDay
         ? new Date(form.startDate + 'T00:00:00')
         : new Date(form.startDate + 'T' + form.startTime);
-      const end = form.allDay
+      let end = form.allDay
         ? new Date(form.endDate + 'T23:59:59')
         : new Date(form.endDate + 'T' + form.endTime);
+
+      const rt = (form.recurrenceType as RecurrenceType) ?? 'none';
+      if (rt === 'monthly' && form.recurrenceMonthlyMode === 'nthWeekday') {
+        const sy = parseInt(form.startDate.slice(0, 4), 10);
+        const sm = parseInt(form.startDate.slice(5, 7), 10) - 1;
+        const nth = Number(form.recurrenceNthOccurrence);
+        const wd = Number(form.recurrenceWeekday);
+        const dayDate = getNthWeekdayInMonth(sy, sm, nth, wd);
+        if (!dayDate) {
+          setError('That weekday occurrence does not exist in the selected start month.');
+          setLoading(false);
+          return;
+        }
+        const durMs = end.getTime() - start.getTime();
+        if (form.allDay) {
+          const ds = toDateInputLocal(dayDate);
+          start = new Date(ds + 'T00:00:00');
+          end = new Date(ds + 'T23:59:59');
+        } else {
+          const t0 = new Date(form.startDate + 'T' + form.startTime);
+          start = new Date(dayDate);
+          start.setHours(t0.getHours(), t0.getMinutes(), 0, 0);
+          end = new Date(start.getTime() + durMs);
+        }
+      }
+
       if (end < start) {
         setError('End must be after start');
         setLoading(false);
         return;
       }
-      const rt = (form.recurrenceType as RecurrenceType) ?? 'none';
       const hasRecurrence = rt !== 'none';
       if (hasRecurrence && form.recurrenceUntil) {
         const until = new Date(form.recurrenceUntil + 'T23:59:59');
@@ -1180,6 +1241,20 @@ function AddEventForm({
           ? Timestamp.fromDate(new Date(form.recurrenceUntil + 'T23:59:59'))
           : null,
       };
+      if (rt === 'monthly') {
+        eventData.recurrenceMonthlyMode = form.recurrenceMonthlyMode;
+        if (form.recurrenceMonthlyMode === 'nthWeekday') {
+          eventData.recurrenceNthOccurrence = Number(form.recurrenceNthOccurrence);
+          eventData.recurrenceWeekday = Number(form.recurrenceWeekday);
+        } else {
+          eventData.recurrenceNthOccurrence = null;
+          eventData.recurrenceWeekday = null;
+        }
+      } else {
+        eventData.recurrenceMonthlyMode = null;
+        eventData.recurrenceNthOccurrence = null;
+        eventData.recurrenceWeekday = null;
+      }
       if (!isEdit) eventData.createdAt = Timestamp.now();
       if (category) {
         eventData.categoryId = category.id;
@@ -1391,6 +1466,68 @@ function AddEventForm({
             <option value="yearly">Yearly</option>
           </select>
         </div>
+        {form.recurrenceType === 'monthly' && (
+          <div className="space-y-2">
+            <label htmlFor="ev-monthly-mode" className="block text-sm font-medium text-charcoal mb-1">
+              Monthly pattern
+            </label>
+            <select
+              id="ev-monthly-mode"
+              name="recurrenceMonthlyMode"
+              value={form.recurrenceMonthlyMode}
+              onChange={handleChange}
+              className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            >
+              <option value="sameDay">Same calendar date each month (e.g. the 15th)</option>
+              <option value="nthWeekday">Specific weekday (e.g. first Wednesday)</option>
+            </select>
+            {form.recurrenceMonthlyMode === 'nthWeekday' && (
+              <div className="flex flex-wrap gap-2 items-end">
+                <div className="min-w-[120px] flex-1">
+                  <label htmlFor="ev-nth" className="block text-xs font-medium text-text-light mb-0.5">
+                    Week of month
+                  </label>
+                  <select
+                    id="ev-nth"
+                    name="recurrenceNthOccurrence"
+                    value={form.recurrenceNthOccurrence}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {RECURRENCE_NTH_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="min-w-[140px] flex-1">
+                  <label htmlFor="ev-weekday" className="block text-xs font-medium text-text-light mb-0.5">
+                    Day
+                  </label>
+                  <select
+                    id="ev-weekday"
+                    name="recurrenceWeekday"
+                    value={form.recurrenceWeekday}
+                    onChange={handleChange}
+                    className="w-full rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                  >
+                    {RECURRENCE_WEEKDAY_OPTIONS.map((o) => (
+                      <option key={o.value} value={o.value}>
+                        {o.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+            )}
+            <p className="text-xs text-text-light">
+              {form.recurrenceMonthlyMode === 'nthWeekday'
+                ? 'Start date is set to that weekday in the month of your start date (first occurrence).'
+                : 'Repeats on the same day-of-month as your start date each month.'}
+            </p>
+          </div>
+        )}
         {form.recurrenceType !== 'none' && (
           <div>
             <label htmlFor="ev-repeat-until" className="block text-sm font-medium text-charcoal mb-1">

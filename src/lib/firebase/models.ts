@@ -77,6 +77,9 @@ export interface CalendarCategory {
 
 export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
 
+/** Monthly: same calendar day vs nth weekday (e.g. first Wednesday) */
+export type RecurrenceMonthlyMode = 'sameDay' | 'nthWeekday';
+
 export interface CalendarEvent {
   id?: string;
   title: string;
@@ -95,6 +98,12 @@ export interface CalendarEvent {
   recurrenceUntil?: Date;
   /** Denormalized for queries: true when recurrenceType is not none */
   hasRecurrence?: boolean;
+  /** When monthly: default sameDay (legacy) */
+  recurrenceMonthlyMode?: RecurrenceMonthlyMode;
+  /** 1 = first … 5 = fifth; -1 = last (only with nthWeekday mode) */
+  recurrenceNthOccurrence?: number;
+  /** 0 = Sunday … 6 = Saturday (only with nthWeekday mode) */
+  recurrenceWeekday?: number;
   /** Set on expanded instances; Firestore document id of the series */
   parentEventId?: string;
 } 
