@@ -95,9 +95,13 @@ export interface CalendarEvent {
   createdBy?: string;
   /** Stored on Firestore doc when event repeats */
   recurrenceType?: RecurrenceType;
+  /** Interval for daily/weekly/monthly/yearly repeats. e.g. 2 = every 2 weeks */
+  recurrenceInterval?: number;
   recurrenceUntil?: Date;
   /** Denormalized for queries: true when recurrenceType is not none */
   hasRecurrence?: boolean;
+  /** Weekly: show on these weekdays (0=Sun..6=Sat). If empty/undefined, uses startDate weekday. */
+  recurrenceByWeekday?: number[];
   /** When monthly: default sameDay (legacy) */
   recurrenceMonthlyMode?: RecurrenceMonthlyMode;
   /** 1 = first … 5 = fifth; -1 = last (only with nthWeekday mode) */

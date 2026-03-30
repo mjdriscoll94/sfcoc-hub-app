@@ -1,4 +1,4 @@
-import { addDays, addWeeks, addMonths, addYears, endOfDay } from 'date-fns';
+import { addDays, addWeeks, addMonths, addYears, endOfDay, startOfWeek } from 'date-fns';
 import type { CalendarEvent, RecurrenceType } from '@/lib/firebase/models';
 
 /** Map Firestore document data (client or admin SDK) to CalendarEvent */
@@ -18,6 +18,8 @@ export function calendarEventFromFirestore(id: string, d: Record<string, unknown
   const monthlyMode = (d.recurrenceMonthlyMode as CalendarEvent['recurrenceMonthlyMode']) ?? 'sameDay';
   const nth = d.recurrenceNthOccurrence;
   const wd = d.recurrenceWeekday;
+  const interval = d.recurrenceInterval;
+  const byWeekday = d.recurrenceByWeekday;
   return {
     id,
     title: (d.title as string) ?? '',
@@ -32,8 +34,10 @@ export function calendarEventFromFirestore(id: string, d: Record<string, unknown
     createdAt: (d.createdAt as { toDate?: () => Date })?.toDate?.(),
     createdBy: d.createdBy as string | undefined,
     recurrenceType: rt,
+    recurrenceInterval: typeof interval === 'number' && interval > 0 ? interval : undefined,
     recurrenceUntil,
     hasRecurrence: (d.hasRecurrence as boolean | undefined) ?? rt !== 'none',
+    recurrenceByWeekday: Array.isArray(byWeekday) ? (byWeekday as unknown[]).filter((x) => typeof x === 'number') as number[] : undefined,
     recurrenceMonthlyMode: monthlyMode,
     recurrenceNthOccurrence: typeof nth === 'number' ? nth : undefined,
     recurrenceWeekday: typeof wd === 'number' ? wd : undefined,
@@ -86,16 +90,16 @@ function applyTimeFrom(baseTime: Date, on: Date): Date {
   return out;
 }
 
-function nextOccurrenceSimple(from: Date, type: RecurrenceType): Date {
+function nextOccurrenceSimple(from: Date, type: RecurrenceType, interval: number): Date {
   switch (type) {
     case 'daily':
-      return addDays(from, 1);
+      return addDays(from, interval);
     case 'weekly':
-      return addWeeks(from, 1);
+      return addWeeks(from, interval);
     case 'monthly':
-      return addMonths(from, 1);
+      return addMonths(from, interval);
     case 'yearly':
-      return addYears(from, 1);
+      return addYears(from, interval);
     default:
       return addDays(from, 1);
   }
@@ -158,6 +162,51 @@ function expandMonthlyNthWeekday(
   return out;
 }
 
+function expandWeeklyByWeekday(
+  base: CalendarEvent,
+  rangeStart: Date,
+  rangeEnd: Date,
+  seriesEnd: Date,
+  durationMs: number,
+  intervalWeeks: number,
+  weekdays: number[]
+): CalendarEvent[] {
+  const sorted = [...new Set(weekdays)]
+    .filter((d) => d >= 0 && d <= 6)
+    .sort((a, b) => a - b);
+  if (sorted.length === 0) return [];
+
+  const baseStart = base.startDate;
+  const baseWeekStart = startOfWeek(baseStart, { weekStartsOn: 0 }); // Sunday
+  const timeSrc = baseStart;
+
+  const out: CalendarEvent[] = [];
+  for (let i = 0; i < MAX_ITERATIONS; i++) {
+    const wkStart = addWeeks(baseWeekStart, i * intervalWeeks);
+    for (const wd of sorted) {
+      const day = new Date(wkStart);
+      day.setDate(day.getDate() + wd);
+      const occStart = applyTimeFrom(timeSrc, day);
+      if (occStart < baseStart) continue; // don't generate before first occurrence
+      if (occStart > seriesEnd) return out;
+      if (occStart < rangeStart || occStart > rangeEnd) continue;
+
+      const instStart = new Date(occStart);
+      const instEnd = new Date(instStart.getTime() + durationMs);
+      const dateKey = toDateKey(instStart.getFullYear(), instStart.getMonth(), instStart.getDate());
+      const parentId = base.id ?? 'event';
+      out.push({
+        ...base,
+        id: `${parentId}__${dateKey}`,
+        parentEventId: base.id,
+        startDate: instStart,
+        endDate: instEnd,
+      });
+    }
+  }
+  return out;
+}
+
 /**
  * Expand a stored calendar event into display instances for [rangeStart, rangeEnd].
  * Non-recurring: one instance if its start falls in range.
@@ -181,6 +230,7 @@ export function expandEventToInstances(
   const seriesEnd = base.recurrenceUntil
     ? endOfDay(base.recurrenceUntil)
     : endOfDay(addYears(base.startDate, MAX_SERIES_YEARS));
+  const interval = Math.max(1, base.recurrenceInterval ?? 1);
 
   if (
     r === 'monthly' &&
@@ -191,11 +241,23 @@ export function expandEventToInstances(
     return expandMonthlyNthWeekday(base, rangeStart, rangeEnd, seriesEnd, durationMs);
   }
 
+  if (r === 'weekly' && base.recurrenceByWeekday && base.recurrenceByWeekday.length > 0) {
+    return expandWeeklyByWeekday(
+      base,
+      rangeStart,
+      rangeEnd,
+      seriesEnd,
+      durationMs,
+      interval,
+      base.recurrenceByWeekday
+    );
+  }
+
   let cursor = new Date(base.startDate);
   let iterations = 0;
 
   while (cursor < rangeStart && cursor <= seriesEnd && iterations < MAX_ITERATIONS) {
-    cursor = nextOccurrenceSimple(cursor, r);
+    cursor = nextOccurrenceSimple(cursor, r, interval);
     iterations++;
   }
 
@@ -213,7 +275,7 @@ export function expandEventToInstances(
       startDate: instStart,
       endDate: instEnd,
     });
-    cursor = nextOccurrenceSimple(cursor, r);
+    cursor = nextOccurrenceSimple(cursor, r, interval);
     iterations++;
   }
 

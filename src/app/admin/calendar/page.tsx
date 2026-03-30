@@ -93,6 +93,13 @@ const RECURRENCE_WEEKDAY_OPTIONS: { value: string; label: string }[] = [
   { value: '6', label: 'Saturday' },
 ];
 
+const RECURRENCE_INTERVAL_OPTIONS: { value: string; label: string }[] = [
+  { value: '1', label: 'Every week' },
+  { value: '2', label: 'Every 2 weeks (bi-weekly)' },
+  { value: '3', label: 'Every 3 weeks' },
+  { value: '4', label: 'Every 4 weeks' },
+];
+
 function getDaysInMonth(year: number, month: number) {
   const first = new Date(year, month, 1);
   const last = new Date(year, month + 1, 0);
@@ -1094,7 +1101,11 @@ function AddEventForm({
         endDate: toDateInput(end),
         endTime: toTimeInput(end),
         recurrenceType: (initialEvent.recurrenceType ?? 'none') as RecurrenceType,
+        recurrenceInterval: String(initialEvent.recurrenceInterval ?? 1),
         recurrenceUntil: initialEvent.recurrenceUntil ? toDateInput(initialEvent.recurrenceUntil) : '',
+        recurrenceByWeekday: Array.isArray(initialEvent.recurrenceByWeekday)
+          ? initialEvent.recurrenceByWeekday.map(String)
+          : [String(start.getDay())],
         recurrenceMonthlyMode: (initialEvent.recurrenceMonthlyMode ?? 'sameDay') as RecurrenceMonthlyMode,
         recurrenceNthOccurrence: String(initialEvent.recurrenceNthOccurrence ?? 1),
         recurrenceWeekday: String(initialEvent.recurrenceWeekday ?? 3),
@@ -1112,7 +1123,9 @@ function AddEventForm({
       endDate: d,
       endTime: '17:00',
       recurrenceType: 'none' as RecurrenceType,
+      recurrenceInterval: '1',
       recurrenceUntil: '',
+      recurrenceByWeekday: [String(initialDate.getDay())],
       recurrenceMonthlyMode: 'sameDay' as RecurrenceMonthlyMode,
       recurrenceNthOccurrence: '1',
       recurrenceWeekday: '3',
@@ -1143,6 +1156,17 @@ function AddEventForm({
       return;
     }
     if (name === 'categoryId') setShowNewCategory(false);
+    if (type === 'checkbox' && name === 'recurrenceByWeekday') {
+      setForm((prev) => {
+        const current = new Set<string>(prev.recurrenceByWeekday ?? []);
+        if (checked) current.add(value);
+        else current.delete(value);
+        const next = [...current].sort((a, b) => Number(a) - Number(b));
+        return { ...prev, recurrenceByWeekday: next };
+      });
+      return;
+    }
+
     setForm((prev) => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -1188,6 +1212,7 @@ function AddEventForm({
         : new Date(form.endDate + 'T' + form.endTime);
 
       const rt = (form.recurrenceType as RecurrenceType) ?? 'none';
+      const interval = Math.max(1, Number(form.recurrenceInterval ?? '1') || 1);
       if (rt === 'monthly' && form.recurrenceMonthlyMode === 'nthWeekday') {
         const sy = parseInt(form.startDate.slice(0, 4), 10);
         const sm = parseInt(form.startDate.slice(5, 7), 10) - 1;
@@ -1236,11 +1261,18 @@ function AddEventForm({
         endDate: Timestamp.fromDate(end),
         createdBy: userProfile?.uid ?? null,
         recurrenceType: rt,
+        recurrenceInterval: interval,
         hasRecurrence,
         recurrenceUntil: hasRecurrence && form.recurrenceUntil
           ? Timestamp.fromDate(new Date(form.recurrenceUntil + 'T23:59:59'))
           : null,
       };
+      if (rt === 'weekly') {
+        const by = (form.recurrenceByWeekday ?? []).map((x: string) => Number(x)).filter((n: number) => !Number.isNaN(n));
+        eventData.recurrenceByWeekday = by.length > 0 ? by : [start.getDay()];
+      } else {
+        eventData.recurrenceByWeekday = null;
+      }
       if (rt === 'monthly') {
         eventData.recurrenceMonthlyMode = form.recurrenceMonthlyMode;
         if (form.recurrenceMonthlyMode === 'nthWeekday') {
@@ -1466,6 +1498,60 @@ function AddEventForm({
             <option value="yearly">Yearly</option>
           </select>
         </div>
+        {form.recurrenceType === 'weekly' && (
+          <div className="space-y-2">
+            <label className="block text-sm font-medium text-charcoal mb-1">Weekly schedule</label>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <label htmlFor="ev-weekly-interval" className="block text-xs font-medium text-text-light mb-0.5">
+                  Interval
+                </label>
+                <select
+                  id="ev-weekly-interval"
+                  name="recurrenceInterval"
+                  value={form.recurrenceInterval}
+                  onChange={handleChange}
+                  className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  {RECURRENCE_INTERVAL_OPTIONS.map((o) => (
+                    <option key={o.value} value={o.value}>
+                      {o.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <span className="block text-xs font-medium text-text-light mb-0.5">Days</span>
+                <div className="flex flex-wrap gap-2">
+                  {RECURRENCE_WEEKDAY_OPTIONS.map((o) => {
+                    const checked = (form.recurrenceByWeekday ?? []).includes(o.value);
+                    return (
+                      <label
+                        key={o.value}
+                        className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm cursor-pointer select-none ${
+                          checked ? 'border-transparent bg-bg-secondary/70 text-charcoal' : 'border-border bg-white text-text-light'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          name="recurrenceByWeekday"
+                          value={o.value}
+                          checked={checked}
+                          onChange={handleChange}
+                          className="accent-[var(--coral)]"
+                        />
+                        <span>{o.label}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+                <p className="mt-1 text-xs text-text-light">
+                  Choose one or more days. If none are selected, we’ll default to the start date’s weekday.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
         {form.recurrenceType === 'monthly' && (
           <div className="space-y-2">
             <label htmlFor="ev-monthly-mode" className="block text-sm font-medium text-charcoal mb-1">
