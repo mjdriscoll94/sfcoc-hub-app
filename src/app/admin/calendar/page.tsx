@@ -22,20 +22,34 @@ import {
 import Link from 'next/link';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
 import { CalendarEvent, CalendarCategory } from '@/lib/firebase/models';
-import { ArrowLeft, Download, Link2, ChevronDown, Check, Tags, X, Trash2 } from 'lucide-react';
+import { ArrowLeft, Download, Link2, ChevronDown, Check, Tags, X, Trash2, Plus } from 'lucide-react';
 
-const CATEGORY_COLORS = [
-  { name: 'Coral', value: '#E88B5F' },
-  { name: 'Sage', value: '#70A8A0' },
-  { name: 'Blue', value: '#5F9FE8' },
-  { name: 'Green', value: '#5FAF8A' },
-  { name: 'Purple', value: '#8B5FBF' },
-  { name: 'Amber', value: '#E8A05F' },
-  { name: 'Slate', value: '#5A6A74' },
-  { name: 'Rose', value: '#E87A7A' },
-] as const;
+/** Calendar filter / TeamUp-style palette + legacy swatches so existing categories stay selectable */
+const CATEGORY_COLORS: { name: string; value: string }[] = [
+  { name: "Children's Events", value: '#C4A35A' },
+  { name: 'Church Events', value: '#1B5E3A' },
+  { name: "Men's Events", value: '#2563EB' },
+  { name: 'Private Events', value: '#0EA5E9' },
+  { name: "Teen Events", value: '#DC2626' },
+  { name: "Women's Events", value: '#A855F7' },
+  { name: 'Worship / Class', value: '#0D9488' },
+  { name: 'Young Adult', value: '#4A3728' },
+  { name: 'Coral (legacy)', value: '#E88B5F' },
+  { name: 'Sage (legacy)', value: '#70A8A0' },
+  { name: 'Blue (legacy)', value: '#5F9FE8' },
+  { name: 'Green (legacy)', value: '#5FAF8A' },
+  { name: 'Purple (legacy)', value: '#8B5FBF' },
+  { name: 'Amber (legacy)', value: '#E8A05F' },
+  { name: 'Slate (legacy)', value: '#5A6A74' },
+  { name: 'Rose (legacy)', value: '#E87A7A' },
+];
 
 const DEFAULT_EVENT_COLOR = '#E88B5F';
+
+function categoryColorSelectOptions(currentHex: string): { name: string; value: string }[] {
+  if (CATEGORY_COLORS.some((c) => c.value === currentHex)) return CATEGORY_COLORS;
+  return [{ name: `Saved color (${currentHex})`, value: currentHex }, ...CATEGORY_COLORS];
+}
 
 /** Firestore category id key for events with no category when filtering */
 const UNCATEGORIZED_FILTER_KEY = '__uncategorized__';
@@ -1433,10 +1447,10 @@ function CategoryEditRow({
               value={color}
               onChange={(e) => setColor(e.target.value)}
               disabled={busy}
-              className="min-w-0 flex-1 rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+              className="flex-1 min-w-[12rem] rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
             >
-              {CATEGORY_COLORS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
+              {categoryColorSelectOptions(color).map((opt) => (
+                <option key={`${opt.value}-${opt.name}`} value={opt.value}>
                   {opt.name}
                 </option>
               ))}
@@ -1459,6 +1473,97 @@ function CategoryEditRow({
         >
           <Trash2 className="h-4 w-4" />
           Delete
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function AddCategoryForm() {
+  const [name, setName] = useState('');
+  const [color, setColor] = useState(CATEGORY_COLORS[0]?.value ?? DEFAULT_EVENT_COLOR);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleAdd = async () => {
+    if (!name.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await addDoc(collection(db, 'calendarCategories'), {
+        name: name.trim(),
+        color,
+      });
+      setName('');
+      setColor(CATEGORY_COLORS[0]?.value ?? DEFAULT_EVENT_COLOR);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to add category');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="rounded-lg border border-dashed border-primary/35 bg-sage/5 p-3 mb-4">
+      <h3 className="text-sm font-semibold text-charcoal mb-2">Add category</h3>
+      <p className="text-xs text-text-light mb-3">
+        Choose a name and color. Categories sync to the calendar key and event forms automatically.
+      </p>
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label htmlFor="new-cat-modal-name" className="block text-xs font-medium text-text-light mb-0.5">
+            Name
+          </label>
+          <input
+            id="new-cat-modal-name"
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={saving}
+            placeholder="e.g. Youth night"
+            className="w-full rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+          />
+        </div>
+        <div className="min-w-[12rem]">
+          <label htmlFor="new-cat-modal-color" className="block text-xs font-medium text-text-light mb-0.5">
+            Color
+          </label>
+          <div className="flex items-center gap-2">
+            <span
+              className="h-8 w-8 shrink-0 rounded-md border border-border shadow-sm"
+              style={{ backgroundColor: color }}
+              aria-hidden
+            />
+            <select
+              id="new-cat-modal-color"
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              disabled={saving}
+              className="min-w-0 flex-1 rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            >
+              {CATEGORY_COLORS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleAdd}
+          disabled={saving || !name.trim()}
+          className="inline-flex items-center gap-1.5 rounded-md admin-calendar-btn-coral px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        >
+          {saving ? (
+            'Adding…'
+          ) : (
+            <>
+              <Plus className="h-4 w-4" />
+              Add
+            </>
+          )}
         </button>
       </div>
       {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
@@ -1511,9 +1616,10 @@ function EditCategoriesModal({
           </button>
         </div>
         <div className="overflow-y-auto px-4 py-3">
+          <AddCategoryForm />
           {categories.length === 0 ? (
             <p className="text-sm text-text-light">
-              No categories yet. Create one when adding or editing an event.
+              No categories yet. Add one above, or create one from an event.
             </p>
           ) : (
             <ul className="space-y-4 list-none m-0 p-0">
