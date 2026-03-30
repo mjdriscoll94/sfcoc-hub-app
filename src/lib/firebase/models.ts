@@ -75,6 +75,8 @@ export interface CalendarCategory {
   color: string; // hex, e.g. #E88B5F
 }
 
+export type RecurrenceType = 'none' | 'daily' | 'weekly' | 'monthly' | 'yearly';
+
 export interface CalendarEvent {
   id?: string;
   title: string;
@@ -88,4 +90,11 @@ export interface CalendarEvent {
   categoryColor?: string;
   createdAt?: Date;
   createdBy?: string;
+  /** Stored on Firestore doc when event repeats */
+  recurrenceType?: RecurrenceType;
+  recurrenceUntil?: Date;
+  /** Denormalized for queries: true when recurrenceType is not none */
+  hasRecurrence?: boolean;
+  /** Set on expanded instances; Firestore document id of the series */
+  parentEventId?: string;
 } 

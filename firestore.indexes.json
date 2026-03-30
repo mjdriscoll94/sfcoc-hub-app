@@ -79,6 +79,20 @@
       ]
     },
     {
+      "collectionGroup": "calendarEvents",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "hasRecurrence",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "startDate",
+          "order": "ASCENDING"
+        }
+      ]
+    },
+    {
       "collectionGroup": "lifeGroupResources",
       "queryScope": "COLLECTION",
       "fields": [

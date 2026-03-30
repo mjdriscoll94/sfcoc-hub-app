@@ -9,6 +9,7 @@ import {
   collection,
   doc,
   addDoc,
+  getDoc,
   getDocs,
   query,
   where,
@@ -21,7 +22,11 @@ import {
 } from 'firebase/firestore';
 import Link from 'next/link';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
-import { CalendarEvent, CalendarCategory } from '@/lib/firebase/models';
+import { CalendarEvent, CalendarCategory, type RecurrenceType } from '@/lib/firebase/models';
+import {
+  calendarEventFromFirestore,
+  expandAllEvents,
+} from '@/lib/calendar/recurrence';
 import { ArrowLeft, Download, Link2, ChevronDown, Check, Tags, X, Trash2, Plus } from 'lucide-react';
 
 /** Calendar filter / TeamUp-style palette + legacy swatches so existing categories stay selectable */
@@ -102,6 +107,13 @@ function eventMatchesFilter(ev: CalendarEvent, hiddenKeys: ReadonlySet<string>):
   return !hiddenKeys.has(cid);
 }
 
+/** Firestore document id for an event (series or single), not a virtual instance id */
+function firestoreDocIdForEvent(ev: CalendarEvent): string | null {
+  if (ev.parentEventId) return ev.parentEventId;
+  if (ev.id?.includes('__')) return ev.id.split('__')[0] ?? null;
+  return ev.id ?? null;
+}
+
 /** Use origin only so NEXT_PUBLIC_BASE_URL values that include a path do not duplicate `/api/calendar/feed`. */
 function calendarFeedSiteOrigin(baseUrl: string): string {
   const t = baseUrl.trim();
@@ -153,6 +165,33 @@ async function stripCategoryFromEvents(categoryId: string): Promise<void> {
     });
     await batch.commit();
   }
+}
+
+async function loadEventsForRange(queryStart: Date, queryEnd: Date): Promise<CalendarEvent[]> {
+  const q1 = query(
+    collection(db, 'calendarEvents'),
+    where('startDate', '>=', Timestamp.fromDate(queryStart)),
+    where('startDate', '<=', Timestamp.fromDate(queryEnd)),
+    orderBy('startDate')
+  );
+  const q2 = query(
+    collection(db, 'calendarEvents'),
+    where('hasRecurrence', '==', true),
+    where('startDate', '<=', Timestamp.fromDate(queryEnd)),
+    orderBy('startDate')
+  );
+  const [snap1, snap2] = await Promise.all([getDocs(q1), getDocs(q2)]);
+  const raw: CalendarEvent[] = [];
+  const seen = new Set<string>();
+  snap1.docs.forEach((docSnap) => {
+    seen.add(docSnap.id);
+    raw.push(calendarEventFromFirestore(docSnap.id, docSnap.data() as Record<string, unknown>));
+  });
+  snap2.docs.forEach((docSnap) => {
+    if (seen.has(docSnap.id)) return;
+    raw.push(calendarEventFromFirestore(docSnap.id, docSnap.data() as Record<string, unknown>));
+  });
+  return expandAllEvents(raw, queryStart, queryEnd);
 }
 
 export default function AdminCalendarPage() {
@@ -234,37 +273,19 @@ export default function AdminCalendarPage() {
       queryEnd.setDate(queryEnd.getDate() + 6);
       queryEnd.setHours(23, 59, 59, 999);
     }
-    const q = query(
-      collection(db, 'calendarEvents'),
-      where('startDate', '>=', Timestamp.fromDate(queryStart)),
-      where('startDate', '<=', Timestamp.fromDate(queryEnd)),
-      orderBy('startDate')
-    );
-    getDocs(q)
-      .then((snap) => {
-        const list: CalendarEvent[] = [];
-        snap.docs.forEach((doc) => {
-          const d = doc.data();
-          const startDate = d.startDate?.toDate?.() ?? new Date(d.startDate);
-          list.push({
-            id: doc.id,
-            title: d.title ?? '',
-            description: d.description,
-            startDate,
-            endDate: d.endDate?.toDate?.() ?? (d.endDate ? new Date(d.endDate) : undefined),
-            allDay: d.allDay ?? false,
-            location: d.location,
-            categoryId: d.categoryId ?? undefined,
-            categoryName: d.categoryName ?? undefined,
-            categoryColor: d.categoryColor ?? undefined,
-            createdAt: d.createdAt?.toDate?.() ?? undefined,
-            createdBy: d.createdBy,
-          });
-        });
-        setEvents(list);
+    let cancelled = false;
+    setLoading(true);
+    loadEventsForRange(queryStart, queryEnd)
+      .then((list) => {
+        if (!cancelled) setEvents(list);
       })
       .catch((err) => console.error('Failed to load calendar events', err))
-      .finally(() => setLoading(false));
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [viewMode, focusDate, canAccess, eventsNonce]);
 
   const toggleCategoryFilter = useCallback((key: string) => {
@@ -317,7 +338,6 @@ export default function AdminCalendarPage() {
   };
 
   const onEventAdded = () => {
-    setLoading(true);
     const y = focusDate.getFullYear();
     const m = focusDate.getMonth();
     let queryStart: Date;
@@ -335,35 +355,10 @@ export default function AdminCalendarPage() {
       queryEnd.setDate(queryEnd.getDate() + 6);
       queryEnd.setHours(23, 59, 59, 999);
     }
-    const q = query(
-      collection(db, 'calendarEvents'),
-      where('startDate', '>=', Timestamp.fromDate(queryStart)),
-      where('startDate', '<=', Timestamp.fromDate(queryEnd)),
-      orderBy('startDate')
-    );
-    getDocs(q)
-      .then((snap) => {
-        const list: CalendarEvent[] = [];
-        snap.docs.forEach((doc) => {
-          const d = doc.data();
-          const startDate = d.startDate?.toDate?.() ?? new Date(d.startDate);
-          list.push({
-            id: doc.id,
-            title: d.title ?? '',
-            description: d.description,
-            startDate,
-            endDate: d.endDate?.toDate?.() ?? (d.endDate ? new Date(d.endDate) : undefined),
-            allDay: d.allDay ?? false,
-            location: d.location,
-            categoryId: d.categoryId ?? undefined,
-            categoryName: d.categoryName ?? undefined,
-            categoryColor: d.categoryColor ?? undefined,
-            createdAt: d.createdAt?.toDate?.() ?? undefined,
-            createdBy: d.createdBy,
-          });
-        });
-        setEvents(list);
-      })
+    setLoading(true);
+    loadEventsForRange(queryStart, queryEnd)
+      .then(setEvents)
+      .catch((err) => console.error('Failed to reload calendar events', err))
       .finally(() => setLoading(false));
     closeModal();
   };
@@ -478,7 +473,7 @@ export default function AdminCalendarPage() {
                   type="button"
                   onClick={() => {
                     setViewMode(mode);
-                    if (mode === 'month') setFocusDate((d) => new Date(today.getFullYear(), today.getMonth(), 1));
+                    if (mode === 'month') setFocusDate(() => new Date(today.getFullYear(), today.getMonth(), 1));
                     if (mode === 'week') setFocusDate(() => new Date());
                   }}
                   className={`px-3 py-1.5 text-sm font-medium rounded-md capitalize ${viewMode === mode ? 'admin-calendar-btn-coral' : 'text-[var(--charcoal)] hover:bg-[var(--bg-secondary)]'}`}
@@ -900,11 +895,17 @@ function DayModal({
   const dateStr = `${MONTH_NAMES[month]} ${day}, ${year}`;
 
   const handleDelete = async (ev: CalendarEvent) => {
-    if (!ev.id) return;
-    if (!window.confirm(`Delete "${ev.title}"?`)) return;
-    setDeletingId(ev.id);
+    const documentId = firestoreDocIdForEvent(ev);
+    if (!documentId) return;
+    const isRecurring =
+      (ev.recurrenceType && ev.recurrenceType !== 'none') || !!ev.parentEventId;
+    const msg = isRecurring
+      ? `Delete the entire recurring series "${ev.title}"? All occurrences will be removed.`
+      : `Delete "${ev.title}"?`;
+    if (!window.confirm(msg)) return;
+    setDeletingId(documentId);
     try {
-      await deleteDoc(doc(db, 'calendarEvents', ev.id));
+      await deleteDoc(doc(db, 'calendarEvents', documentId));
       onEventAdded();
     } catch (err) {
       console.error('Failed to delete event', err);
@@ -952,7 +953,24 @@ function DayModal({
                       <span className="flex shrink-0 gap-1">
                         <button
                           type="button"
-                          onClick={() => setEditingEvent(ev)}
+                          onClick={async () => {
+                            const docId = firestoreDocIdForEvent(ev);
+                            if (!docId) {
+                              setEditingEvent(ev);
+                              return;
+                            }
+                            const snap = await getDoc(doc(db, 'calendarEvents', docId));
+                            if (snap.exists()) {
+                              setEditingEvent(
+                                calendarEventFromFirestore(
+                                  snap.id,
+                                  snap.data() as Record<string, unknown>
+                                )
+                              );
+                            } else {
+                              setEditingEvent(ev);
+                            }
+                          }}
                           className="rounded px-2 py-0.5 text-xs font-medium text-charcoal hover:bg-white/60"
                           aria-label="Edit"
                         >
@@ -961,11 +979,11 @@ function DayModal({
                         <button
                           type="button"
                           onClick={() => handleDelete(ev)}
-                          disabled={deletingId === ev.id}
+                          disabled={deletingId === firestoreDocIdForEvent(ev)}
                           className="rounded px-2 py-0.5 text-xs font-medium text-error hover:bg-white/60 disabled:opacity-50"
                           aria-label="Delete"
                         >
-                          {deletingId === ev.id ? '…' : 'Delete'}
+                          {deletingId === firestoreDocIdForEvent(ev) ? '…' : 'Delete'}
                         </button>
                       </span>
                     </li>
@@ -1045,6 +1063,8 @@ function AddEventForm({
         startTime: toTimeInput(start),
         endDate: toDateInput(end),
         endTime: toTimeInput(end),
+        recurrenceType: (initialEvent.recurrenceType ?? 'none') as RecurrenceType,
+        recurrenceUntil: initialEvent.recurrenceUntil ? toDateInput(initialEvent.recurrenceUntil) : '',
       };
     }
     const d = toDateInput(initialDate);
@@ -1058,6 +1078,8 @@ function AddEventForm({
       startTime: '09:00',
       endDate: d,
       endTime: '17:00',
+      recurrenceType: 'none' as RecurrenceType,
+      recurrenceUntil: '',
     };
   });
 
@@ -1133,6 +1155,16 @@ function AddEventForm({
         setLoading(false);
         return;
       }
+      const rt = (form.recurrenceType as RecurrenceType) ?? 'none';
+      const hasRecurrence = rt !== 'none';
+      if (hasRecurrence && form.recurrenceUntil) {
+        const until = new Date(form.recurrenceUntil + 'T23:59:59');
+        if (until < start) {
+          setError('Repeat end date must be on or after the start date');
+          setLoading(false);
+          return;
+        }
+      }
       const category = categories.find((c) => c.id === form.categoryId);
       const eventData: Record<string, unknown> = {
         title: form.title.trim(),
@@ -1142,6 +1174,11 @@ function AddEventForm({
         startDate: Timestamp.fromDate(start),
         endDate: Timestamp.fromDate(end),
         createdBy: userProfile?.uid ?? null,
+        recurrenceType: rt,
+        hasRecurrence,
+        recurrenceUntil: hasRecurrence && form.recurrenceUntil
+          ? Timestamp.fromDate(new Date(form.recurrenceUntil + 'T23:59:59'))
+          : null,
       };
       if (!isEdit) eventData.createdAt = Timestamp.now();
       if (category) {
@@ -1329,6 +1366,44 @@ function AddEventForm({
               name="endTime"
               type="time"
               value={form.endTime}
+              onChange={handleChange}
+              className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </div>
+        )}
+      </div>
+      <div className="rounded-lg border border-border bg-bg/40 p-3 space-y-3">
+        <div>
+          <label htmlFor="ev-repeat" className="block text-sm font-medium text-charcoal mb-1">
+            Repeat
+          </label>
+          <select
+            id="ev-repeat"
+            name="recurrenceType"
+            value={form.recurrenceType}
+            onChange={handleChange}
+            className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          >
+            <option value="none">Does not repeat</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="monthly">Monthly</option>
+            <option value="yearly">Yearly</option>
+          </select>
+        </div>
+        {form.recurrenceType !== 'none' && (
+          <div>
+            <label htmlFor="ev-repeat-until" className="block text-sm font-medium text-charcoal mb-1">
+              Repeat until (optional)
+            </label>
+            <p className="text-xs text-text-light mb-1">
+              Leave blank to repeat for up to three years from the first date. Set an end date to stop sooner.
+            </p>
+            <input
+              id="ev-repeat-until"
+              name="recurrenceUntil"
+              type="date"
+              value={form.recurrenceUntil}
               onChange={handleChange}
               className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
