@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import { db } from '@/lib/firebase/config';
@@ -16,6 +16,7 @@ import {
   Timestamp,
   updateDoc,
   deleteDoc,
+  onSnapshot,
 } from 'firebase/firestore';
 import Link from 'next/link';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
@@ -34,6 +35,9 @@ const CATEGORY_COLORS = [
 ] as const;
 
 const DEFAULT_EVENT_COLOR = '#E88B5F';
+
+/** Firestore category id key for events with no category when filtering */
+const UNCATEGORIZED_FILTER_KEY = '__uncategorized__';
 
 const MONTH_NAMES = [
   'January', 'February', 'March', 'April', 'May', 'June',
@@ -75,6 +79,14 @@ function eventColor(ev: CalendarEvent): string {
   return ev.categoryColor ?? DEFAULT_EVENT_COLOR;
 }
 
+function eventMatchesFilter(ev: CalendarEvent, hiddenKeys: ReadonlySet<string>): boolean {
+  const cid = ev.categoryId;
+  if (!cid) {
+    return !hiddenKeys.has(UNCATEGORIZED_FILTER_KEY);
+  }
+  return !hiddenKeys.has(cid);
+}
+
 /** Use origin only so NEXT_PUBLIC_BASE_URL values that include a path do not duplicate `/api/calendar/feed`. */
 function calendarFeedSiteOrigin(baseUrl: string): string {
   const t = baseUrl.trim();
@@ -99,6 +111,9 @@ export default function AdminCalendarPage() {
   const [exportOpen, setExportOpen] = useState(false);
   const [copiedFeed, setCopiedFeed] = useState(false);
   const exportRef = useRef<HTMLDivElement>(null);
+  const [calendarCategories, setCalendarCategories] = useState<CalendarCategory[]>([]);
+  /** Category ids (or UNCATEGORIZED_FILTER_KEY) that are hidden from the calendar view */
+  const [hiddenCategoryKeys, setHiddenCategoryKeys] = useState<Set<string>>(() => new Set());
 
   const canAccess =
     userProfile?.isAdmin ||
@@ -117,6 +132,28 @@ export default function AdminCalendarPage() {
       return;
     }
   }, [userProfile, canAccess, router]);
+
+  useEffect(() => {
+    if (!canAccess) return;
+    const unsub = onSnapshot(
+      collection(db, 'calendarCategories'),
+      (snap) => {
+        const list: CalendarCategory[] = [];
+        snap.docs.forEach((docSnap) => {
+          const d = docSnap.data();
+          list.push({
+            id: docSnap.id,
+            name: d.name ?? '',
+            color: d.color ?? DEFAULT_EVENT_COLOR,
+          });
+        });
+        list.sort((a, b) => a.name.localeCompare(b.name));
+        setCalendarCategories(list);
+      },
+      (err) => console.error('Failed to subscribe to calendar categories', err)
+    );
+    return () => unsub();
+  }, [canAccess]);
 
   useEffect(() => {
     if (!canAccess) return;
@@ -170,13 +207,30 @@ export default function AdminCalendarPage() {
       .finally(() => setLoading(false));
   }, [viewMode, focusDate, canAccess]);
 
-  const eventsByDate: Record<string, CalendarEvent[]> = {};
-  events.forEach((ev) => {
-    const d = ev.startDate;
-    const key = toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
-    if (!eventsByDate[key]) eventsByDate[key] = [];
-    eventsByDate[key].push(ev);
-  });
+  const toggleCategoryFilter = useCallback((key: string) => {
+    setHiddenCategoryKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const filteredEvents = useMemo(
+    () => events.filter((ev) => eventMatchesFilter(ev, hiddenCategoryKeys)),
+    [events, hiddenCategoryKeys]
+  );
+
+  const eventsByDate = useMemo(() => {
+    const map: Record<string, CalendarEvent[]> = {};
+    filteredEvents.forEach((ev) => {
+      const d = ev.startDate;
+      const key = toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
+      if (!map[key]) map[key] = [];
+      map[key].push(ev);
+    });
+    return map;
+  }, [filteredEvents]);
 
   const openModal = (y: number, m: number, d: number) => {
     setSelectedDate({ year: y, month: m, day: d });
@@ -440,6 +494,72 @@ export default function AdminCalendarPage() {
               )}
             </div>
           </div>
+        </div>
+
+        <div
+          className="mb-6 rounded-lg border border-border bg-card px-4 py-3"
+          aria-label="Filter events by category"
+        >
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1 mb-2">
+            <span className="text-sm font-medium text-charcoal shrink-0">Category key</span>
+            <span className="text-xs text-text-light">Click a category to show or hide its events.</span>
+          </div>
+          <ul className="flex flex-wrap items-center gap-2 list-none m-0 p-0">
+            {calendarCategories.map((c) => {
+              const id = c.id ?? '';
+              const hidden = id ? hiddenCategoryKeys.has(id) : false;
+              const shown = !hidden;
+              return (
+                <li key={id || c.name}>
+                  <button
+                    type="button"
+                    onClick={() => id && toggleCategoryFilter(id)}
+                    disabled={!id}
+                    aria-pressed={shown}
+                    title={shown ? 'Click to hide these events' : 'Click to show these events'}
+                    className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${
+                      shown
+                        ? 'border-transparent bg-bg-secondary/70 text-charcoal hover:bg-bg-secondary'
+                        : 'border-border bg-white/80 text-text-light opacity-60 line-through decoration-charcoal/40'
+                    }`}
+                  >
+                    <span
+                      className={`h-3.5 w-3.5 shrink-0 rounded-sm border border-charcoal/15 shadow-sm ${shown ? '' : 'grayscale'}`}
+                      style={{ backgroundColor: c.color }}
+                      aria-hidden
+                    />
+                    <span>{c.name || 'Untitled'}</span>
+                  </button>
+                </li>
+              );
+            })}
+            <li>
+              <button
+                type="button"
+                onClick={() => toggleCategoryFilter(UNCATEGORIZED_FILTER_KEY)}
+                aria-pressed={!hiddenCategoryKeys.has(UNCATEGORIZED_FILTER_KEY)}
+                title={
+                  !hiddenCategoryKeys.has(UNCATEGORIZED_FILTER_KEY)
+                    ? 'Click to hide events with no category'
+                    : 'Click to show events with no category'
+                }
+                className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 ${
+                  !hiddenCategoryKeys.has(UNCATEGORIZED_FILTER_KEY)
+                    ? 'border-transparent bg-bg-secondary/70 text-charcoal hover:bg-bg-secondary'
+                    : 'border-border bg-white/80 text-text-light opacity-60 line-through decoration-charcoal/40'
+                }`}
+              >
+                <span
+                  className={`h-3.5 w-3.5 shrink-0 rounded-sm border border-charcoal/15 shadow-sm ${
+                    !hiddenCategoryKeys.has(UNCATEGORIZED_FILTER_KEY) ? '' : 'grayscale'
+                  }`}
+                  style={{ backgroundColor: DEFAULT_EVENT_COLOR }}
+                  aria-hidden
+                />
+                <span>No category</span>
+              </button>
+            </li>
+          </ul>
         </div>
 
         {loading && (
