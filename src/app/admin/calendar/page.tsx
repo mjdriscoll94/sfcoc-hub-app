@@ -17,11 +17,12 @@ import {
   updateDoc,
   deleteDoc,
   onSnapshot,
+  writeBatch,
 } from 'firebase/firestore';
 import Link from 'next/link';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
 import { CalendarEvent, CalendarCategory } from '@/lib/firebase/models';
-import { ArrowLeft, Download, Link2, ChevronDown, Check } from 'lucide-react';
+import { ArrowLeft, Download, Link2, ChevronDown, Check, Tags, X, Trash2 } from 'lucide-react';
 
 const CATEGORY_COLORS = [
   { name: 'Coral', value: '#E88B5F' },
@@ -98,6 +99,48 @@ function calendarFeedSiteOrigin(baseUrl: string): string {
   }
 }
 
+function chunkFirestoreDocs<T>(docs: T[], batchSize: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < docs.length; i += batchSize) {
+    out.push(docs.slice(i, i + batchSize));
+  }
+  return out;
+}
+
+async function updateEventsDenormalizedCategory(
+  categoryId: string,
+  name: string,
+  color: string
+): Promise<void> {
+  const q = query(collection(db, 'calendarEvents'), where('categoryId', '==', categoryId));
+  const snap = await getDocs(q);
+  const docChunks = chunkFirestoreDocs(snap.docs, 500);
+  for (const chunk of docChunks) {
+    const batch = writeBatch(db);
+    chunk.forEach((d) => {
+      batch.update(d.ref, { categoryName: name, categoryColor: color });
+    });
+    await batch.commit();
+  }
+}
+
+async function stripCategoryFromEvents(categoryId: string): Promise<void> {
+  const q = query(collection(db, 'calendarEvents'), where('categoryId', '==', categoryId));
+  const snap = await getDocs(q);
+  const docChunks = chunkFirestoreDocs(snap.docs, 500);
+  for (const chunk of docChunks) {
+    const batch = writeBatch(db);
+    chunk.forEach((d) => {
+      batch.update(d.ref, {
+        categoryId: null,
+        categoryName: null,
+        categoryColor: null,
+      });
+    });
+    await batch.commit();
+  }
+}
+
 export default function AdminCalendarPage() {
   const { userProfile } = useAuth();
   const router = useRouter();
@@ -114,6 +157,9 @@ export default function AdminCalendarPage() {
   const [calendarCategories, setCalendarCategories] = useState<CalendarCategory[]>([]);
   /** Category ids (or UNCATEGORIZED_FILTER_KEY) that are hidden from the calendar view */
   const [hiddenCategoryKeys, setHiddenCategoryKeys] = useState<Set<string>>(() => new Set());
+  const [categoriesEditorOpen, setCategoriesEditorOpen] = useState(false);
+  /** Bump to reload events after category edit/delete (denormalized fields on events). */
+  const [eventsNonce, setEventsNonce] = useState(0);
 
   const canAccess =
     userProfile?.isAdmin ||
@@ -205,13 +251,27 @@ export default function AdminCalendarPage() {
       })
       .catch((err) => console.error('Failed to load calendar events', err))
       .finally(() => setLoading(false));
-  }, [viewMode, focusDate, canAccess]);
+  }, [viewMode, focusDate, canAccess, eventsNonce]);
 
   const toggleCategoryFilter = useCallback((key: string) => {
     setHiddenCategoryKeys((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
+      return next;
+    });
+  }, []);
+
+  const refetchEvents = useCallback(() => {
+    setLoading(true);
+    setEventsNonce((n) => n + 1);
+  }, []);
+
+  const removeCategoryFromHiddenFilter = useCallback((categoryId: string) => {
+    setHiddenCategoryKeys((prev) => {
+      if (!prev.has(categoryId)) return prev;
+      const next = new Set(prev);
+      next.delete(categoryId);
       return next;
     });
   }, []);
@@ -493,8 +553,27 @@ export default function AdminCalendarPage() {
                 </div>
               )}
             </div>
+            <button
+              type="button"
+              onClick={() => setCategoriesEditorOpen(true)}
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <Tags className="h-4 w-4" />
+              Edit Categories
+            </button>
           </div>
         </div>
+
+        {categoriesEditorOpen && (
+          <EditCategoriesModal
+            categories={calendarCategories}
+            onClose={() => setCategoriesEditorOpen(false)}
+            onAfterChange={() => {
+              refetchEvents();
+            }}
+            onCategoryDeleted={(id) => removeCategoryFromHiddenFilter(id)}
+          />
+        )}
 
         <div
           className="mb-6 rounded-lg border border-border bg-card px-4 py-3"
@@ -1259,5 +1338,198 @@ function AddEventForm({
         </button>
       </div>
     </form>
+  );
+}
+
+function CategoryEditRow({
+  category,
+  onAfterChange,
+  onCategoryDeleted,
+}: {
+  category: CalendarCategory;
+  onAfterChange: () => void;
+  onCategoryDeleted: (id: string) => void;
+}) {
+  const categoryId = category.id ?? '';
+  const [name, setName] = useState(category.name);
+  const [color, setColor] = useState(category.color);
+  const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setName(category.name);
+    setColor(category.color);
+  }, [category.id, category.name, category.color]);
+
+  const dirty =
+    name.trim() !== category.name.trim() || color !== category.color;
+
+  const handleSave = async () => {
+    if (!categoryId || !name.trim()) return;
+    setSaving(true);
+    setError(null);
+    try {
+      await updateDoc(doc(db, 'calendarCategories', categoryId), {
+        name: name.trim(),
+        color,
+      });
+      await updateEventsDenormalizedCategory(categoryId, name.trim(), color);
+      onAfterChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to save');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!categoryId) return;
+    if (
+      !window.confirm(
+        `Delete "${category.name || 'this category'}"? Events using it will have no category.`
+      )
+    ) {
+      return;
+    }
+    setDeleting(true);
+    setError(null);
+    try {
+      await stripCategoryFromEvents(categoryId);
+      await deleteDoc(doc(db, 'calendarCategories', categoryId));
+      onCategoryDeleted(categoryId);
+      onAfterChange();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to delete');
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const busy = saving || deleting;
+
+  return (
+    <div className="rounded-lg border border-border bg-bg/40 p-3">
+      <div className="flex flex-wrap items-end gap-2">
+        <div className="min-w-0 flex-1">
+          <label className="block text-xs font-medium text-text-light mb-0.5">Name</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            disabled={busy}
+            className="w-full rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+          />
+        </div>
+        <div className="w-36">
+          <label className="block text-xs font-medium text-text-light mb-0.5">Color</label>
+          <div className="flex items-center gap-2">
+            <span
+              className="h-8 w-8 shrink-0 rounded-md border border-border shadow-sm"
+              style={{ backgroundColor: color }}
+              aria-hidden
+            />
+            <select
+              value={color}
+              onChange={(e) => setColor(e.target.value)}
+              disabled={busy}
+              className="min-w-0 flex-1 rounded-md border border-border bg-white px-2 py-1.5 text-sm text-charcoal focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary disabled:opacity-50"
+            >
+              {CATEGORY_COLORS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.name}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+        <button
+          type="button"
+          onClick={handleSave}
+          disabled={busy || !name.trim() || !dirty}
+          className="rounded-md admin-calendar-btn-coral px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
+        >
+          {saving ? 'Saving…' : 'Save'}
+        </button>
+        <button
+          type="button"
+          onClick={handleDelete}
+          disabled={busy}
+          className="inline-flex items-center gap-1 rounded-md border border-red-200 bg-white px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 disabled:opacity-50"
+        >
+          <Trash2 className="h-4 w-4" />
+          Delete
+        </button>
+      </div>
+      {error && <p className="mt-2 text-xs text-red-600">{error}</p>}
+    </div>
+  );
+}
+
+function EditCategoriesModal({
+  categories,
+  onClose,
+  onAfterChange,
+  onCategoryDeleted,
+}: {
+  categories: CalendarCategory[];
+  onClose: () => void;
+  onAfterChange: () => void;
+  onCategoryDeleted: (id: string) => void;
+}) {
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  return (
+    <div
+      className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/50"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="edit-categories-title"
+      onClick={onClose}
+    >
+      <div
+        className="flex w-full max-w-lg max-h-[90vh] flex-col overflow-hidden rounded-xl border-2 border-charcoal/15 bg-white shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0">
+          <h2 id="edit-categories-title" className="text-lg font-semibold text-charcoal">
+            Edit categories
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            className="rounded-md p-1.5 text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="overflow-y-auto px-4 py-3">
+          {categories.length === 0 ? (
+            <p className="text-sm text-text-light">
+              No categories yet. Create one when adding or editing an event.
+            </p>
+          ) : (
+            <ul className="space-y-4 list-none m-0 p-0">
+              {categories.map((c) => (
+                <li key={c.id}>
+                  <CategoryEditRow
+                    category={c}
+                    onAfterChange={onAfterChange}
+                    onCategoryDeleted={onCategoryDeleted}
+                  />
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
+    </div>
   );
 }
