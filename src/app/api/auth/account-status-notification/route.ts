@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { transporter } from '@/lib/email/config';
+import { transporter, getEmailFromInformationHub } from '@/lib/email/config';
 
 const BASE_URL = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.siouxfallschurchofchrist.org';
 const LOGO_URL = 'https://res.cloudinary.com/dzjsztwqp/image/upload/v1751485185/SFCOC_Colored_lxaty4.png';
@@ -79,7 +79,7 @@ export async function POST(request: Request) {
         : buildRejectedEmail(greeting);
 
     await transporter.sendMail({
-      from: 'SFCOC Information Hub <announcements@siouxfallschurchofchrist.org>',
+      from: getEmailFromInformationHub(),
       to: email.trim(),
       subject,
       html,

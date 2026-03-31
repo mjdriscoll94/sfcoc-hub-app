@@ -153,7 +153,9 @@ export default function AdminDashboard() {
                       <div className="flex-1 min-w-0">
                         <span className="absolute inset-0" aria-hidden="true" />
                         <p className="text-sm font-medium text-charcoal">Send Email</p>
-                        <p className="text-sm text-text-light">Email members (replaces Mailchimp)</p>
+                        <p className="text-sm text-text-light">
+                          Broadcast to members or send a one-address test (SES)
+                        </p>
                       </div>
                     </Link>
                     <Link

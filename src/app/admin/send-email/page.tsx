@@ -23,6 +23,11 @@ export default function AdminSendEmailPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ count: number } | null>(null);
 
+  const [testEmail, setTestEmail] = useState('');
+  const [testSending, setTestSending] = useState(false);
+  const [testError, setTestError] = useState<string | null>(null);
+  const [testSuccess, setTestSuccess] = useState(false);
+
   const canAccessAdmin =
     userProfile?.isAdmin ||
     (userProfile?.role &&
@@ -89,6 +94,32 @@ export default function AdminSendEmailPage() {
     }
   };
 
+  const handleSendTest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setTestError(null);
+    setTestSuccess(false);
+    const addr = testEmail.trim();
+    if (!addr) {
+      setTestError('Enter an email address.');
+      return;
+    }
+    setTestSending(true);
+    try {
+      const res = await fetch('/api/admin/send-test-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: addr }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || data.details?.message || 'Failed to send test');
+      setTestSuccess(true);
+    } catch (err) {
+      setTestError(err instanceof Error ? err.message : 'Failed to send test email');
+    } finally {
+      setTestSending(false);
+    }
+  };
+
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <Link
@@ -112,6 +143,47 @@ export default function AdminSendEmailPage() {
         >
           Manage email lists
         </Link>
+      </div>
+
+      <div id="send-test-email" className="mb-8 rounded-lg border border-border bg-card p-6 shadow-sm scroll-mt-8">
+        <h2 className="text-lg font-semibold text-charcoal mb-1">Send test email</h2>
+        <p className="text-sm text-text-light mb-4">
+          Sends one templated message (same layout as member emails: logo and footer) to a single address.
+          Uses the announcements sender identity. Does not contact any mailing list.
+        </p>
+        <form onSubmit={handleSendTest} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label htmlFor="test-email" className="block text-sm font-medium text-charcoal mb-1">
+              Recipient email
+            </label>
+            <input
+              id="test-email"
+              type="email"
+              autoComplete="email"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              placeholder="you@example.com"
+              className="block w-full rounded-md border border-border bg-white text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+            />
+          </div>
+          <button
+            type="submit"
+            disabled={testSending}
+            className="shrink-0 px-4 py-2 border border-primary text-primary text-sm font-semibold rounded-lg hover:bg-primary/5 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
+          >
+            {testSending ? 'Sending…' : 'Send test email'}
+          </button>
+        </form>
+        {testError && (
+          <p className="mt-3 text-sm text-error" role="alert">
+            {testError}
+          </p>
+        )}
+        {testSuccess && (
+          <p className="mt-3 text-sm text-success">
+            Test email sent. Check the inbox (and spam) for the recipient you entered.
+          </p>
+        )}
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg border border-border p-6 shadow-sm">

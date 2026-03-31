@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import { format } from 'date-fns';
-import { transporter } from '@/lib/email/config';
+import { transporter, getEmailFromServiceRoles } from '@/lib/email/config';
 
 export async function POST(request: Request) {
   try {
@@ -185,7 +185,7 @@ export async function POST(request: Request) {
     // Send email directly using transporter
     console.log('Sending email to:', userEmail);
     const mailOptions = {
-      from: `SFCoC Service Roles <announcements@siouxfallschurchofchrist.org>`,
+      from: getEmailFromServiceRoles(),
       to: userEmail,
       subject,
       html: content,

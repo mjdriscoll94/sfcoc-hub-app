@@ -1,38 +1,10 @@
 import { NextResponse } from 'next/server';
-import nodemailer from 'nodemailer';
-
-// Create reusable transporter object using Resend SMTP
-const transporter = nodemailer.createTransport({
-  host: "smtp.resend.com",
-  port: 465,
-  secure: true,
-  auth: {
-    user: "resend",
-    pass: process.env.RESEND_API_KEY || "re_9MZjEWtL_7HPtgrq6XYN1LnoBHTnghvU6"
-  }
-});
+import { transporter, getEmailFromAnnouncements } from '@/lib/email/config';
 
 export async function POST(request: Request) {
   try {
     console.log('Email API route called');
-    
-    // Verify SMTP connection
-    try {
-      await transporter.verify();
-      console.log('SMTP connection verified successfully');
-    } catch (verifyError: unknown) {
-      const error = verifyError instanceof Error ? verifyError : new Error(String(verifyError));
-      console.error('SMTP connection verification failed:', {
-        error: error.message,
-        stack: error.stack
-      });
-      return NextResponse.json(
-        { error: 'Failed to connect to SMTP server', details: error.message },
-        { status: 500 }
-      );
-    }
 
-    // Parse request body
     let body;
     try {
       body = await request.json();
@@ -46,12 +18,12 @@ export async function POST(request: Request) {
     }
 
     const { type, subject, content, recipients } = body;
-    
+
     console.log('Email request data:', {
       type,
       subject,
       recipientCount: recipients?.length,
-      hasContent: !!content
+      hasContent: !!content,
     });
 
     if (!type || !subject || !content || !recipients) {
@@ -69,7 +41,7 @@ export async function POST(request: Request) {
     }
 
     const mailOptions = {
-      from: `SFCoC Announcements <announcements@siouxfallschurchofchrist.org>`,
+      from: getEmailFromAnnouncements(),
       to: recipients,
       subject,
       html: content,
@@ -78,47 +50,33 @@ export async function POST(request: Request) {
     console.log('Attempting to send email with options:', {
       from: mailOptions.from,
       subject: mailOptions.subject,
-      recipientCount: recipients.length
+      recipientCount: recipients.length,
     });
 
     try {
       const result = await transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', {
+      console.log('Email sent successfully:', { messageId: result.messageId });
+      return NextResponse.json({
+        success: true,
         messageId: result.messageId,
-        response: result.response
       });
-      return NextResponse.json({ 
-        success: true, 
-        messageId: result.messageId,
-        response: result.response
-      });
-    } catch (emailError: any) {
-      console.error('SMTP error:', {
-        message: emailError.message,
-        code: emailError.code,
-        command: emailError.command,
-        response: emailError.response
-      });
+    } catch (emailError: unknown) {
+      const err = emailError instanceof Error ? emailError : new Error(String(emailError));
+      console.error('SES send error:', { message: err.message });
       return NextResponse.json(
-        { 
-          error: 'Failed to send email via SMTP', 
-          details: {
-            message: emailError.message,
-            code: emailError.code,
-            response: emailError.response
-          }
+        {
+          error: 'Failed to send email',
+          details: { message: err.message },
         },
         { status: 500 }
       );
     }
-  } catch (error: any) {
-    console.error('Unexpected error in email API route:', {
-      message: error.message,
-      stack: error.stack
-    });
+  } catch (error: unknown) {
+    const err = error instanceof Error ? error : new Error(String(error));
+    console.error('Unexpected error in email API route:', { message: err.message, stack: err.stack });
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', details: err.message },
       { status: 500 }
     );
   }
-} 
+}
