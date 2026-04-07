@@ -7,17 +7,17 @@ import Link from 'next/link';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
 
-type Audience = 'all' | 'announcements' | 'events' | 'newsletter' | 'list';
-
 type EmailListSummary = { id: string; name: string; emailCount: number };
+
+/** Single select value: built-in keys, or `list:<firestoreId>` for a saved list. */
+type RecipientSelection = 'all' | 'announcements' | 'events' | 'newsletter' | `list:${string}`;
 
 export default function AdminSendEmailPage() {
   const { userProfile } = useAuth();
   const router = useRouter();
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
-  const [audience, setAudience] = useState<Audience>('all');
-  const [listId, setListId] = useState('');
+  const [recipientSelection, setRecipientSelection] = useState<RecipientSelection>('all');
   const [emailLists, setEmailLists] = useState<EmailListSummary[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -66,7 +66,9 @@ export default function AdminSendEmailPage() {
       setError('Subject and message are required.');
       return;
     }
-    if (audience === 'list' && !listId) {
+    const isSavedList = recipientSelection.startsWith('list:');
+    const listId = isSavedList ? recipientSelection.slice(5) : '';
+    if (isSavedList && !listId) {
       setError('Please select an email list.');
       return;
     }
@@ -78,8 +80,8 @@ export default function AdminSendEmailPage() {
         body: JSON.stringify({
           subject: subject.trim(),
           content: body.trim(),
-          audience,
-          ...(audience === 'list' && listId ? { listId } : {}),
+          audience: isSavedList ? 'list' : recipientSelection,
+          ...(isSavedList && listId ? { listId } : {}),
         }),
       });
       const data = await res.json();
@@ -134,7 +136,7 @@ export default function AdminSendEmailPage() {
         <div>
           <h1 className="text-2xl font-bold text-charcoal mb-2">Send Email to Members</h1>
           <p className="text-text-light">
-            Send an email to approved members, subscription groups, or a custom list.
+            Send an email to approved members, subscription groups, or a saved email list.
           </p>
         </div>
         <Link
@@ -189,46 +191,46 @@ export default function AdminSendEmailPage() {
       <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg border border-border p-6 shadow-sm">
         <div>
           <label htmlFor="audience" className="block text-sm font-medium text-charcoal mb-1">
-            Audience
+            Who should receive this email?
           </label>
           <select
             id="audience"
-            value={audience}
-            onChange={(e) => setAudience(e.target.value as Audience)}
+            value={recipientSelection}
+            onChange={(e) => setRecipientSelection(e.target.value as RecipientSelection)}
             className="block w-full rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
           >
             <option value="all">All approved members</option>
             <option value="announcements">Announcements subscribers only</option>
             <option value="events">Events subscribers only</option>
             <option value="newsletter">Newsletter subscribers only</option>
-            <option value="list">Custom email list</option>
-          </select>
-        </div>
-        {audience === 'list' && (
-          <div>
-            <label htmlFor="listId" className="block text-sm font-medium text-charcoal mb-1">
-              Email list
-            </label>
-            <select
-              id="listId"
-              value={listId}
-              onChange={(e) => setListId(e.target.value)}
-              className="block w-full rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
-            >
-              <option value="">Select a list</option>
-              {emailLists.map((list) => (
-                <option key={list.id} value={list.id}>
-                  {list.name} ({list.emailCount})
-                </option>
-              ))}
-            </select>
-            {emailLists.length === 0 && (
-              <p className="text-sm text-text-light mt-1">
-                No lists yet. <Link href="/admin/send-email/lists" className="text-primary hover:underline">Create one</Link>.
-              </p>
+            {emailLists.length > 0 && (
+              <optgroup label="Saved email lists">
+                {emailLists.map((list) => {
+                  const n = list.emailCount;
+                  const countLabel = `${n} ${n === 1 ? 'recipient' : 'recipients'}`;
+                  return (
+                    <option
+                      key={list.id}
+                      value={`list:${list.id}`}
+                      disabled={n === 0}
+                    >
+                      {list.name} ({countLabel})
+                    </option>
+                  );
+                })}
+              </optgroup>
             )}
-          </div>
-        )}
+          </select>
+          {emailLists.length === 0 && (
+            <p className="text-sm text-text-light mt-2">
+              No saved lists yet.{' '}
+              <Link href="/admin/send-email/lists" className="text-primary hover:underline">
+                Create an email list
+              </Link>{' '}
+              to target a specific group.
+            </p>
+          )}
+        </div>
 
         <div>
           <label htmlFor="subject" className="block text-sm font-medium text-charcoal mb-1">
