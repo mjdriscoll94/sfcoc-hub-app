@@ -87,6 +87,7 @@ Set these in your deployment (e.g. Vercel project settings or `.env.local` for l
 | `EMAIL_FROM` | No | Full RFC “from” for announcement mail (`/api/email`). Alias: `SES_FROM`. |
 | `EMAIL_FROM_INFORMATION_HUB` | No | Admin broadcasts and account-status mail; falls back to `EMAIL_FROM` / `SES_FROM` if unset. |
 | `EMAIL_FROM_SERVICE_ROLES` | No | Service-role assignment emails only. |
+| `EMAIL_REPLY_TO` | Recommended | Single address where **Reply** should go (e.g. church office). Bulk sends use one SES message per recipient so **Reply-All** cannot expose the full list; this still directs normal replies to one monitored inbox. Verify this identity in SES if required. |
 
 \* If the app runs on AWS (e.g. EC2, ECS, Lambda) and uses an IAM role, you can omit the key/secret and rely on the default credential chain. For Vercel or other hosts, you must set `AWS_ACCESS_KEY_ID` and `AWS_SECRET_ACCESS_KEY`.
 
@@ -98,6 +99,7 @@ These variables are read from the server environment at runtime (they are **not*
 AWS_ACCESS_KEY_ID=AKIA...
 AWS_SECRET_ACCESS_KEY=...
 AWS_REGION=us-east-1
+EMAIL_REPLY_TO=office@siouxfallschurchofchrist.org
 ```
 
 Remove any Resend-related variables (e.g. `RESEND_API_KEY`); they are no longer used.

@@ -44,25 +44,39 @@ export interface SendMailOptions {
   subject: string;
   html: string;
   text?: string;
+  /** Overrides `EMAIL_REPLY_TO` for this message only. */
+  replyTo?: string | string[];
+}
+
+/** Single address for replies (must be verified in SES if different from From domain rules apply). */
+function getReplyToAddresses(override?: string | string[]): string[] | undefined {
+  const rawList = override !== undefined
+    ? (Array.isArray(override) ? override : [override])
+    : process.env.EMAIL_REPLY_TO?.split(/[,;]+/).map((s) => s.trim()).filter(Boolean) ?? [];
+  const valid = rawList.filter((a) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(a));
+  if (valid.length === 0) return undefined;
+  // SES SendEmail allows multiple Reply-To; one is enough for a single office inbox.
+  return [valid[0]];
 }
 
 /**
  * Send email via Amazon SES. Replaces the previous Resend/nodemailer transporter.
- * Uses the same interface (from, to, subject, html) so existing callers work unchanged.
+ * Sends **one message per recipient** so recipients never see each other’s addresses
+ * (Reply-All cannot reach the whole list). Optional Reply-To from `EMAIL_REPLY_TO` or `replyTo`.
  */
 export async function sendMailViaSES(options: SendMailOptions): Promise<{ messageId: string }> {
-  const toAddresses = Array.isArray(options.to) ? options.to : [options.to];
+  const toAddresses = [...new Set(Array.isArray(options.to) ? options.to : [options.to])];
   if (toAddresses.length === 0) {
     throw new Error('At least one recipient is required');
   }
-  // SES allows up to 50 destinations per call
-  const chunkSize = 50;
+  const replyToAddresses = getReplyToAddresses(options.replyTo);
+
   let lastMessageId = '';
-  for (let i = 0; i < toAddresses.length; i += chunkSize) {
-    const chunk = toAddresses.slice(i, i + chunkSize);
+  for (const addr of toAddresses) {
     const command = new SendEmailCommand({
       Source: options.from,
-      Destination: { ToAddresses: chunk },
+      Destination: { ToAddresses: [addr] },
+      ...(replyToAddresses ? { ReplyToAddresses: replyToAddresses } : {}),
       Message: {
         Subject: { Data: options.subject, Charset: 'UTF-8' },
         Body: {
@@ -86,6 +100,7 @@ export const transporter = {
       subject: options.subject,
       html: options.html,
       text: options.text,
+      replyTo: options.replyTo,
     });
   },
   verify: async () => {
