@@ -6,20 +6,9 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeftIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
+import { listNameFromFilename, parseEmailsFromRawText } from '@/lib/utils/emailListImport';
 
 type EmailListSummary = { id: string; name: string; emailCount: number };
-
-function parseEmailsFromText(text: string): string[] {
-  const raw = text
-    .split(/[\n,;]+/)
-    .map((s) => s.trim().toLowerCase())
-    .filter(Boolean);
-  const set = new Set<string>();
-  for (const e of raw) {
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(e)) set.add(e);
-  }
-  return [...set];
-}
 
 export default function AdminEmailListsPage() {
   const { userProfile } = useAuth();
@@ -31,7 +20,7 @@ export default function AdminEmailListsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
   const [formEmailsText, setFormEmailsText] = useState('');
-  const [formFile, setFormFile] = useState<File | null>(null);
+  const [importSummary, setImportSummary] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -70,7 +59,7 @@ export default function AdminEmailListsPage() {
     setEditingId(null);
     setFormName('');
     setFormEmailsText('');
-    setFormFile(null);
+    setImportSummary(null);
     setShowForm(true);
   };
 
@@ -78,7 +67,7 @@ export default function AdminEmailListsPage() {
     setEditingId(id);
     setFormName('');
     setFormEmailsText('');
-    setFormFile(null);
+    setImportSummary(null);
     try {
       const res = await fetch(`/api/admin/email-lists/${id}`);
       if (!res.ok) throw new Error('Failed to load list');
@@ -96,22 +85,49 @@ export default function AdminEmailListsPage() {
     setEditingId(null);
     setFormName('');
     setFormEmailsText('');
-    setFormFile(null);
+    setImportSummary(null);
   };
 
-  const getEmailsToSave = async (): Promise<string[]> => {
-    let text = formEmailsText;
-    if (formFile) {
-      const fileText = await new Promise<string>((resolve, reject) => {
-        const r = new FileReader();
-        r.onload = () => resolve(String(r.result ?? ''));
-        r.onerror = () => reject(new Error('Failed to read file'));
-        r.readAsText(formFile);
-      });
-      text = text ? `${text}\n${fileText}` : fileText;
+  const handleCsvSelected = async (file: File | null) => {
+    if (!file) return;
+    try {
+      const raw = await file.text();
+      const imported = parseEmailsFromRawText(raw);
+      if (imported.length === 0) {
+        setImportSummary(`No email addresses found in ${file.name}. Check the file format.`);
+        return;
+      }
+
+      if (editingId) {
+        const existing = new Set(parseEmailsFromRawText(formEmailsText));
+        let added = 0;
+        for (const e of imported) {
+          if (!existing.has(e)) {
+            existing.add(e);
+            added++;
+          }
+        }
+        setFormEmailsText([...existing].sort().join('\n'));
+        setImportSummary(
+          added > 0
+            ? `Merged ${added} new address${added !== 1 ? 'es' : ''} from ${file.name} (${imported.length} in file).`
+            : `No new addresses to add from ${file.name} (all were already on this list).`
+        );
+      } else {
+        setFormEmailsText(imported.join('\n'));
+        if (!formName.trim()) {
+          setFormName(listNameFromFilename(file.name));
+        }
+        setImportSummary(
+          `Imported ${imported.length} address${imported.length !== 1 ? 'es' : ''} from ${file.name}. You can edit the list name below.`
+        );
+      }
+    } catch {
+      setImportSummary('Could not read that file. Try a UTF-8 .csv or .txt file.');
     }
-    return parseEmailsFromText(text);
   };
+
+  const getEmailsToSave = (): string[] => parseEmailsFromRawText(formEmailsText);
 
   const handleSave = async () => {
     if (!formName.trim()) {
@@ -121,7 +137,12 @@ export default function AdminEmailListsPage() {
     setError(null);
     setSaving(true);
     try {
-      const emails = await getEmailsToSave();
+      const emails = getEmailsToSave();
+      if (emails.length === 0) {
+        setError('Add at least one email address, or import a CSV file.');
+        setSaving(false);
+        return;
+      }
       if (editingId) {
         const res = await fetch(`/api/admin/email-lists/${editingId}`, {
           method: 'PATCH',
@@ -205,30 +226,47 @@ export default function AdminEmailListsPage() {
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
                 className="block w-full rounded-md border border-border bg-card text-charcoal px-3 py-2 sm:text-sm"
-                placeholder="e.g. Ministry Leaders"
+                placeholder="e.g. Ministry Leaders (filled from CSV file name when you import)"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">
-                Email addresses (one per line, or comma-separated)
+
+            <div className="rounded-md border border-border bg-bg/50 p-4 space-y-2">
+              <label className="block text-sm font-medium text-charcoal">
+                Import from CSV or text file
               </label>
-              <textarea
-                rows={8}
-                value={formEmailsText}
-                onChange={(e) => setFormEmailsText(e.target.value)}
-                className="block w-full rounded-md border border-border bg-card text-charcoal px-3 py-2 sm:text-sm"
-                placeholder="one@example.com&#10;two@example.com"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">
-                Or upload a file (CSV or text, one email per line or comma-separated)
-              </label>
+              <p className="text-xs text-text-light">
+                Upload a .csv export (e.g. from Google Contacts or a spreadsheet). Emails are found in any column;
+                a header row is fine. For a new list, the list name is set from the file name until you change it.
+                When editing, new addresses from the file are merged with the list.
+              </p>
               <input
                 type="file"
-                accept=".txt,.csv"
-                onChange={(e) => setFormFile(e.target.files?.[0] ?? null)}
+                accept=".csv,.txt,text/csv,text/plain"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  void handleCsvSelected(f ?? null);
+                  e.target.value = '';
+                }}
                 className="block w-full text-sm text-charcoal file:mr-4 file:py-2 file:px-4 file:rounded file:border-0 file:bg-primary file:text-on-primary file:font-semibold"
+              />
+            </div>
+
+            {importSummary && (
+              <p className="text-sm text-charcoal bg-sage/10 border border-sage/20 rounded-md px-3 py-2">
+                {importSummary}
+              </p>
+            )}
+
+            <div>
+              <label className="block text-sm font-medium text-charcoal mb-1">
+                Email addresses (edit freely; one per line works best)
+              </label>
+              <textarea
+                rows={10}
+                value={formEmailsText}
+                onChange={(e) => setFormEmailsText(e.target.value)}
+                className="block w-full rounded-md border border-border bg-card text-charcoal px-3 py-2 sm:text-sm font-mono text-xs"
+                placeholder="one@example.com&#10;two@example.com&#10;&#10;Or paste comma-separated addresses, or import a CSV above."
               />
             </div>
             <div className="flex gap-3">
