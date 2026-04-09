@@ -1,5 +1,3 @@
-import { auth } from '@/lib/firebase/config';
-import { ActionCodeSettings, sendPasswordResetEmail as firebaseSendPasswordReset } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
 import { User, UserProfile } from '@/types';
 import { sendWelcomeEmail } from '@/lib/email/emailService';
@@ -10,21 +8,6 @@ const DEFAULT_EMAIL_SUBSCRIPTIONS = {
   announcements: true,
   events: true,
   newsletter: true
-};
-
-const actionCodeSettings: ActionCodeSettings = {
-  url: process.env.NEXT_PUBLIC_PASSWORD_RESET_URL || 'http://localhost:3000/auth/reset-password',
-  handleCodeInApp: true,
-};
-
-export const generatePasswordResetLink = async (email: string): Promise<string> => {
-  try {
-    await firebaseSendPasswordReset(auth, email, actionCodeSettings);
-    return `${actionCodeSettings.url}?email=${encodeURIComponent(email)}`;
-  } catch (error) {
-    console.error('Error generating password reset link:', error);
-    throw error;
-  }
 };
 
 // Function to ensure user profile has all required fields

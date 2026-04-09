@@ -15,6 +15,19 @@ export interface EmailSubscriber {
   };
 }
 
+function resolveEmailApiUrl(): string {
+  if (typeof window !== 'undefined') {
+    return '/api/email';
+  }
+  const base =
+    process.env.NEXT_PUBLIC_BASE_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null);
+  if (base) {
+    return `${base.replace(/\/$/, '')}/api/email`;
+  }
+  return 'http://localhost:3000/api/email';
+}
+
 export async function sendEmail(type: string, subject: string, content: string, recipients: string[]) {
   try {
     console.log('Sending email via API:', {
@@ -23,7 +36,7 @@ export async function sendEmail(type: string, subject: string, content: string, 
       recipientCount: recipients.length
     });
 
-    const response = await fetch('/api/email', {
+    const response = await fetch(resolveEmailApiUrl(), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -178,12 +191,13 @@ export async function sendWelcomeEmail(email: string, name?: string) {
 }
 
 export async function sendPasswordResetEmail(email: string, resetLink: string) {
+  const href = resetLink.replace(/&/g, '&amp;');
   const content = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <h1 style="color: #333;">Password Reset Request</h1>
-      <p style="color: #666; line-height: 1.6;">We received a request to reset your password. Click the link below to reset it:</p>
+      <p style="color: #666; line-height: 1.6;">We received a request to reset your password. Click the link below to choose a new password (secure page hosted by Firebase):</p>
       <p style="margin: 20px 0;">
-        <a href="${resetLink}" 
+        <a href="${href}" 
            style="background-color: #ff7c54; 
                   color: white; 
                   padding: 12px 24px; 

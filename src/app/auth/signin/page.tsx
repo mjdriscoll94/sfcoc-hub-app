@@ -112,7 +112,7 @@ export default function SignInPage() {
             </div>
           )}
 
-          <div>
+          <div className="flex flex-col gap-3">
             <button
               type="submit"
               disabled={isLoading}
@@ -122,6 +122,14 @@ export default function SignInPage() {
             >
               {isLoading ? 'Signing in...' : 'Sign in'}
             </button>
+            <div className="text-center">
+              <Link
+                href="/auth/forgot-password"
+                className="text-sm font-medium text-primary hover:opacity-80"
+              >
+                Forgot password?
+              </Link>
+            </div>
           </div>
 
           <div className="text-center">
