@@ -864,6 +864,10 @@ function MonthCard({
   eventsByDate: Record<string, CalendarEvent[]>;
   onDayClick: (y: number, m: number, d: number) => void;
 }) {
+  const now = new Date();
+  const todayY = now.getFullYear();
+  const todayM = now.getMonth();
+  const todayD = now.getDate();
   const days = getDaysInMonth(year, month);
   return (
     <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
@@ -883,6 +887,7 @@ function MonthCard({
             if (d === null) return <div key={`e-${i}`} />;
             const key = toDateKey(year, month, d);
             const dayEvents = eventsByDate[key] ?? [];
+            const isToday = year === todayY && month === todayM && d === todayD;
             return (
               <button
                 key={d}
@@ -894,6 +899,7 @@ function MonthCard({
                   hover:bg-sage/20 hover:border-sage/40 focus:outline-none focus:ring-2 focus:ring-[var(--coral)] focus:ring-offset-1
                   border border-transparent
                   ${dayEvents.length > 0 ? 'admin-calendar-day-has-events' : 'text-[var(--charcoal)]'}
+                  ${isToday ? 'admin-calendar-day-today' : ''}
                 `}
               >
                 {d}

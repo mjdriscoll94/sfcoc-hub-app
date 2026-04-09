@@ -19,9 +19,16 @@
   background-color: var(--coral-dark) !important;
   border-color: var(--coral-dark) !important;
 }
+/* Year grid: days with events — sage tint so it’s not confused with uncategorized events (coral #E88B5F) */
 .admin-calendar-day-has-events {
-  background-color: var(--coral) !important;
+  background-color: rgba(112, 168, 160, 0.38) !important;
   color: #2F3E46 !important;
+  border: 1px solid rgba(112, 168, 160, 0.7) !important;
+}
+
+/* Year grid: current calendar date — outline only, works with or without events */
+.admin-calendar-day-today {
+  box-shadow: inset 0 0 0 2px #2f3e46 !important;
 }
 
 /* Unified Brand Color Scheme - Vibrant & Modern */
