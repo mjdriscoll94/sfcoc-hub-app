@@ -19,6 +19,7 @@ import {
   deleteDoc,
   onSnapshot,
   writeBatch,
+  arrayUnion,
 } from 'firebase/firestore';
 import Link from 'next/link';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
@@ -351,11 +352,21 @@ export default function AdminCalendarPage() {
   const eventsByDate = useMemo(() => {
     const map: Record<string, CalendarEvent[]> = {};
     filteredEvents.forEach((ev) => {
-      const d = ev.startDate;
-      const key = toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
-      if (!map[key]) map[key] = [];
-      map[key].push(ev);
+      const start = ev.startDate;
+      const end = ev.endDate ?? ev.startDate;
+      const startDay = new Date(start.getFullYear(), start.getMonth(), start.getDate());
+      const endDay = new Date(end.getFullYear(), end.getMonth(), end.getDate());
+      const cursor = new Date(startDay);
+      while (cursor <= endDay) {
+        const key = toDateKey(cursor.getFullYear(), cursor.getMonth(), cursor.getDate());
+        if (!map[key]) map[key] = [];
+        map[key].push(ev);
+        cursor.setDate(cursor.getDate() + 1);
+      }
     });
+    for (const key of Object.keys(map)) {
+      map[key].sort((a, b) => a.startDate.getTime() - b.startDate.getTime());
+    }
     return map;
   }, [filteredEvents]);
 
@@ -912,6 +923,10 @@ function MonthCard({
   );
 }
 
+function isRecurringEvent(ev: CalendarEvent): boolean {
+  return Boolean(ev.parentEventId) || Boolean(ev.recurrenceType && ev.recurrenceType !== 'none');
+}
+
 function DayModal({
   year,
   month,
@@ -930,35 +945,130 @@ function DayModal({
   const [showAddForm, setShowAddForm] = useState(false);
   const [editingEvent, setEditingEvent] = useState<CalendarEvent | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [recurringDeleteTarget, setRecurringDeleteTarget] = useState<CalendarEvent | null>(null);
   const dateStr = `${MONTH_NAMES[month]} ${day}, ${year}`;
 
-  const handleDelete = async (ev: CalendarEvent) => {
+  const deleteEntireSeries = async (ev: CalendarEvent) => {
     const documentId = firestoreDocIdForEvent(ev);
     if (!documentId) return;
-    const isRecurring =
-      (ev.recurrenceType && ev.recurrenceType !== 'none') || !!ev.parentEventId;
-    const msg = isRecurring
-      ? `Delete the entire recurring series "${ev.title}"? All occurrences will be removed.`
-      : `Delete "${ev.title}"?`;
-    if (!window.confirm(msg)) return;
     setDeletingId(documentId);
     try {
       await deleteDoc(doc(db, 'calendarEvents', documentId));
+      setRecurringDeleteTarget(null);
       onEventAdded();
     } catch (err) {
-      console.error('Failed to delete event', err);
+      console.error('Failed to delete event series', err);
     } finally {
       setDeletingId(null);
     }
   };
 
+  const deleteThisOccurrenceOnly = async (ev: CalendarEvent) => {
+    const parentId = firestoreDocIdForEvent(ev);
+    if (!parentId) return;
+    const d = ev.startDate;
+    const key = toDateKey(d.getFullYear(), d.getMonth(), d.getDate());
+    setDeletingId(`exc:${parentId}`);
+    try {
+      await updateDoc(doc(db, 'calendarEvents', parentId), {
+        recurrenceExceptions: arrayUnion(key),
+      });
+      setRecurringDeleteTarget(null);
+      onEventAdded();
+    } catch (err) {
+      console.error('Failed to skip recurring occurrence', err);
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const promptDelete = (ev: CalendarEvent) => {
+    if (isRecurringEvent(ev)) {
+      setRecurringDeleteTarget(ev);
+      return;
+    }
+    if (!window.confirm(`Delete "${ev.title}"?`)) return;
+    const documentId = firestoreDocIdForEvent(ev);
+    if (!documentId) return;
+    void (async () => {
+      setDeletingId(documentId);
+      try {
+        await deleteDoc(doc(db, 'calendarEvents', documentId));
+        onEventAdded();
+      } catch (err) {
+        console.error('Failed to delete event', err);
+      } finally {
+        setDeletingId(null);
+      }
+    })();
+  };
+
   const showForm = showAddForm || editingEvent !== null;
+
+  const deleteBusyFor = (ev: CalendarEvent) => {
+    const pid = firestoreDocIdForEvent(ev);
+    if (!pid) return false;
+    return deletingId === pid || deletingId === `exc:${pid}`;
+  };
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="fixed inset-0 bg-black/40" aria-hidden="true" onClick={onClose} />
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
         <div className="relative w-full max-w-lg rounded-xl bg-white border-2 border-charcoal/15 shadow-2xl text-left ring-4 ring-black/5">
+          {recurringDeleteTarget && (
+            <div
+              className="absolute inset-0 z-[100] flex items-center justify-center rounded-xl bg-black/45 p-4"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="recurring-delete-title"
+            >
+              <div className="w-full max-w-sm rounded-lg bg-white p-5 shadow-xl border border-border">
+                <h4 id="recurring-delete-title" className="text-base font-semibold text-charcoal mb-2">
+                  Delete recurring event
+                </h4>
+                <p className="text-sm text-text-light mb-4">
+                  <span className="font-medium text-charcoal">&quot;{recurringDeleteTarget.title}&quot;</span> — choose
+                  whether to remove only this date or delete the entire repeating series from the calendar.
+                </p>
+                <div className="flex flex-col gap-2">
+                  <button
+                    type="button"
+                    disabled={deletingId !== null}
+                    onClick={() => void deleteThisOccurrenceOnly(recurringDeleteTarget)}
+                    className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-charcoal hover:bg-bg-secondary disabled:opacity-50"
+                  >
+                    This date only
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletingId !== null}
+                    onClick={() => {
+                      if (
+                        !window.confirm(
+                          `Delete the entire series "${recurringDeleteTarget.title}"? All occurrences will be removed.`
+                        )
+                      ) {
+                        return;
+                      }
+                      void deleteEntireSeries(recurringDeleteTarget);
+                    }}
+                    className="w-full rounded-lg border border-error/40 bg-error-bg px-3 py-2 text-sm font-medium text-error hover:opacity-90 disabled:opacity-50"
+                  >
+                    Entire series
+                  </button>
+                  <button
+                    type="button"
+                    disabled={deletingId !== null}
+                    onClick={() => setRecurringDeleteTarget(null)}
+                    className="w-full rounded-lg px-3 py-2 text-sm font-medium text-text-light hover:text-charcoal disabled:opacity-50"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
           <div className="px-4 pt-4 pb-2 flex items-center justify-between border-b border-border bg-bg/50 rounded-t-xl">
             <h3 className="text-lg font-semibold text-charcoal">{dateStr}</h3>
             <button
@@ -1016,12 +1126,12 @@ function DayModal({
                         </button>
                         <button
                           type="button"
-                          onClick={() => handleDelete(ev)}
-                          disabled={deletingId === firestoreDocIdForEvent(ev)}
+                          onClick={() => promptDelete(ev)}
+                          disabled={deleteBusyFor(ev)}
                           className="rounded px-2 py-0.5 text-xs font-medium text-error hover:bg-white/60 disabled:opacity-50"
                           aria-label="Delete"
                         >
-                          {deletingId === firestoreDocIdForEvent(ev) ? '…' : 'Delete'}
+                          {deleteBusyFor(ev) ? '…' : 'Delete'}
                         </button>
                       </span>
                     </li>

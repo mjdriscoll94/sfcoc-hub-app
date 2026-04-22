@@ -110,4 +110,6 @@ export interface CalendarEvent {
   recurrenceWeekday?: number;
   /** Set on expanded instances; Firestore document id of the series */
   parentEventId?: string;
+  /** Recurring series only: YYYY-MM-DD calendar keys to skip (single-occurrence deletes) */
+  recurrenceExceptions?: string[];
 } 

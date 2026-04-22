@@ -20,6 +20,7 @@ export function calendarEventFromFirestore(id: string, d: Record<string, unknown
   const wd = d.recurrenceWeekday;
   const interval = d.recurrenceInterval;
   const byWeekday = d.recurrenceByWeekday;
+  const rex = d.recurrenceExceptions;
   return {
     id,
     title: (d.title as string) ?? '',
@@ -42,6 +43,9 @@ export function calendarEventFromFirestore(id: string, d: Record<string, unknown
     recurrenceNthOccurrence: typeof nth === 'number' ? nth : undefined,
     recurrenceWeekday: typeof wd === 'number' ? wd : undefined,
     parentEventId: undefined,
+    recurrenceExceptions: Array.isArray(rex)
+      ? (rex as unknown[]).filter((x): x is string => typeof x === 'string')
+      : undefined,
   };
 }
 
@@ -50,6 +54,17 @@ const MAX_ITERATIONS = 4000;
 
 function toDateKey(y: number, m: number, d: number): string {
   return `${y}-${String(m + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+function isRecurrenceExceptionSkipped(base: CalendarEvent, instanceStart: Date): boolean {
+  const ex = base.recurrenceExceptions;
+  if (!ex?.length) return false;
+  const dateKey = toDateKey(
+    instanceStart.getFullYear(),
+    instanceStart.getMonth(),
+    instanceStart.getDate()
+  );
+  return ex.includes(dateKey);
 }
 
 /**
@@ -145,16 +160,18 @@ function expandMonthlyNthWeekday(
     if (c > seriesEnd) break;
     if (c >= rangeStart && c <= rangeEnd) {
       const instStart = new Date(c);
-      const instEnd = new Date(instStart.getTime() + durationMs);
-      const dateKey = toDateKey(instStart.getFullYear(), instStart.getMonth(), instStart.getDate());
-      const parentId = base.id ?? 'event';
-      out.push({
-        ...base,
-        id: `${parentId}__${dateKey}`,
-        parentEventId: base.id,
-        startDate: instStart,
-        endDate: instEnd,
-      });
+      if (!isRecurrenceExceptionSkipped(base, instStart)) {
+        const instEnd = new Date(instStart.getTime() + durationMs);
+        const dateKey = toDateKey(instStart.getFullYear(), instStart.getMonth(), instStart.getDate());
+        const parentId = base.id ?? 'event';
+        out.push({
+          ...base,
+          id: `${parentId}__${dateKey}`,
+          parentEventId: base.id,
+          startDate: instStart,
+          endDate: instEnd,
+        });
+      }
     }
     [y, m] = advanceMonth(y, m);
   }
@@ -192,6 +209,7 @@ function expandWeeklyByWeekday(
       if (occStart < rangeStart || occStart > rangeEnd) continue;
 
       const instStart = new Date(occStart);
+      if (isRecurrenceExceptionSkipped(base, instStart)) continue;
       const instEnd = new Date(instStart.getTime() + durationMs);
       const dateKey = toDateKey(instStart.getFullYear(), instStart.getMonth(), instStart.getDate());
       const parentId = base.id ?? 'event';
@@ -220,10 +238,11 @@ export function expandEventToInstances(
   const r = base.recurrenceType;
   if (!r || r === 'none') {
     const s = base.startDate;
-    if (s >= rangeStart && s <= rangeEnd) {
-      return [base];
+    const e = base.endDate ?? base.startDate;
+    if (e < rangeStart || s > rangeEnd) {
+      return [];
     }
-    return [];
+    return [base];
   }
 
   const durationMs = (base.endDate ?? base.startDate).getTime() - base.startDate.getTime();
@@ -265,16 +284,18 @@ export function expandEventToInstances(
   iterations = 0;
   while (cursor <= rangeEnd && cursor <= seriesEnd && iterations < MAX_ITERATIONS) {
     const instStart = new Date(cursor);
-    const instEnd = new Date(instStart.getTime() + durationMs);
-    const dateKey = toDateKey(instStart.getFullYear(), instStart.getMonth(), instStart.getDate());
-    const parentId = base.id ?? 'event';
-    out.push({
+    if (!isRecurrenceExceptionSkipped(base, instStart)) {
+      const instEnd = new Date(instStart.getTime() + durationMs);
+      const dateKey = toDateKey(instStart.getFullYear(), instStart.getMonth(), instStart.getDate());
+      const parentId = base.id ?? 'event';
+      out.push({
       ...base,
       id: `${parentId}__${dateKey}`,
       parentEventId: base.id,
       startDate: instStart,
       endDate: instEnd,
     });
+    }
     cursor = nextOccurrenceSimple(cursor, r, interval);
     iterations++;
   }
