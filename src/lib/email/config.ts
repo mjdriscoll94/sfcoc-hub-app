@@ -1,4 +1,6 @@
 import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
+import type { EmailAttachment } from '@/lib/email/attachments';
+import { sendRawMailViaSES } from '@/lib/email/sesRawMime';
 
 const DEFAULT_MAILBOX = 'announcements@siouxfallschurchofchrist.org';
 
@@ -46,6 +48,8 @@ export interface SendMailOptions {
   text?: string;
   /** Overrides `EMAIL_REPLY_TO` for this message only. */
   replyTo?: string | string[];
+  /** When set, sends via SES Raw email (required for attachments). */
+  attachments?: EmailAttachment[];
 }
 
 /** Single address for replies (must be verified in SES if different from From domain rules apply). */
@@ -70,6 +74,18 @@ export async function sendMailViaSES(options: SendMailOptions): Promise<{ messag
     throw new Error('At least one recipient is required');
   }
   const replyToAddresses = getReplyToAddresses(options.replyTo);
+
+  if (options.attachments?.length) {
+    return sendRawMailViaSES(sesClient, {
+      from: options.from,
+      to: toAddresses,
+      subject: options.subject,
+      html: options.html,
+      text: options.text,
+      replyTo: replyToAddresses,
+      attachments: options.attachments,
+    });
+  }
 
   let lastMessageId = '';
   for (const addr of toAddresses) {
@@ -101,6 +117,7 @@ export const transporter = {
       html: options.html,
       text: options.text,
       replyTo: options.replyTo,
+      attachments: options.attachments,
     });
   },
   verify: async () => {

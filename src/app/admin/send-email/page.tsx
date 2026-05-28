@@ -6,6 +6,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeftIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
+import {
+  MAX_EMAIL_ATTACHMENTS,
+  MAX_ATTACHMENT_BYTES_PER_FILE,
+  MAX_ATTACHMENT_BYTES_TOTAL,
+} from '@/lib/email/attachments';
 
 type EmailListSummary = { id: string; name: string; emailCount: number };
 
@@ -19,6 +24,7 @@ export default function AdminSendEmailPage() {
   const [body, setBody] = useState('');
   const [recipientSelection, setRecipientSelection] = useState<RecipientSelection>('all');
   const [emailLists, setEmailLists] = useState<EmailListSummary[]>([]);
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ count: number } | null>(null);
@@ -58,6 +64,43 @@ export default function AdminSendEmailPage() {
     return null;
   }
 
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  const handleAttachmentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? []);
+    e.target.value = '';
+    if (picked.length === 0) return;
+
+    setAttachments((prev) => {
+      const combined = [...prev, ...picked].slice(0, MAX_EMAIL_ATTACHMENTS);
+      const total = combined.reduce((sum, f) => sum + f.size, 0);
+      if (total > MAX_ATTACHMENT_BYTES_TOTAL) {
+        setError(
+          `Total attachment size cannot exceed ${MAX_ATTACHMENT_BYTES_TOTAL / (1024 * 1024)} MB.`
+        );
+        return prev;
+      }
+      for (const f of picked) {
+        if (f.size > MAX_ATTACHMENT_BYTES_PER_FILE) {
+          setError(
+            `Each file must be ${MAX_ATTACHMENT_BYTES_PER_FILE / (1024 * 1024)} MB or smaller (${f.name}).`
+          );
+          return prev;
+        }
+      }
+      setError(null);
+      return combined;
+    });
+  };
+
+  const removeAttachment = (index: number) => {
+    setAttachments((prev) => prev.filter((_, i) => i !== index));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -74,21 +117,23 @@ export default function AdminSendEmailPage() {
     }
     setSending(true);
     try {
+      const formData = new FormData();
+      formData.append('subject', subject.trim());
+      formData.append('content', body.trim());
+      formData.append('audience', isSavedList ? 'list' : recipientSelection);
+      if (isSavedList && listId) formData.append('listId', listId);
+      attachments.forEach((file) => formData.append('attachments', file));
+
       const res = await fetch('/api/admin/send-email', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: subject.trim(),
-          content: body.trim(),
-          audience: isSavedList ? 'list' : recipientSelection,
-          ...(isSavedList && listId ? { listId } : {}),
-        }),
+        body: formData,
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
       setSuccess({ count: data.recipientCount ?? 0 });
       setSubject('');
       setBody('');
+      setAttachments([]);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to send email');
     } finally {
@@ -260,6 +305,47 @@ export default function AdminSendEmailPage() {
             placeholder="Write your message. You can use plain text; it will be wrapped in the church email template."
             required
           />
+        </div>
+
+        <div>
+          <label htmlFor="attachments" className="block text-sm font-medium text-charcoal mb-1">
+            Attachments (optional)
+          </label>
+          <p className="text-sm text-text-light mb-2">
+            Up to {MAX_EMAIL_ATTACHMENTS} files, {MAX_ATTACHMENT_BYTES_PER_FILE / (1024 * 1024)} MB each,{' '}
+            {MAX_ATTACHMENT_BYTES_TOTAL / (1024 * 1024)} MB total. PDF, images, and common documents.
+          </p>
+          <input
+            id="attachments"
+            type="file"
+            multiple
+            disabled={attachments.length >= MAX_EMAIL_ATTACHMENTS || sending}
+            onChange={handleAttachmentChange}
+            className="block w-full text-sm text-charcoal file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20"
+          />
+          {attachments.length > 0 && (
+            <ul className="mt-3 space-y-2">
+              {attachments.map((file, index) => (
+                <li
+                  key={`${file.name}-${file.size}-${index}`}
+                  className="flex items-center justify-between gap-2 rounded-md border border-border bg-card px-3 py-2 text-sm"
+                >
+                  <span className="truncate text-charcoal">
+                    {file.name}{' '}
+                    <span className="text-text-light">({formatFileSize(file.size)})</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => removeAttachment(index)}
+                    disabled={sending}
+                    className="shrink-0 text-error hover:underline disabled:opacity-50"
+                  >
+                    Remove
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
 
         {error && (
