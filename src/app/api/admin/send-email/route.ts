@@ -109,14 +109,33 @@ export async function POST(request: Request) {
 
     const html = wrapMemberEmailHtml(content);
 
+    const from = getEmailFromInformationHub();
+    let sentCount = 0;
+
     for (const to of uniqueEmails) {
-      await transporter.sendMail({
-        from: getEmailFromInformationHub(),
-        to,
-        subject,
-        html,
-        ...(attachments.length > 0 ? { attachments } : {}),
-      });
+      try {
+        await transporter.sendMail({
+          from,
+          to,
+          subject,
+          html,
+          ...(attachments.length > 0 ? { attachments } : {}),
+        });
+        sentCount += 1;
+      } catch (sendErr) {
+        console.error(`Admin send-email failed for ${to}:`, sendErr);
+        const detail =
+          sendErr instanceof Error ? sendErr.message : 'Unknown send error';
+        return NextResponse.json(
+          {
+            error:
+              attachments.length > 0
+                ? `Failed to send email with attachment${sentCount > 0 ? ` (${sentCount} of ${uniqueEmails.length} sent before failure)` : ''}: ${detail}`
+                : `Failed to send email${sentCount > 0 ? ` (${sentCount} of ${uniqueEmails.length} sent before failure)` : ''}: ${detail}`,
+          },
+          { status: 500 }
+        );
+      }
     }
 
     return NextResponse.json({
@@ -126,9 +145,7 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     console.error('Admin send-email error:', error);
-    return NextResponse.json(
-      { error: 'Failed to send email' },
-      { status: 500 }
-    );
+    const message = error instanceof Error ? error.message : 'Failed to send email';
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }

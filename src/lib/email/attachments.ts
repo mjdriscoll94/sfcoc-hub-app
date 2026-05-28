@@ -28,28 +28,37 @@ function safeFilename(name: string): string {
   return base.slice(0, 200) || 'attachment';
 }
 
-function isAllowedFile(file: File): boolean {
-  const ext = file.name.split('.').pop()?.toLowerCase() ?? '';
+function uploadFilename(entry: File | Blob): string {
+  if (entry instanceof File && entry.name) return entry.name;
+  return 'attachment';
+}
+
+function isAllowedUpload(entry: File | Blob): boolean {
+  const name = uploadFilename(entry);
+  const ext = name.split('.').pop()?.toLowerCase() ?? '';
   if (BLOCKED_EXTENSIONS.has(ext)) return false;
-  if (file.type && !file.type.startsWith('application/octet-stream')) {
+  const type = entry.type;
+  if (type && !type.startsWith('application/octet-stream')) {
     const ok =
-      file.type.startsWith('image/') ||
-      file.type === 'application/pdf' ||
-      file.type.startsWith('text/') ||
-      file.type.includes('officedocument') ||
-      file.type === 'application/msword' ||
-      file.type === 'application/zip' ||
-      file.type === 'application/x-zip-compressed';
+      type.startsWith('image/') ||
+      type === 'application/pdf' ||
+      type.startsWith('text/') ||
+      type.includes('officedocument') ||
+      type === 'application/msword' ||
+      type === 'application/zip' ||
+      type === 'application/x-zip-compressed';
     if (!ok) return false;
   }
   return true;
 }
 
+function isFormUpload(entry: FormDataEntryValue): entry is File | Blob {
+  return entry instanceof Blob && entry.size > 0;
+}
+
 /** Parse and validate `attachments` fields from multipart form data. */
 export async function attachmentsFromFormData(formData: FormData): Promise<EmailAttachment[]> {
-  const files = formData
-    .getAll('attachments')
-    .filter((entry): entry is File => entry instanceof File && entry.size > 0);
+  const files = formData.getAll('attachments').filter(isFormUpload);
 
   if (files.length > MAX_EMAIL_ATTACHMENTS) {
     throw new Error(`You can attach at most ${MAX_EMAIL_ATTACHMENTS} files.`);
@@ -59,11 +68,12 @@ export async function attachmentsFromFormData(formData: FormData): Promise<Email
   let totalBytes = 0;
 
   for (const file of files) {
-    if (!isAllowedFile(file)) {
-      throw new Error(`File type not allowed: ${file.name}`);
+    const name = uploadFilename(file);
+    if (!isAllowedUpload(file)) {
+      throw new Error(`File type not allowed: ${name}`);
     }
     if (file.size > MAX_ATTACHMENT_BYTES_PER_FILE) {
-      throw new Error(`File too large (max ${MAX_ATTACHMENT_BYTES_PER_FILE / (1024 * 1024)} MB each): ${file.name}`);
+      throw new Error(`File too large (max ${MAX_ATTACHMENT_BYTES_PER_FILE / (1024 * 1024)} MB each): ${name}`);
     }
     totalBytes += file.size;
     if (totalBytes > MAX_ATTACHMENT_BYTES_TOTAL) {
@@ -71,7 +81,7 @@ export async function attachmentsFromFormData(formData: FormData): Promise<Email
     }
     const buf = Buffer.from(await file.arrayBuffer());
     out.push({
-      filename: safeFilename(file.name),
+      filename: safeFilename(name),
       contentType: file.type || 'application/octet-stream',
       content: buf,
     });
