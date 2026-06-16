@@ -4,6 +4,7 @@ export interface AttendanceHousehold {
   normalizedName: string;
   active: boolean;
   isVisitor?: boolean;
+  longTermExempt?: boolean;
 }
 
 export interface AttendanceRecord {
@@ -100,7 +101,7 @@ export const buildAttendanceAttention = (
   const sortedRecords = [...records].sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime());
 
   return households
-    .filter((household) => !household.isVisitor)
+    .filter((household) => !household.isVisitor && !household.longTermExempt)
     .map((household) => {
       const recentHistory = sortedRecords
         .map<AttendanceHistoryEntry>((record) => ({

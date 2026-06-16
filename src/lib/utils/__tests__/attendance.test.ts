@@ -80,3 +80,18 @@ test('buildAttendanceAttention ignores visitor households', () => {
 
   assert.equal(attention.length, 0);
 });
+
+test('buildAttendanceAttention ignores long-term exempt households', () => {
+  const households: AttendanceHousehold[] = [
+    { id: 'x', householdName: 'Extended Trip', normalizedName: 'extended trip', active: true, longTermExempt: true },
+  ];
+
+  const records: AttendanceRecord[] = [
+    { id: '2026-06-14', serviceDate: new Date(2026, 5, 14), counts: { x: 0 } },
+    { id: '2026-06-07', serviceDate: new Date(2026, 5, 7), counts: { x: 0 } },
+  ];
+
+  const attention = buildAttendanceAttention(households, records);
+
+  assert.equal(attention.length, 0);
+});
