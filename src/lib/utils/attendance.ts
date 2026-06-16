@@ -11,6 +11,7 @@ export interface AttendanceHousehold {
 export interface AttendanceRecord {
   id: string;
   serviceDate: Date;
+  noService?: boolean;
   counts: Record<string, number>;
   exemptions?: Record<string, string>;
   visitorDetails?: Record<
@@ -143,6 +144,7 @@ export const buildAttendanceAttention = (
     .filter((household) => !household.isVisitor && !household.longTermExempt)
     .map((household) => {
       const recentHistory = sortedRecords
+        .filter((record) => !record.noService)
         .filter((record) => isHouseholdAvailableForSunday(household, record.serviceDate))
         .map<AttendanceHistoryEntry>((record) => ({
           count: record.counts[household.id],

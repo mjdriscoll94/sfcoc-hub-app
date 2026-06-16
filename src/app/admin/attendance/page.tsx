@@ -44,6 +44,7 @@ interface FirestoreAttendanceHousehold {
 
 interface FirestoreAttendanceRecord {
   serviceDate?: Timestamp;
+  noService?: boolean;
   counts?: Record<string, number>;
   exemptions?: Record<string, string>;
   visitorDetails?: Record<
@@ -79,6 +80,7 @@ export default function AttendanceAdminPage() {
   const [draftExemptions, setDraftExemptions] = useState<Record<string, string>>({});
   const [draftVisitorDetails, setDraftVisitorDetails] = useState<Record<string, VisitorDetailDraft>>({});
   const [openVisitorNotes, setOpenVisitorNotes] = useState<Record<string, boolean>>({});
+  const [noService, setNoService] = useState(false);
   const [importText, setImportText] = useState('');
   const [importAsVisitor, setImportAsVisitor] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
@@ -134,6 +136,7 @@ export default function AttendanceAdminPage() {
           return {
             id: snapshot.id,
             serviceDate: data.serviceDate?.toDate() || getDateFromSundayKey(snapshot.id),
+            noService: data.noService === true,
             counts: data.counts || {},
             exemptions: data.exemptions || {},
             visitorDetails: data.visitorDetails || {},
@@ -183,6 +186,7 @@ export default function AttendanceAdminPage() {
       setDraftExemptions(nextExemptions);
       setDraftVisitorDetails(nextVisitorDetails);
       setOpenVisitorNotes(nextOpenVisitorNotes);
+      setNoService(selectedRecord.noService === true);
       return;
     }
 
@@ -205,6 +209,7 @@ export default function AttendanceAdminPage() {
     setDraftExemptions(blankExemptions);
     setDraftVisitorDetails(blankVisitorDetails);
     setOpenVisitorNotes(blankOpenVisitorNotes);
+    setNoService(false);
   }, [households, records, selectedSundayKey]);
 
   if (!userProfile?.isAdmin) {
@@ -218,10 +223,11 @@ export default function AttendanceAdminPage() {
   const recurringVisitors = households
     .filter((household) => household.isVisitor)
     .map((household) => {
-      const visits = records.filter((record) => (record.counts[household.id] || 0) > 0).length;
+      const visits = records.filter((record) => !record.noService && (record.counts[household.id] || 0) > 0).length;
       const latestDetails = records
         .slice()
         .sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime())
+        .filter((record) => !record.noService)
         .map((record) => record.visitorDetails?.[household.id])
         .find(Boolean);
 
@@ -480,6 +486,7 @@ export default function AttendanceAdminPage() {
         doc(db, 'attendanceRecords', selectedSundayKey),
         {
           serviceDate: Timestamp.fromDate(selectedSunday),
+          noService,
           counts,
           exemptions,
           visitorDetails,
@@ -492,6 +499,7 @@ export default function AttendanceAdminPage() {
       const nextRecord: AttendanceRecord = {
         id: selectedSundayKey,
         serviceDate: selectedSunday,
+        noService,
         counts,
         exemptions,
         visitorDetails,
@@ -646,6 +654,7 @@ export default function AttendanceAdminPage() {
         doc(db, 'attendanceRecords', selectedSundayKey),
         {
           serviceDate: Timestamp.fromDate(selectedSunday),
+          noService,
           counts: nextCounts,
           exemptions: selectedRecord?.exemptions || {},
           visitorDetails: selectedRecord?.visitorDetails || {},
@@ -661,6 +670,7 @@ export default function AttendanceAdminPage() {
         return {
           id: snapshot.id,
           serviceDate: data.serviceDate?.toDate() || getDateFromSundayKey(snapshot.id),
+          noService: data.noService === true,
           counts: data.counts || {},
         };
       });
@@ -682,6 +692,7 @@ export default function AttendanceAdminPage() {
       const nextRecord: AttendanceRecord = {
         id: selectedSundayKey,
         serviceDate: selectedSunday,
+        noService,
         counts: nextCounts,
         exemptions: selectedRecord?.exemptions || {},
         visitorDetails: selectedRecord?.visitorDetails || {},
@@ -794,6 +805,15 @@ export default function AttendanceAdminPage() {
                     <p className="mt-1">
                       {selectedRecord ? 'Editing a saved attendance record.' : 'No record saved yet for this Sunday.'}
                     </p>
+                    <label className="mt-3 flex items-center gap-2 text-sm text-charcoal">
+                      <input
+                        type="checkbox"
+                        checked={noService}
+                        onChange={(event) => setNoService(event.target.checked)}
+                        className="h-4 w-4 rounded border-border text-coral focus:ring-coral"
+                      />
+                      <span>No Service or Count Kept</span>
+                    </label>
                   </div>
                 </div>
               </div>
@@ -856,6 +876,7 @@ export default function AttendanceAdminPage() {
               <div className="space-y-3">
                 {filteredHouseholds.map((household) => {
                   const history = records
+                    .filter((record) => !record.noService)
                     .filter((record) => isHouseholdAvailableForSunday(household, record.serviceDate))
                     .sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime())
                     .slice(0, 6)
