@@ -204,6 +204,7 @@ export default function AttendanceAdminPage() {
 
   const handleImportHouseholds = async () => {
     const parsedHouseholds = parseAttendanceHouseholds(importText);
+    const previousHouseholds = households;
 
     if (parsedHouseholds.length === 0) {
       setError('Paste at least one household name to import.');
@@ -246,17 +247,17 @@ export default function AttendanceAdminPage() {
         addedCount += 1;
       }
 
-      await batch.commit();
-
       const activeHouseholds = nextHouseholds
         .filter((household) => household.active)
         .sort((a, b) => a.householdName.localeCompare(b.householdName));
 
       setHouseholds(activeHouseholds);
       setImportText('');
+      await batch.commit();
       setMessage(`Imported ${addedCount} household${addedCount === 1 ? '' : 's'}.`);
     } catch (importError) {
       console.error('Error importing households:', importError);
+      setHouseholds(previousHouseholds);
       setError('Failed to import households.');
     } finally {
       setImporting(false);
