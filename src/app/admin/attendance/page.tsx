@@ -24,6 +24,7 @@ import {
   getDateFromSundayKey,
   getSundayForDate,
   getSundayKey,
+  isHouseholdAvailableForSunday,
   parseAttendanceHouseholds,
   normalizeAttendanceName,
   type AttendanceHousehold,
@@ -34,6 +35,8 @@ interface FirestoreAttendanceHousehold {
   householdName?: string;
   normalizedName?: string;
   active?: boolean;
+  createdAt?: Timestamp;
+  availableFrom?: Timestamp;
   isVisitor?: boolean;
   longTermExempt?: boolean;
 }
@@ -111,6 +114,7 @@ export default function AttendanceAdminPage() {
               householdName: data.householdName || 'Unnamed Household',
               normalizedName: data.normalizedName || normalizeAttendanceName(data.householdName || ''),
               active: data.active !== false,
+              availableFrom: data.availableFrom?.toDate() || data.createdAt?.toDate() || new Date(2000, 0, 2, 12, 0, 0, 0),
               isVisitor: data.isVisitor === true,
               longTermExempt: data.longTermExempt === true,
             };
@@ -226,7 +230,8 @@ export default function AttendanceAdminPage() {
     })
     .filter((visitor) => visitor.visits >= 2)
     .sort((a, b) => b.visits - a.visits || a.householdName.localeCompare(b.householdName));
-  const filteredHouseholds = households.filter((household) =>
+  const availableHouseholds = households.filter((household) => isHouseholdAvailableForSunday(household, selectedSunday));
+  const filteredHouseholds = availableHouseholds.filter((household) =>
     household.householdName.toLowerCase().includes(searchQuery.trim().toLowerCase()),
   );
   const totalAttendance = filteredHouseholds.reduce((sum, household) => {
@@ -375,11 +380,13 @@ export default function AttendanceAdminPage() {
           continue;
         }
 
+        const availableFrom = getSundayForDate(selectedSunday);
         const newDoc = doc(collection(db, 'attendanceHouseholds'));
         batch.set(newDoc, {
           householdName,
           normalizedName,
           active: true,
+          availableFrom: Timestamp.fromDate(availableFrom),
           isVisitor: importAsVisitor,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
@@ -389,6 +396,7 @@ export default function AttendanceAdminPage() {
           householdName,
           normalizedName,
           active: true,
+          availableFrom,
           isVisitor: importAsVisitor,
         });
         existingByName.set(normalizedName, nextHouseholds[nextHouseholds.length - 1]);
@@ -418,7 +426,7 @@ export default function AttendanceAdminPage() {
       setError(null);
       setMessage(null);
 
-      const counts = households.reduce<Record<string, number>>((result, household) => {
+      const counts = availableHouseholds.reduce<Record<string, number>>((result, household) => {
         const rawValue = draftCounts[household.id];
         if (rawValue === '') {
           return result;
@@ -431,14 +439,14 @@ export default function AttendanceAdminPage() {
 
         return result;
       }, {});
-      const exemptions = households.reduce<Record<string, string>>((result, household) => {
+      const exemptions = availableHouseholds.reduce<Record<string, string>>((result, household) => {
         const note = (household.longTermExempt ? 'Long-term exemption' : draftExemptions[household.id])?.trim();
         if (note) {
           result[household.id] = note;
         }
         return result;
       }, {});
-      const visitorDetails = households.reduce<NonNullable<AttendanceRecord['visitorDetails']>>((result, household) => {
+      const visitorDetails = availableHouseholds.reduce<NonNullable<AttendanceRecord['visitorDetails']>>((result, household) => {
         if (!household.isVisitor) {
           return result;
         }

@@ -4,6 +4,7 @@ import {
   buildAttendanceAttention,
   getSundayForDate,
   getSundayKey,
+  isHouseholdAvailableForSunday,
   parseAttendanceHouseholds,
   type AttendanceHousehold,
   type AttendanceRecord,
@@ -21,10 +22,24 @@ test('getSunday helpers normalize a weekday to that week Sunday', () => {
   assert.equal(getSundayKey(sunday), '2026-06-14');
 });
 
+test('isHouseholdAvailableForSunday only allows current and future Sundays', () => {
+  const household: AttendanceHousehold = {
+    id: 'a',
+    householdName: 'Adams',
+    normalizedName: 'adams',
+    active: true,
+    availableFrom: new Date(2026, 5, 14),
+  };
+
+  assert.equal(isHouseholdAvailableForSunday(household, new Date(2026, 5, 14)), true);
+  assert.equal(isHouseholdAvailableForSunday(household, new Date(2026, 5, 21)), true);
+  assert.equal(isHouseholdAvailableForSunday(household, new Date(2026, 5, 7)), false);
+});
+
 test('buildAttendanceAttention returns active miss conditions', () => {
   const households: AttendanceHousehold[] = [
-    { id: 'a', householdName: 'Adams', normalizedName: 'adams', active: true },
-    { id: 'b', householdName: 'Baker', normalizedName: 'baker', active: true },
+    { id: 'a', householdName: 'Adams', normalizedName: 'adams', active: true, availableFrom: new Date(2026, 0, 4) },
+    { id: 'b', householdName: 'Baker', normalizedName: 'baker', active: true, availableFrom: new Date(2026, 0, 4) },
   ];
 
   const records: AttendanceRecord[] = [
@@ -51,7 +66,7 @@ test('buildAttendanceAttention returns active miss conditions', () => {
 
 test('buildAttendanceAttention ignores exempt absences', () => {
   const households: AttendanceHousehold[] = [
-    { id: 'a', householdName: 'Adams', normalizedName: 'adams', active: true },
+    { id: 'a', householdName: 'Adams', normalizedName: 'adams', active: true, availableFrom: new Date(2026, 0, 4) },
   ];
 
   const records: AttendanceRecord[] = [
@@ -67,7 +82,7 @@ test('buildAttendanceAttention ignores exempt absences', () => {
 
 test('buildAttendanceAttention ignores visitor households', () => {
   const households: AttendanceHousehold[] = [
-    { id: 'v', householdName: 'Visitor Family', normalizedName: 'visitor family', active: true, isVisitor: true },
+    { id: 'v', householdName: 'Visitor Family', normalizedName: 'visitor family', active: true, availableFrom: new Date(2026, 0, 4), isVisitor: true },
   ];
 
   const records: AttendanceRecord[] = [
@@ -83,7 +98,7 @@ test('buildAttendanceAttention ignores visitor households', () => {
 
 test('buildAttendanceAttention ignores long-term exempt households', () => {
   const households: AttendanceHousehold[] = [
-    { id: 'x', householdName: 'Extended Trip', normalizedName: 'extended trip', active: true, longTermExempt: true },
+    { id: 'x', householdName: 'Extended Trip', normalizedName: 'extended trip', active: true, availableFrom: new Date(2026, 0, 4), longTermExempt: true },
   ];
 
   const records: AttendanceRecord[] = [

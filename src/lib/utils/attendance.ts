@@ -3,6 +3,7 @@ export interface AttendanceHousehold {
   householdName: string;
   normalizedName: string;
   active: boolean;
+  availableFrom: Date;
   isVisitor?: boolean;
   longTermExempt?: boolean;
 }
@@ -94,6 +95,11 @@ export const getDateFromSundayKey = (value: string): Date => {
   return new Date(year, (month || 1) - 1, day || 1, 12, 0, 0, 0);
 };
 
+export const isHouseholdAvailableForSunday = (
+  household: Pick<AttendanceHousehold, 'availableFrom'>,
+  sunday: Date,
+): boolean => household.availableFrom.getTime() <= getSundayForDate(sunday).getTime();
+
 export const buildAttendanceAttention = (
   households: AttendanceHousehold[],
   records: AttendanceRecord[],
@@ -104,6 +110,7 @@ export const buildAttendanceAttention = (
     .filter((household) => !household.isVisitor && !household.longTermExempt)
     .map((household) => {
       const recentHistory = sortedRecords
+        .filter((record) => isHouseholdAvailableForSunday(household, record.serviceDate))
         .map<AttendanceHistoryEntry>((record) => ({
           count: record.counts[household.id],
           exempt: typeof record.exemptions?.[household.id] === 'string' && record.exemptions[household.id].trim().length > 0,
