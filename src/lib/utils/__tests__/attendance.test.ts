@@ -64,3 +64,19 @@ test('buildAttendanceAttention ignores exempt absences', () => {
 
   assert.equal(attention.length, 0);
 });
+
+test('buildAttendanceAttention ignores visitor households', () => {
+  const households: AttendanceHousehold[] = [
+    { id: 'v', householdName: 'Visitor Family', normalizedName: 'visitor family', active: true, isVisitor: true },
+  ];
+
+  const records: AttendanceRecord[] = [
+    { id: '2026-06-14', serviceDate: new Date(2026, 5, 14), counts: { v: 0 } },
+    { id: '2026-06-07', serviceDate: new Date(2026, 5, 7), counts: { v: 0 } },
+    { id: '2026-05-31', serviceDate: new Date(2026, 4, 31), counts: { v: 0 } },
+  ];
+
+  const attention = buildAttendanceAttention(households, records);
+
+  assert.equal(attention.length, 0);
+});

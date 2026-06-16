@@ -14,7 +14,7 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Save, Upload, Users } from 'lucide-react';
+import { AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Mail, Save, Upload, Users } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
@@ -33,12 +33,29 @@ interface FirestoreAttendanceHousehold {
   householdName?: string;
   normalizedName?: string;
   active?: boolean;
+  isVisitor?: boolean;
 }
 
 interface FirestoreAttendanceRecord {
   serviceDate?: Timestamp;
   counts?: Record<string, number>;
   exemptions?: Record<string, string>;
+  visitorDetails?: Record<
+    string,
+    {
+      notes?: string;
+      wantedMoreInformation?: boolean;
+      hasBeenContacted?: boolean;
+      contactedBy?: string;
+    }
+  >;
+}
+
+interface VisitorDetailDraft {
+  notes: string;
+  wantedMoreInformation: boolean;
+  hasBeenContacted: boolean;
+  contactedBy: string;
 }
 
 export default function AttendanceAdminPage() {
@@ -54,11 +71,16 @@ export default function AttendanceAdminPage() {
   const [selectedSundayKey, setSelectedSundayKey] = useState(getSundayKey(getSundayForDate(new Date())));
   const [draftCounts, setDraftCounts] = useState<Record<string, string>>({});
   const [draftExemptions, setDraftExemptions] = useState<Record<string, string>>({});
+  const [draftVisitorDetails, setDraftVisitorDetails] = useState<Record<string, VisitorDetailDraft>>({});
+  const [openVisitorNotes, setOpenVisitorNotes] = useState<Record<string, boolean>>({});
   const [importText, setImportText] = useState('');
+  const [importAsVisitor, setImportAsVisitor] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [sendingAttentionEmail, setSendingAttentionEmail] = useState(false);
+  const [attentionEmailRecipients, setAttentionEmailRecipients] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -87,6 +109,7 @@ export default function AttendanceAdminPage() {
               householdName: data.householdName || 'Unnamed Household',
               normalizedName: data.normalizedName || normalizeAttendanceName(data.householdName || ''),
               active: data.active !== false,
+              isVisitor: data.isVisitor === true,
             };
           })
           .filter((household) => household.active);
@@ -101,6 +124,7 @@ export default function AttendanceAdminPage() {
             serviceDate: data.serviceDate?.toDate() || getDateFromSundayKey(snapshot.id),
             counts: data.counts || {},
             exemptions: data.exemptions || {},
+            visitorDetails: data.visitorDetails || {},
           };
         });
 
@@ -129,19 +153,46 @@ export default function AttendanceAdminPage() {
       households.forEach((household) => {
         nextExemptions[household.id] = selectedRecord.exemptions?.[household.id] || '';
       });
+      const nextVisitorDetails: Record<string, VisitorDetailDraft> = {};
+      households.forEach((household) => {
+        const details = selectedRecord.visitorDetails?.[household.id];
+        nextVisitorDetails[household.id] = {
+          notes: details?.notes || '',
+          wantedMoreInformation: !!details?.wantedMoreInformation,
+          hasBeenContacted: !!details?.hasBeenContacted,
+          contactedBy: details?.contactedBy || '',
+        };
+      });
+      const nextOpenVisitorNotes: Record<string, boolean> = {};
+      households.forEach((household) => {
+        nextOpenVisitorNotes[household.id] = !!selectedRecord.visitorDetails?.[household.id]?.notes;
+      });
       setDraftCounts(nextDraft);
       setDraftExemptions(nextExemptions);
+      setDraftVisitorDetails(nextVisitorDetails);
+      setOpenVisitorNotes(nextOpenVisitorNotes);
       return;
     }
 
     const blankDraft: Record<string, string> = {};
     const blankExemptions: Record<string, string> = {};
+    const blankVisitorDetails: Record<string, VisitorDetailDraft> = {};
+    const blankOpenVisitorNotes: Record<string, boolean> = {};
     households.forEach((household) => {
       blankDraft[household.id] = '';
       blankExemptions[household.id] = '';
+      blankVisitorDetails[household.id] = {
+        notes: '',
+        wantedMoreInformation: false,
+        hasBeenContacted: false,
+        contactedBy: '',
+      };
+      blankOpenVisitorNotes[household.id] = false;
     });
     setDraftCounts(blankDraft);
     setDraftExemptions(blankExemptions);
+    setDraftVisitorDetails(blankVisitorDetails);
+    setOpenVisitorNotes(blankOpenVisitorNotes);
   }, [households, records, selectedSundayKey]);
 
   if (!userProfile?.isAdmin) {
@@ -202,6 +253,42 @@ export default function AttendanceAdminPage() {
     }));
   };
 
+  const handleVisitorNotesToggle = (householdId: string) => {
+    setOpenVisitorNotes((current) => ({
+      ...current,
+      [householdId]: !current[householdId],
+    }));
+  };
+
+  const handleVisitorDetailChange = (
+    householdId: string,
+    field: keyof VisitorDetailDraft,
+    value: string | boolean,
+  ) => {
+    setDraftVisitorDetails((current) => {
+      const existing = current[householdId] || {
+        notes: '',
+        wantedMoreInformation: false,
+        hasBeenContacted: false,
+        contactedBy: '',
+      };
+
+      const next: VisitorDetailDraft = {
+        ...existing,
+        [field]: value,
+      } as VisitorDetailDraft;
+
+      if (field === 'hasBeenContacted' && value === false) {
+        next.contactedBy = '';
+      }
+
+      return {
+        ...current,
+        [householdId]: next,
+      };
+    });
+  };
+
   const handleImportHouseholds = async () => {
     const parsedHouseholds = parseAttendanceHouseholds(importText);
     const previousHouseholds = households;
@@ -234,6 +321,7 @@ export default function AttendanceAdminPage() {
           householdName,
           normalizedName,
           active: true,
+          isVisitor: importAsVisitor,
           createdAt: Timestamp.now(),
           updatedAt: Timestamp.now(),
         });
@@ -242,6 +330,7 @@ export default function AttendanceAdminPage() {
           householdName,
           normalizedName,
           active: true,
+          isVisitor: importAsVisitor,
         });
         existingByName.set(normalizedName, nextHouseholds[nextHouseholds.length - 1]);
         addedCount += 1;
@@ -254,7 +343,7 @@ export default function AttendanceAdminPage() {
       setHouseholds(activeHouseholds);
       setImportText('');
       await batch.commit();
-      setMessage(`Imported ${addedCount} household${addedCount === 1 ? '' : 's'}.`);
+      setMessage(`Imported ${addedCount} ${importAsVisitor ? 'visitor ' : ''}household${addedCount === 1 ? '' : 's'}.`);
     } catch (importError) {
       console.error('Error importing households:', importError);
       setHouseholds(previousHouseholds);
@@ -290,6 +379,30 @@ export default function AttendanceAdminPage() {
         }
         return result;
       }, {});
+      const visitorDetails = households.reduce<NonNullable<AttendanceRecord['visitorDetails']>>((result, household) => {
+        if (!household.isVisitor) {
+          return result;
+        }
+
+        const details = draftVisitorDetails[household.id];
+        const notes = details?.notes.trim() || '';
+        const wantedMoreInformation = !!details?.wantedMoreInformation;
+        const hasBeenContacted = !!details?.hasBeenContacted;
+        const contactedBy = details?.contactedBy.trim() || '';
+
+        if (!notes && !wantedMoreInformation && !hasBeenContacted && !contactedBy) {
+          return result;
+        }
+
+        result[household.id] = {
+          ...(notes ? { notes } : {}),
+          ...(wantedMoreInformation ? { wantedMoreInformation } : {}),
+          ...(hasBeenContacted ? { hasBeenContacted } : {}),
+          ...(contactedBy ? { contactedBy } : {}),
+        };
+
+        return result;
+      }, {});
 
       await setDoc(
         doc(db, 'attendanceRecords', selectedSundayKey),
@@ -297,6 +410,7 @@ export default function AttendanceAdminPage() {
           serviceDate: Timestamp.fromDate(selectedSunday),
           counts,
           exemptions,
+          visitorDetails,
           updatedAt: Timestamp.now(),
           updatedBy: userProfile.uid,
         },
@@ -308,6 +422,7 @@ export default function AttendanceAdminPage() {
         serviceDate: selectedSunday,
         counts,
         exemptions,
+        visitorDetails,
       };
 
       setRecords((current) => {
@@ -320,6 +435,58 @@ export default function AttendanceAdminPage() {
       setError('Failed to save attendance.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSendAttentionEmail = async () => {
+    const recipients = attentionEmailRecipients
+      .split(',')
+      .map((value) => value.trim())
+      .filter(Boolean);
+
+    if (recipients.length === 0) {
+      setError('Enter at least one email address for the attention report.');
+      return;
+    }
+
+    if (attentionItems.length === 0) {
+      setError('There are no households to include in the attention report.');
+      return;
+    }
+
+    try {
+      setSendingAttentionEmail(true);
+      setError(null);
+      setMessage(null);
+
+      const response = await fetch('/api/admin/attendance/send-attention-email', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          to: recipients,
+          items: attentionItems.map((item) => ({
+            householdName: item.householdName,
+            conditions: item.conditions.map((condition) => ({
+              label: condition.label,
+            })),
+          })),
+        }),
+      });
+
+      const responseData = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to send attention email.');
+      }
+
+      setMessage(`Sent attention email to ${responseData.recipientCount} recipient${responseData.recipientCount === 1 ? '' : 's'}.`);
+      setAttentionEmailRecipients('');
+    } catch (sendError) {
+      console.error('Error sending attention email:', sendError);
+      setError(sendError instanceof Error ? sendError.message : 'Failed to send attention email.');
+    } finally {
+      setSendingAttentionEmail(false);
     }
   };
 
@@ -434,12 +601,67 @@ export default function AttendanceAdminPage() {
                   }));
                   const exemptionNote = draftExemptions[household.id] || '';
                   const isExempt = exemptionNote.trim().length > 0;
+                  const visitorDetails = draftVisitorDetails[household.id] || {
+                    notes: '',
+                    wantedMoreInformation: false,
+                    hasBeenContacted: false,
+                    contactedBy: '',
+                  };
+                  const hasVisitorNotes = visitorDetails.notes.trim().length > 0;
+                  const visitorNotesOpen = !!openVisitorNotes[household.id];
 
                   return (
-                    <div key={household.id} className="rounded-lg border border-border p-4">
+                    <div
+                      key={household.id}
+                      className={`rounded-lg border p-4 ${
+                        household.isVisitor ? 'border-sky-200 bg-sky-50/40' : 'border-border'
+                      }`}
+                    >
                       <div className="flex flex-col gap-4">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-base font-semibold text-charcoal">
+                              {household.householdName}
+                              {household.isVisitor ? (
+                                <span className="ml-2 rounded-full bg-sky-100 px-2 py-0.5 text-xs font-medium text-sky-700">
+                                  Visitor
+                                </span>
+                              ) : null}
+                            </p>
+                          </div>
+                          {household.isVisitor ? (
+                            <div className="flex flex-col items-start gap-2 text-sm text-charcoal">
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={visitorDetails.wantedMoreInformation}
+                                  onChange={(event) => handleVisitorDetailChange(household.id, 'wantedMoreInformation', event.target.checked)}
+                                  className="h-4 w-4 rounded border-border text-coral focus:ring-coral"
+                                />
+                                <span>Wanted more information</span>
+                              </label>
+                              <label className="flex items-center gap-2">
+                                <input
+                                  type="checkbox"
+                                  checked={visitorDetails.hasBeenContacted}
+                                  onChange={(event) => handleVisitorDetailChange(household.id, 'hasBeenContacted', event.target.checked)}
+                                  className="h-4 w-4 rounded border-border text-coral focus:ring-coral"
+                                />
+                                <span>Has been contacted</span>
+                              </label>
+                              {visitorDetails.hasBeenContacted ? (
+                                <input
+                                  type="text"
+                                  value={visitorDetails.contactedBy}
+                                  onChange={(event) => handleVisitorDetailChange(household.id, 'contactedBy', event.target.value)}
+                                  placeholder="Who contacted them?"
+                                  className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                                />
+                              ) : null}
+                            </div>
+                          ) : null}
+                        </div>
                         <div>
-                          <p className="text-base font-semibold text-charcoal">{household.householdName}</p>
                           <div className="mt-2 flex flex-wrap gap-2">
                             {history.map((entry) => (
                               <span
@@ -471,25 +693,52 @@ export default function AttendanceAdminPage() {
                             />
                           </label>
                           <div className="flex-1 lg:max-w-md">
-                            <button
-                              type="button"
-                              onClick={() => handleExemptionToggle(household.id)}
-                              className={`mb-2 inline-flex rounded-md border px-3 py-2 text-sm font-medium transition ${
-                                isExempt
-                                  ? 'border-sky-300 bg-sky-50 text-sky-700'
-                                  : 'border-border text-charcoal hover:border-coral hover:text-coral'
-                              }`}
-                            >
-                              {isExempt ? 'Exemption Added' : 'Add Exemption'}
-                            </button>
-                            {isExempt && (
-                              <textarea
-                                value={exemptionNote}
-                                onChange={(event) => handleExemptionNoteChange(household.id, event.target.value)}
-                                rows={2}
-                                placeholder="Where were they?"
-                                className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
-                              />
+                            {household.isVisitor ? (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleVisitorNotesToggle(household.id)}
+                                  className={`mb-2 inline-flex rounded-md border px-3 py-2 text-sm font-medium transition ${
+                                    hasVisitorNotes
+                                      ? 'border-sky-300 bg-sky-50 text-sky-700'
+                                      : 'border-border text-charcoal hover:border-coral hover:text-coral'
+                                  }`}
+                                >
+                                  {hasVisitorNotes ? 'Visitor Notes Added' : 'Visitor Notes'}
+                                </button>
+                                {visitorNotesOpen ? (
+                                  <textarea
+                                    value={visitorDetails.notes}
+                                    onChange={(event) => handleVisitorDetailChange(household.id, 'notes', event.target.value)}
+                                    rows={2}
+                                    placeholder="Visitor notes"
+                                    className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                                  />
+                                ) : null}
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  onClick={() => handleExemptionToggle(household.id)}
+                                  className={`mb-2 inline-flex rounded-md border px-3 py-2 text-sm font-medium transition ${
+                                    isExempt
+                                      ? 'border-sky-300 bg-sky-50 text-sky-700'
+                                      : 'border-border text-charcoal hover:border-coral hover:text-coral'
+                                  }`}
+                                >
+                                  {isExempt ? 'Exemption Added' : 'Add Exemption'}
+                                </button>
+                                {isExempt && (
+                                  <textarea
+                                    value={exemptionNote}
+                                    onChange={(event) => handleExemptionNoteChange(household.id, event.target.value)}
+                                    rows={2}
+                                    placeholder="Where were they?"
+                                    className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                                  />
+                                )}
+                              </>
                             )}
                           </div>
                         </div>
@@ -531,26 +780,51 @@ export default function AttendanceAdminPage() {
                   No households currently match a follow-up condition.
                 </div>
               ) : (
-                attentionItems.map((item) => (
-                  <div key={item.householdId} className="rounded-lg border border-border p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-charcoal">{item.householdName}</p>
-                        <p className="mt-1 text-xs text-text-light">
-                          Recent counts: {item.recentCounts.length > 0 ? item.recentCounts.join(', ') : 'No history yet'}
-                        </p>
-                      </div>
-                      <Users className="h-5 w-5 text-coral" />
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {item.conditions.map((condition) => (
-                        <span key={condition.key} className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
-                          {condition.label}
-                        </span>
-                      ))}
+                <>
+                  <div className="rounded-lg border border-border bg-slate-50 p-4">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-charcoal">Send this list to</span>
+                      <input
+                        type="text"
+                        value={attentionEmailRecipients}
+                        onChange={(event) => setAttentionEmailRecipients(event.target.value)}
+                        placeholder="name@example.com, second@example.com"
+                        className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                      />
+                    </label>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSendAttentionEmail}
+                        disabled={sendingAttentionEmail}
+                        className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        {sendingAttentionEmail ? 'Sending...' : 'Send Email'}
+                      </button>
                     </div>
                   </div>
-                ))
+                  {attentionItems.map((item) => (
+                    <div key={item.householdId} className="rounded-lg border border-border p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-charcoal">{item.householdName}</p>
+                          <p className="mt-1 text-xs text-text-light">
+                            Recent counts: {item.recentCounts.length > 0 ? item.recentCounts.join(', ') : 'No history yet'}
+                          </p>
+                        </div>
+                        <Users className="h-5 w-5 text-coral" />
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {item.conditions.map((condition) => (
+                          <span key={condition.key} className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
+                            {condition.label}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </section>
@@ -575,9 +849,20 @@ export default function AttendanceAdminPage() {
             />
 
             <div className="mt-4 flex items-center justify-between gap-4">
-              <p className="text-xs text-text-light">
-                Imported households stay separate from the app directory and member records.
-              </p>
+              <div className="flex flex-col gap-3">
+                <p className="text-xs text-text-light">
+                  Imported households stay separate from the app directory and member records.
+                </p>
+                <label className="flex items-center gap-2 text-sm text-charcoal">
+                  <input
+                    type="checkbox"
+                    checked={importAsVisitor}
+                    onChange={(event) => setImportAsVisitor(event.target.checked)}
+                    className="h-4 w-4 rounded border-border text-coral focus:ring-coral"
+                  />
+                  <span>Import these as visitor households</span>
+                </label>
+              </div>
               <button
                 onClick={handleImportHouseholds}
                 disabled={importing}

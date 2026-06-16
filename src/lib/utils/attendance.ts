@@ -3,6 +3,7 @@ export interface AttendanceHousehold {
   householdName: string;
   normalizedName: string;
   active: boolean;
+  isVisitor?: boolean;
 }
 
 export interface AttendanceRecord {
@@ -10,6 +11,15 @@ export interface AttendanceRecord {
   serviceDate: Date;
   counts: Record<string, number>;
   exemptions?: Record<string, string>;
+  visitorDetails?: Record<
+    string,
+    {
+      notes?: string;
+      wantedMoreInformation?: boolean;
+      hasBeenContacted?: boolean;
+      contactedBy?: string;
+    }
+  >;
 }
 
 export interface AttendanceCondition {
@@ -90,6 +100,7 @@ export const buildAttendanceAttention = (
   const sortedRecords = [...records].sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime());
 
   return households
+    .filter((household) => !household.isVisitor)
     .map((household) => {
       const recentHistory = sortedRecords
         .map<AttendanceHistoryEntry>((record) => ({
