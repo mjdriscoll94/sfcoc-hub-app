@@ -14,13 +14,14 @@ import {
   writeBatch,
 } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { AlertCircle, CalendarDays, Save, Upload, Users } from 'lucide-react';
+import { AlertCircle, CalendarDays, ChevronLeft, ChevronRight, Save, Upload, Users } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import {
   buildAttendanceAttention,
   getDateFromSundayKey,
+  getSundayForDate,
   getSundayKey,
   parseAttendanceHouseholds,
   normalizeAttendanceName,
@@ -37,6 +38,7 @@ interface FirestoreAttendanceHousehold {
 interface FirestoreAttendanceRecord {
   serviceDate?: Timestamp;
   counts?: Record<string, number>;
+  exemptions?: Record<string, string>;
 }
 
 export default function AttendanceAdminPage() {
@@ -49,8 +51,9 @@ export default function AttendanceAdminPage() {
 
   const [households, setHouseholds] = useState<AttendanceHousehold[]>([]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
-  const [selectedSundayKey, setSelectedSundayKey] = useState(getSundayKey(new Date()));
+  const [selectedSundayKey, setSelectedSundayKey] = useState(getSundayKey(getSundayForDate(new Date())));
   const [draftCounts, setDraftCounts] = useState<Record<string, string>>({});
+  const [draftExemptions, setDraftExemptions] = useState<Record<string, string>>({});
   const [importText, setImportText] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -97,6 +100,7 @@ export default function AttendanceAdminPage() {
             id: snapshot.id,
             serviceDate: data.serviceDate?.toDate() || getDateFromSundayKey(snapshot.id),
             counts: data.counts || {},
+            exemptions: data.exemptions || {},
           };
         });
 
@@ -121,15 +125,23 @@ export default function AttendanceAdminPage() {
         const count = selectedRecord.counts[household.id];
         nextDraft[household.id] = typeof count === 'number' ? String(count) : '';
       });
+      const nextExemptions: Record<string, string> = {};
+      households.forEach((household) => {
+        nextExemptions[household.id] = selectedRecord.exemptions?.[household.id] || '';
+      });
       setDraftCounts(nextDraft);
+      setDraftExemptions(nextExemptions);
       return;
     }
 
     const blankDraft: Record<string, string> = {};
+    const blankExemptions: Record<string, string> = {};
     households.forEach((household) => {
       blankDraft[household.id] = '';
+      blankExemptions[household.id] = '';
     });
     setDraftCounts(blankDraft);
+    setDraftExemptions(blankExemptions);
   }, [households, records, selectedSundayKey]);
 
   if (!userProfile?.isAdmin) {
@@ -147,10 +159,20 @@ export default function AttendanceAdminPage() {
     return sum + (Number.isFinite(value) ? value : 0);
   }, 0);
 
-  const handleSundayChange = (value: string) => {
-    setSelectedSundayKey(getSundayKey(new Date(`${value}T12:00:00`)));
+  const handleSundayChange = (direction: -1 | 1) => {
+    const nextSunday = new Date(selectedSunday);
+    nextSunday.setDate(nextSunday.getDate() + direction * 7);
+    const mostRecentSunday = getSundayForDate(new Date());
+
+    if (direction === 1 && nextSunday.getTime() > mostRecentSunday.getTime()) {
+      return;
+    }
+
+    setSelectedSundayKey(getSundayKey(nextSunday));
     setMessage(null);
   };
+
+  const isViewingMostRecentSunday = selectedSunday.getTime() >= getSundayForDate(new Date()).getTime();
 
   const handleCountChange = (householdId: string, value: string) => {
     if (value !== '' && !/^\d+$/.test(value)) {
@@ -158,6 +180,23 @@ export default function AttendanceAdminPage() {
     }
 
     setDraftCounts((current) => ({
+      ...current,
+      [householdId]: value,
+    }));
+  };
+
+  const handleExemptionToggle = (householdId: string) => {
+    setDraftExemptions((current) => {
+      const currentValue = current[householdId] || '';
+      return {
+        ...current,
+        [householdId]: currentValue ? '' : 'Away with notice',
+      };
+    });
+  };
+
+  const handleExemptionNoteChange = (householdId: string, value: string) => {
+    setDraftExemptions((current) => ({
       ...current,
       [householdId]: value,
     }));
@@ -243,12 +282,20 @@ export default function AttendanceAdminPage() {
 
         return result;
       }, {});
+      const exemptions = households.reduce<Record<string, string>>((result, household) => {
+        const note = draftExemptions[household.id]?.trim();
+        if (note) {
+          result[household.id] = note;
+        }
+        return result;
+      }, {});
 
       await setDoc(
         doc(db, 'attendanceRecords', selectedSundayKey),
         {
           serviceDate: Timestamp.fromDate(selectedSunday),
           counts,
+          exemptions,
           updatedAt: Timestamp.now(),
           updatedBy: userProfile.uid,
         },
@@ -259,6 +306,7 @@ export default function AttendanceAdminPage() {
         id: selectedSundayKey,
         serviceDate: selectedSunday,
         counts,
+        exemptions,
       };
 
       setRecords((current) => {
@@ -315,15 +363,31 @@ export default function AttendanceAdminPage() {
             </div>
 
             <div className="mb-4 grid gap-4 md:grid-cols-[220px_1fr]">
-              <label className="block">
+              <div>
                 <span className="mb-2 block text-sm font-medium text-charcoal">Sunday</span>
-                <input
-                  type="date"
-                  value={selectedSundayKey}
-                  onChange={(event) => handleSundayChange(event.target.value)}
-                  className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
-                />
-              </label>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleSundayChange(-1)}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-charcoal transition hover:border-coral hover:text-coral"
+                    aria-label="Previous Sunday"
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                  </button>
+                  <div className="flex-1 rounded-md border border-border px-3 py-2 text-center text-sm font-medium text-charcoal">
+                    {format(selectedSunday, 'MMM d, yyyy')}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleSundayChange(1)}
+                    disabled={isViewingMostRecentSunday}
+                    className="inline-flex h-10 w-10 items-center justify-center rounded-md border border-border text-charcoal transition hover:border-coral hover:text-coral disabled:cursor-not-allowed disabled:opacity-50"
+                    aria-label="Next Sunday"
+                  >
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              </div>
               <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-600">
                 <div className="flex items-start gap-3">
                   <CalendarDays className="mt-0.5 h-5 w-5 text-coral" />
@@ -365,11 +429,14 @@ export default function AttendanceAdminPage() {
                     id: record.id,
                     label: format(record.serviceDate, 'MMM d'),
                     value: record.counts[household.id],
+                    exempt: !!record.exemptions?.[household.id],
                   }));
+                  const exemptionNote = draftExemptions[household.id] || '';
+                  const isExempt = exemptionNote.trim().length > 0;
 
                   return (
                     <div key={household.id} className="rounded-lg border border-border p-4">
-                      <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+                      <div className="flex flex-col gap-4">
                         <div>
                           <p className="text-base font-semibold text-charcoal">{household.householdName}</p>
                           <div className="mt-2 flex flex-wrap gap-2">
@@ -377,28 +444,54 @@ export default function AttendanceAdminPage() {
                               <span
                                 key={entry.id}
                                 className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                                  entry.value === 0
+                                  entry.exempt
+                                    ? 'bg-sky-100 text-sky-700'
+                                    : entry.value === 0
                                     ? 'bg-red-100 text-red-700'
                                     : typeof entry.value === 'number'
                                       ? 'bg-emerald-100 text-emerald-700'
                                       : 'bg-slate-100 text-slate-500'
                                 }`}
                               >
-                                {entry.label}: {typeof entry.value === 'number' ? entry.value : '-'}
+                                {entry.label}: {entry.exempt ? 'Exempt' : typeof entry.value === 'number' ? entry.value : '-'}
                               </span>
                             ))}
                           </div>
                         </div>
-                        <label className="flex items-center gap-3">
-                          <span className="text-sm font-medium text-charcoal">Present</span>
-                          <input
-                            inputMode="numeric"
-                            type="text"
-                            value={draftCounts[household.id] || ''}
-                            onChange={(event) => handleCountChange(household.id, event.target.value)}
-                            className="w-24 rounded-md border border-border px-3 py-2 text-center text-lg font-semibold text-charcoal focus:border-coral focus:outline-none"
-                          />
-                        </label>
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+                          <label className="flex items-center gap-3">
+                            <span className="text-sm font-medium text-charcoal">Present</span>
+                            <input
+                              inputMode="numeric"
+                              type="text"
+                              value={draftCounts[household.id] || ''}
+                              onChange={(event) => handleCountChange(household.id, event.target.value)}
+                              className="w-24 rounded-md border border-border px-3 py-2 text-center text-lg font-semibold text-charcoal focus:border-coral focus:outline-none"
+                            />
+                          </label>
+                          <div className="flex-1 lg:max-w-md">
+                            <button
+                              type="button"
+                              onClick={() => handleExemptionToggle(household.id)}
+                              className={`mb-2 inline-flex rounded-md border px-3 py-2 text-sm font-medium transition ${
+                                isExempt
+                                  ? 'border-sky-300 bg-sky-50 text-sky-700'
+                                  : 'border-border text-charcoal hover:border-coral hover:text-coral'
+                              }`}
+                            >
+                              {isExempt ? 'Exemption Added' : 'Add Exemption'}
+                            </button>
+                            {isExempt && (
+                              <textarea
+                                value={exemptionNote}
+                                onChange={(event) => handleExemptionNoteChange(household.id, event.target.value)}
+                                rows={2}
+                                placeholder="Where were they?"
+                                className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                              />
+                            )}
+                          </div>
+                        </div>
                       </div>
                     </div>
                   );

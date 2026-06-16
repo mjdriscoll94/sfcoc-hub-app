@@ -9,6 +9,7 @@ export interface AttendanceRecord {
   id: string;
   serviceDate: Date;
   counts: Record<string, number>;
+  exemptions?: Record<string, string>;
 }
 
 export interface AttendanceCondition {
@@ -22,6 +23,11 @@ export interface AttendanceAttentionItem {
   householdName: string;
   recentCounts: number[];
   conditions: AttendanceCondition[];
+}
+
+interface AttendanceHistoryEntry {
+  count?: number;
+  exempt: boolean;
 }
 
 export const normalizeAttendanceName = (value: string): string =>
@@ -85,14 +91,21 @@ export const buildAttendanceAttention = (
 
   return households
     .map((household) => {
-      const recentCounts = sortedRecords
-        .map((record) => record.counts[household.id])
-        .filter((count): count is number => typeof count === 'number')
+      const recentHistory = sortedRecords
+        .map<AttendanceHistoryEntry>((record) => ({
+          count: record.counts[household.id],
+          exempt: typeof record.exemptions?.[household.id] === 'string' && record.exemptions[household.id].trim().length > 0,
+        }))
+        .filter((entry) => typeof entry.count === 'number' || entry.exempt)
         .slice(0, 8);
+      const nonExemptCounts = recentHistory
+        .filter((entry): entry is { count: number; exempt: false } => typeof entry.count === 'number' && !entry.exempt)
+        .map((entry) => entry.count);
+      const recentCounts = recentHistory.map((entry) => (typeof entry.count === 'number' ? entry.count : 0));
 
       const conditions: AttendanceCondition[] = [];
 
-      if (recentCounts.length >= 2 && recentCounts[0] === 0 && recentCounts[1] === 0) {
+      if (nonExemptCounts.length >= 2 && nonExemptCounts[0] === 0 && nonExemptCounts[1] === 0) {
         conditions.push({
           key: 'two_consecutive_misses',
           label: '2 consecutive misses',
@@ -100,7 +113,7 @@ export const buildAttendanceAttention = (
         });
       }
 
-      if (recentCounts.slice(0, 6).filter((count) => count === 0).length >= 3) {
+      if (nonExemptCounts.slice(0, 6).filter((count) => count === 0).length >= 3) {
         conditions.push({
           key: 'three_misses_in_six_weeks',
           label: '3 misses in 6 weeks',
@@ -108,7 +121,7 @@ export const buildAttendanceAttention = (
         });
       }
 
-      if (recentCounts.slice(0, 8).filter((count) => count === 0).length >= 4) {
+      if (nonExemptCounts.slice(0, 8).filter((count) => count === 0).length >= 4) {
         conditions.push({
           key: 'four_misses_in_eight_weeks',
           label: '4 misses in 8 weeks',

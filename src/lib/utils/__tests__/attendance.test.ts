@@ -48,3 +48,19 @@ test('buildAttendanceAttention returns active miss conditions', () => {
     'three_misses_in_six_weeks',
   ]);
 });
+
+test('buildAttendanceAttention ignores exempt absences', () => {
+  const households: AttendanceHousehold[] = [
+    { id: 'a', householdName: 'Adams', normalizedName: 'adams', active: true },
+  ];
+
+  const records: AttendanceRecord[] = [
+    { id: '2026-06-14', serviceDate: new Date(2026, 5, 14), counts: { a: 0 }, exemptions: { a: 'Preaching elsewhere' } },
+    { id: '2026-06-07', serviceDate: new Date(2026, 5, 7), counts: { a: 0 } },
+    { id: '2026-05-31', serviceDate: new Date(2026, 4, 31), counts: { a: 2 } },
+  ];
+
+  const attention = buildAttendanceAttention(households, records);
+
+  assert.equal(attention.length, 0);
+});
