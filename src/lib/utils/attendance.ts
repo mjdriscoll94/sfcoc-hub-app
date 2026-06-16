@@ -6,6 +6,8 @@ export interface AttendanceHousehold {
   availableFrom: Date;
   isVisitor?: boolean;
   longTermExempt?: boolean;
+  attentionResetAt?: Date;
+  visitorResetAt?: Date;
 }
 
 export interface AttendanceRecord {
@@ -26,7 +28,7 @@ export interface AttendanceRecord {
 }
 
 export interface AttendanceCondition {
-  key: 'two_consecutive_misses' | 'three_misses_in_six_weeks' | 'four_misses_in_eight_weeks';
+  key: 'two_consecutive_misses' | 'three_misses_in_six_weeks' | 'four_misses_in_eight_weeks' | 'five_consecutive_misses';
   label: string;
   detail: string;
 }
@@ -146,6 +148,7 @@ export const buildAttendanceAttention = (
       const recentHistory = sortedRecords
         .filter((record) => !record.noService)
         .filter((record) => isHouseholdAvailableForSunday(household, record.serviceDate))
+        .filter((record) => !household.attentionResetAt || record.serviceDate.getTime() > household.attentionResetAt.getTime())
         .map<AttendanceHistoryEntry>((record) => ({
           count: record.counts[household.id],
           exempt: typeof record.exemptions?.[household.id] === 'string' && record.exemptions[household.id].trim().length > 0,
@@ -158,6 +161,14 @@ export const buildAttendanceAttention = (
       const recentCounts = recentHistory.map((entry) => (typeof entry.count === 'number' ? entry.count : 0));
 
       const conditions: AttendanceCondition[] = [];
+
+      if (nonExemptCounts.length >= 5 && nonExemptCounts.slice(0, 5).every((count) => count === 0)) {
+        conditions.push({
+          key: 'five_consecutive_misses',
+          label: '5 weeks in a row',
+          detail: 'Absent for five consecutive recorded Sundays.',
+        });
+      }
 
       if (nonExemptCounts.length >= 2 && nonExemptCounts[0] === 0 && nonExemptCounts[1] === 0) {
         conditions.push({

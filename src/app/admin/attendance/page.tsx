@@ -40,6 +40,8 @@ interface FirestoreAttendanceHousehold {
   availableFrom?: Timestamp;
   isVisitor?: boolean;
   longTermExempt?: boolean;
+  attentionResetAt?: Timestamp;
+  visitorResetAt?: Timestamp;
 }
 
 interface FirestoreAttendanceRecord {
@@ -124,6 +126,8 @@ export default function AttendanceAdminPage() {
               availableFrom: data.availableFrom?.toDate() || data.createdAt?.toDate() || new Date(2000, 0, 2, 12, 0, 0, 0),
               isVisitor: data.isVisitor === true,
               longTermExempt: data.longTermExempt === true,
+              attentionResetAt: data.attentionResetAt?.toDate(),
+              visitorResetAt: data.visitorResetAt?.toDate(),
             };
           })
           .filter((household) => household.active);
@@ -223,11 +227,12 @@ export default function AttendanceAdminPage() {
   const recurringVisitors = households
     .filter((household) => household.isVisitor)
     .map((household) => {
-      const visits = records.filter((record) => !record.noService && (record.counts[household.id] || 0) > 0).length;
+      const visits = records.filter((record) => !record.noService && (!household.visitorResetAt || record.serviceDate.getTime() > household.visitorResetAt.getTime()) && (record.counts[household.id] || 0) > 0).length;
       const latestDetails = records
         .slice()
         .sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime())
         .filter((record) => !record.noService)
+        .filter((record) => !household.visitorResetAt || record.serviceDate.getTime() > household.visitorResetAt.getTime())
         .map((record) => record.visitorDetails?.[household.id])
         .find(Boolean);
 
@@ -251,6 +256,40 @@ export default function AttendanceAdminPage() {
     return sum + (Number.isFinite(value) ? value : 0);
   }, 0);
   const isPastSunday = selectedSunday.getTime() < mostRecentSunday.getTime();
+  const categorizedAttention = {
+    consistentlyGone: attentionItems.filter((item) => item.conditions.some((condition) => condition.key === 'five_consecutive_misses')),
+    increasinglyMissing: attentionItems.filter((item) =>
+      !item.conditions.some((condition) => condition.key === 'five_consecutive_misses') &&
+      item.conditions.some((condition) => condition.key === 'three_misses_in_six_weeks' || condition.key === 'four_misses_in_eight_weeks'),
+    ),
+    recentlyMissing: attentionItems.filter((item) =>
+      !item.conditions.some((condition) => condition.key === 'five_consecutive_misses') &&
+      !item.conditions.some((condition) => condition.key === 'three_misses_in_six_weeks' || condition.key === 'four_misses_in_eight_weeks') &&
+      item.conditions.some((condition) => condition.key === 'two_consecutive_misses'),
+    ),
+  };
+
+  const resetHouseholds = async (householdIds: string[], field: 'attentionResetAt' | 'visitorResetAt') => {
+    if (householdIds.length === 0) {
+      return;
+    }
+    const resetAt = Timestamp.now();
+    const batch = writeBatch(db);
+    householdIds.forEach((id) => {
+      batch.update(doc(db, 'attendanceHouseholds', id), {
+        [field]: resetAt,
+        updatedAt: Timestamp.now(),
+      });
+    });
+    await batch.commit();
+    setHouseholds((current) =>
+      current.map((household) =>
+        householdIds.includes(household.id)
+          ? { ...household, [field]: resetAt.toDate() }
+          : household,
+      ),
+    );
+  };
 
   const handleSundayChange = (direction: -1 | 1) => {
     const nextSunday = new Date(selectedSunday);
@@ -532,7 +571,7 @@ export default function AttendanceAdminPage() {
     intro: string;
     setSending: (value: boolean) => void;
     clearRecipients: () => void;
-  }) => {
+  }): Promise<boolean> => {
     const recipients = recipientsText
       .split(',')
       .map((value) => value.trim())
@@ -540,12 +579,12 @@ export default function AttendanceAdminPage() {
 
     if (recipients.length === 0) {
       setError('Enter at least one email address for the report.');
-      return;
+      return false;
     }
 
     if (items.length === 0) {
       setError('There are no households to include in this email.');
-      return;
+      return false;
     }
 
     try {
@@ -576,16 +615,18 @@ export default function AttendanceAdminPage() {
 
       setMessage(`Sent email to ${responseData.recipientCount} recipient${responseData.recipientCount === 1 ? '' : 's'}.`);
       clearRecipients();
+      return true;
     } catch (sendError) {
       console.error('Error sending attendance section email:', sendError);
       setError(sendError instanceof Error ? sendError.message : 'Failed to send email.');
+      return false;
     } finally {
       setSending(false);
     }
   };
 
   const handleSendAttentionEmail = async () => {
-    await sendAttendanceSectionEmail({
+    const sent = await sendAttendanceSectionEmail({
       recipientsText: attentionEmailRecipients,
       items: attentionItems.map((item) => ({
         householdName: item.householdName,
@@ -596,10 +637,13 @@ export default function AttendanceAdminPage() {
       setSending: setSendingAttentionEmail,
       clearRecipients: () => setAttentionEmailRecipients(''),
     });
+    if (sent) {
+      await resetHouseholds(attentionItems.map((item) => item.householdId), 'attentionResetAt');
+    }
   };
 
   const handleSendRecurringVisitorEmail = async () => {
-    await sendAttendanceSectionEmail({
+    const sent = await sendAttendanceSectionEmail({
       recipientsText: recurringVisitorEmailRecipients,
       items: recurringVisitors.map((visitor) => ({
         householdName: visitor.householdName,
@@ -614,6 +658,9 @@ export default function AttendanceAdminPage() {
       setSending: setSendingRecurringVisitorEmail,
       clearRecipients: () => setRecurringVisitorEmailRecipients(''),
     });
+    if (sent) {
+      await resetHouseholds(recurringVisitors.map((visitor) => visitor.householdId), 'visitorResetAt');
+    }
   };
 
   const handleImportHistoricalAttendance = async () => {
@@ -1100,37 +1147,66 @@ export default function AttendanceAdminPage() {
                       />
                     </label>
                     <div className="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleSendAttentionEmail}
-                        disabled={sendingAttentionEmail}
-                        className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Mail className="mr-2 h-4 w-4" />
-                        {sendingAttentionEmail ? 'Sending...' : 'Send Email'}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => resetHouseholds(attentionItems.map((item) => item.householdId), 'attentionResetAt')}
+                          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
+                        >
+                          Reset All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendAttentionEmail}
+                          disabled={sendingAttentionEmail}
+                          className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <Mail className="mr-2 h-4 w-4" />
+                          {sendingAttentionEmail ? 'Sending...' : 'Send Email'}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  {attentionItems.map((item) => (
-                    <div key={item.householdId} className="rounded-lg border border-border p-4">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="font-semibold text-charcoal">{item.householdName}</p>
-                          <p className="mt-1 text-xs text-text-light">
-                            Recent counts: {item.recentCounts.length > 0 ? item.recentCounts.join(', ') : 'No history yet'}
-                          </p>
-                        </div>
-                        <Users className="h-5 w-5 text-coral" />
-                      </div>
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {item.conditions.map((condition) => (
-                          <span key={condition.key} className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
-                            {condition.label}
-                          </span>
+                  {[
+                    { title: 'Consistently Gone', items: categorizedAttention.consistentlyGone },
+                    { title: 'Increasingly Missing', items: categorizedAttention.increasinglyMissing },
+                    { title: 'Recently Missing', items: categorizedAttention.recentlyMissing },
+                  ].map((group) =>
+                    group.items.length > 0 ? (
+                      <div key={group.title} className="space-y-3">
+                        <p className="text-sm font-semibold text-charcoal">{group.title}</p>
+                        {group.items.map((item) => (
+                          <div key={item.householdId} className="rounded-lg border border-border p-4">
+                            <div className="flex items-start justify-between gap-4">
+                              <div>
+                                <p className="font-semibold text-charcoal">{item.householdName}</p>
+                                <p className="mt-1 text-xs text-text-light">
+                                  Recent counts: {item.recentCounts.length > 0 ? item.recentCounts.join(', ') : 'No history yet'}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Users className="h-5 w-5 text-coral" />
+                                <button
+                                  type="button"
+                                  onClick={() => resetHouseholds([item.householdId], 'attentionResetAt')}
+                                  className="rounded-md border border-border px-2 py-1 text-xs font-medium text-charcoal transition hover:border-coral hover:text-coral"
+                                >
+                                  Clear
+                                </button>
+                              </div>
+                            </div>
+                            <div className="mt-3 flex flex-wrap gap-2">
+                              {item.conditions.map((condition) => (
+                                <span key={condition.key} className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-800">
+                                  {condition.label}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
-                    </div>
-                  ))}
+                    ) : null,
+                  )}
                 </>
               )}
             </div>
@@ -1166,15 +1242,24 @@ export default function AttendanceAdminPage() {
                       />
                     </label>
                     <div className="mt-3 flex justify-end">
-                      <button
-                        type="button"
-                        onClick={handleSendRecurringVisitorEmail}
-                        disabled={sendingRecurringVisitorEmail}
-                        className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        <Mail className="mr-2 h-4 w-4" />
-                        {sendingRecurringVisitorEmail ? 'Sending...' : 'Send Email'}
-                      </button>
+                      <div className="flex gap-2">
+                        <button
+                          type="button"
+                          onClick={() => resetHouseholds(recurringVisitors.map((visitor) => visitor.householdId), 'visitorResetAt')}
+                          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
+                        >
+                          Reset All
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSendRecurringVisitorEmail}
+                          disabled={sendingRecurringVisitorEmail}
+                          className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
+                        >
+                          <Mail className="mr-2 h-4 w-4" />
+                          {sendingRecurringVisitorEmail ? 'Sending...' : 'Send Email'}
+                        </button>
+                      </div>
                     </div>
                   </div>
                   {recurringVisitors.map((visitor) => (
@@ -1184,9 +1269,18 @@ export default function AttendanceAdminPage() {
                           <p className="font-semibold text-charcoal">{visitor.householdName}</p>
                           <p className="mt-1 text-xs text-text-light">Total visits: {visitor.visits}</p>
                         </div>
-                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                          Recurring visitor
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                            Recurring visitor
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => resetHouseholds([visitor.householdId], 'visitorResetAt')}
+                            className="rounded-md border border-border px-2 py-1 text-xs font-medium text-charcoal transition hover:border-coral hover:text-coral"
+                          >
+                            Clear
+                          </button>
+                        </div>
                       </div>
                       <div className="mt-3 flex flex-wrap gap-2">
                         {visitor.wantedMoreInformation ? (
