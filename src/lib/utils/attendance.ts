@@ -75,6 +75,39 @@ export const parseAttendanceHouseholds = (value: string): string[] => {
   return households;
 };
 
+export interface ParsedHistoricalAttendanceLine {
+  householdName: string;
+  normalizedName: string;
+  count?: number;
+}
+
+export const parseHistoricalAttendanceLines = (value: string): ParsedHistoricalAttendanceLine[] => {
+  const lines: ParsedHistoricalAttendanceLine[] = [];
+
+  for (const rawLine of value.split('\n')) {
+    const cleaned = rawLine.trim();
+    if (!cleaned) {
+      continue;
+    }
+
+    const match = cleaned.match(/^(.*\S)\s+(\d+)\s*$/);
+    const householdName = (match ? match[1] : cleaned).trim();
+    const count = match ? Number(match[2]) : undefined;
+
+    if (!householdName) {
+      continue;
+    }
+
+    lines.push({
+      householdName,
+      normalizedName: normalizeAttendanceName(householdName),
+      ...(typeof count === 'number' ? { count } : {}),
+    });
+  }
+
+  return lines;
+};
+
 export const getSundayForDate = (value: Date): Date => {
   const sunday = new Date(value);
   sunday.setHours(12, 0, 0, 0);

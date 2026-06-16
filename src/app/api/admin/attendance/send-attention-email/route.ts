@@ -4,7 +4,7 @@ import { wrapMemberEmailHtml } from '@/lib/email/memberEmailTemplate';
 
 interface AttentionEmailItem {
   householdName?: string;
-  conditions?: Array<{
+  labels?: Array<{
     label?: string;
   }>;
 }
@@ -25,9 +25,11 @@ function escapeHtml(value: string): string {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { to, items } = body as {
+    const { to, items, subject, intro } = body as {
       to?: string[];
       items?: AttentionEmailItem[];
+      subject?: string;
+      intro?: string;
     };
 
     const recipients = (to || []).map((email) => email.trim()).filter(Boolean);
@@ -41,14 +43,14 @@ export async function POST(request: Request) {
     }
 
     const attentionItems = (items || []).filter(
-      (item) => item.householdName?.trim() && Array.isArray(item.conditions) && item.conditions.length > 0,
+      (item) => item.householdName?.trim() && Array.isArray(item.labels) && item.labels.length > 0,
     );
     if (attentionItems.length === 0) {
       return NextResponse.json({ error: 'No attention items were provided' }, { status: 400 });
     }
 
     const lines = attentionItems.map((item) => {
-      const labels = (item.conditions || [])
+      const labels = (item.labels || [])
         .map((condition) => condition.label?.trim())
         .filter(Boolean)
         .join(', ');
@@ -56,14 +58,14 @@ export async function POST(request: Request) {
     });
 
     const html = wrapMemberEmailHtml(`
-      <p>The following households currently need attendance follow-up:</p>
+      <p>${escapeHtml((intro || 'The following households currently need attendance follow-up:').trim())}</p>
       <ul>${lines.join('')}</ul>
     `);
 
     const result = await transporter.sendMail({
       from: getEmailFromInformationHub(),
       to: recipients,
-      subject: `Attendance follow-up needed (${attentionItems.length})`,
+      subject: (subject?.trim() || `Attendance follow-up needed (${attentionItems.length})`),
       html,
     });
 

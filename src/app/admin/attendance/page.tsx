@@ -25,6 +25,7 @@ import {
   getSundayForDate,
   getSundayKey,
   isHouseholdAvailableForSunday,
+  parseHistoricalAttendanceLines,
   parseAttendanceHouseholds,
   normalizeAttendanceName,
   type AttendanceHousehold,
@@ -86,6 +87,10 @@ export default function AttendanceAdminPage() {
   const [importing, setImporting] = useState(false);
   const [sendingAttentionEmail, setSendingAttentionEmail] = useState(false);
   const [attentionEmailRecipients, setAttentionEmailRecipients] = useState('');
+  const [sendingRecurringVisitorEmail, setSendingRecurringVisitorEmail] = useState(false);
+  const [recurringVisitorEmailRecipients, setRecurringVisitorEmailRecipients] = useState('');
+  const [historicalImportText, setHistoricalImportText] = useState('');
+  const [importingHistoricalAttendance, setImportingHistoricalAttendance] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
 
@@ -208,6 +213,7 @@ export default function AttendanceAdminPage() {
 
   const selectedSunday = getDateFromSundayKey(selectedSundayKey);
   const selectedRecord = records.find((record) => record.id === selectedSundayKey);
+  const mostRecentSunday = getSundayForDate(new Date());
   const attentionItems = buildAttendanceAttention(households, records);
   const recurringVisitors = households
     .filter((household) => household.isVisitor)
@@ -238,12 +244,11 @@ export default function AttendanceAdminPage() {
     const value = Number(draftCounts[household.id]);
     return sum + (Number.isFinite(value) ? value : 0);
   }, 0);
+  const isPastSunday = selectedSunday.getTime() < mostRecentSunday.getTime();
 
   const handleSundayChange = (direction: -1 | 1) => {
     const nextSunday = new Date(selectedSunday);
     nextSunday.setDate(nextSunday.getDate() + direction * 7);
-    const mostRecentSunday = getSundayForDate(new Date());
-
     if (direction === 1 && nextSunday.getTime() > mostRecentSunday.getTime()) {
       return;
     }
@@ -252,7 +257,7 @@ export default function AttendanceAdminPage() {
     setMessage(null);
   };
 
-  const isViewingMostRecentSunday = selectedSunday.getTime() >= getSundayForDate(new Date()).getTime();
+  const isViewingMostRecentSunday = selectedSunday.getTime() >= mostRecentSunday.getTime();
 
   const handleCountChange = (householdId: string, value: string) => {
     if (value !== '' && !/^\d+$/.test(value)) {
@@ -505,24 +510,38 @@ export default function AttendanceAdminPage() {
     }
   };
 
-  const handleSendAttentionEmail = async () => {
-    const recipients = attentionEmailRecipients
+  const sendAttendanceSectionEmail = async ({
+    recipientsText,
+    items,
+    subject,
+    intro,
+    setSending,
+    clearRecipients,
+  }: {
+    recipientsText: string;
+    items: Array<{ householdName: string; labels: string[] }>;
+    subject: string;
+    intro: string;
+    setSending: (value: boolean) => void;
+    clearRecipients: () => void;
+  }) => {
+    const recipients = recipientsText
       .split(',')
       .map((value) => value.trim())
       .filter(Boolean);
 
     if (recipients.length === 0) {
-      setError('Enter at least one email address for the attention report.');
+      setError('Enter at least one email address for the report.');
       return;
     }
 
-    if (attentionItems.length === 0) {
-      setError('There are no households to include in the attention report.');
+    if (items.length === 0) {
+      setError('There are no households to include in this email.');
       return;
     }
 
     try {
-      setSendingAttentionEmail(true);
+      setSending(true);
       setError(null);
       setMessage(null);
 
@@ -533,27 +552,171 @@ export default function AttendanceAdminPage() {
         },
         body: JSON.stringify({
           to: recipients,
-          items: attentionItems.map((item) => ({
+          subject,
+          intro,
+          items: items.map((item) => ({
             householdName: item.householdName,
-            conditions: item.conditions.map((condition) => ({
-              label: condition.label,
-            })),
+            labels: item.labels.map((label) => ({ label })),
           })),
         }),
       });
 
       const responseData = await response.json();
       if (!response.ok) {
-        throw new Error(responseData.error || 'Failed to send attention email.');
+        throw new Error(responseData.error || 'Failed to send email.');
       }
 
-      setMessage(`Sent attention email to ${responseData.recipientCount} recipient${responseData.recipientCount === 1 ? '' : 's'}.`);
-      setAttentionEmailRecipients('');
+      setMessage(`Sent email to ${responseData.recipientCount} recipient${responseData.recipientCount === 1 ? '' : 's'}.`);
+      clearRecipients();
     } catch (sendError) {
-      console.error('Error sending attention email:', sendError);
-      setError(sendError instanceof Error ? sendError.message : 'Failed to send attention email.');
+      console.error('Error sending attendance section email:', sendError);
+      setError(sendError instanceof Error ? sendError.message : 'Failed to send email.');
     } finally {
-      setSendingAttentionEmail(false);
+      setSending(false);
+    }
+  };
+
+  const handleSendAttentionEmail = async () => {
+    await sendAttendanceSectionEmail({
+      recipientsText: attentionEmailRecipients,
+      items: attentionItems.map((item) => ({
+        householdName: item.householdName,
+        labels: item.conditions.map((condition) => condition.label),
+      })),
+      subject: `Attendance follow-up needed (${attentionItems.length})`,
+      intro: 'The following households currently need attendance follow-up:',
+      setSending: setSendingAttentionEmail,
+      clearRecipients: () => setAttentionEmailRecipients(''),
+    });
+  };
+
+  const handleSendRecurringVisitorEmail = async () => {
+    await sendAttendanceSectionEmail({
+      recipientsText: recurringVisitorEmailRecipients,
+      items: recurringVisitors.map((visitor) => ({
+        householdName: visitor.householdName,
+        labels: [
+          `${visitor.visits} total visits`,
+          ...(visitor.wantedMoreInformation ? ['Wanted more information'] : []),
+          ...(visitor.hasBeenContacted ? [`Contacted${visitor.contactedBy ? ` by ${visitor.contactedBy}` : ''}`] : []),
+        ],
+      })),
+      subject: `Recurring visitors report (${recurringVisitors.length})`,
+      intro: 'The following visitor households have become recurring visitors:',
+      setSending: setSendingRecurringVisitorEmail,
+      clearRecipients: () => setRecurringVisitorEmailRecipients(''),
+    });
+  };
+
+  const handleImportHistoricalAttendance = async () => {
+    const parsedLines = parseHistoricalAttendanceLines(historicalImportText);
+
+    if (parsedLines.length === 0) {
+      setError('Paste at least one household line to import for this Sunday.');
+      return;
+    }
+
+    try {
+      setImportingHistoricalAttendance(true);
+      setError(null);
+      setMessage(null);
+
+      const existingByName = new Map(households.map((household) => [household.normalizedName, household]));
+      const unmatched: string[] = [];
+      const matchedHouseholdIds = new Set<string>();
+      const nextCounts = { ...(selectedRecord?.counts || {}) };
+
+      for (const line of parsedLines) {
+        const household = existingByName.get(line.normalizedName);
+        if (!household) {
+          unmatched.push(line.householdName);
+          continue;
+        }
+
+        matchedHouseholdIds.add(household.id);
+
+        if (typeof line.count === 'number') {
+          nextCounts[household.id] = line.count;
+        } else {
+          delete nextCounts[household.id];
+        }
+      }
+
+      await setDoc(
+        doc(db, 'attendanceRecords', selectedSundayKey),
+        {
+          serviceDate: Timestamp.fromDate(selectedSunday),
+          counts: nextCounts,
+          exemptions: selectedRecord?.exemptions || {},
+          visitorDetails: selectedRecord?.visitorDetails || {},
+          updatedAt: Timestamp.now(),
+          updatedBy: userProfile.uid,
+        },
+        { merge: true },
+      );
+
+      const allRecordsSnapshot = await getDocs(query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'asc')));
+      const allRecords = allRecordsSnapshot.docs.map((snapshot) => {
+        const data = snapshot.data() as FirestoreAttendanceRecord;
+        return {
+          id: snapshot.id,
+          serviceDate: data.serviceDate?.toDate() || getDateFromSundayKey(snapshot.id),
+          counts: data.counts || {},
+        };
+      });
+
+      const batch = writeBatch(db);
+      matchedHouseholdIds.forEach((householdId) => {
+        const earliestRecord = allRecords.find((record) => typeof record.counts[householdId] === 'number');
+        if (!earliestRecord) {
+          return;
+        }
+
+        batch.update(doc(db, 'attendanceHouseholds', householdId), {
+          availableFrom: Timestamp.fromDate(getSundayForDate(earliestRecord.serviceDate)),
+          updatedAt: Timestamp.now(),
+        });
+      });
+      await batch.commit();
+
+      const nextRecord: AttendanceRecord = {
+        id: selectedSundayKey,
+        serviceDate: selectedSunday,
+        counts: nextCounts,
+        exemptions: selectedRecord?.exemptions || {},
+        visitorDetails: selectedRecord?.visitorDetails || {},
+      };
+
+      setRecords((current) => {
+        const withoutCurrent = current.filter((record) => record.id !== selectedSundayKey);
+        return [...withoutCurrent, nextRecord].sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime()).slice(0, 12);
+      });
+
+      setHouseholds((current) =>
+        current.map((household) => {
+          if (!matchedHouseholdIds.has(household.id)) {
+            return household;
+          }
+
+          const earliestRecord = allRecords.find((record) => typeof record.counts[household.id] === 'number');
+          return earliestRecord
+            ? { ...household, availableFrom: getSundayForDate(earliestRecord.serviceDate) }
+            : household;
+        }),
+      );
+
+      setHistoricalImportText('');
+      const matchedCount = parsedLines.length - unmatched.length;
+      setMessage(
+        `Imported ${matchedCount} matched line${matchedCount === 1 ? '' : 's'} for ${format(selectedSunday, 'MMMM d, yyyy')}${
+          unmatched.length ? `. Unmatched: ${unmatched.join(', ')}` : '.'
+        }`,
+      );
+    } catch (importError) {
+      console.error('Error importing historical attendance:', importError);
+      setError('Failed to import historical attendance.');
+    } finally {
+      setImportingHistoricalAttendance(false);
     }
   };
 
@@ -649,6 +812,38 @@ export default function AttendanceAdminPage() {
               </label>
             </div>
 
+            {isPastSunday ? (
+              <div className="mb-4 rounded-lg border border-slate-200 bg-slate-50 p-4">
+                <div className="flex items-start gap-3">
+                  <Upload className="mt-0.5 h-5 w-5 text-coral" />
+                  <div className="w-full">
+                    <h3 className="text-sm font-semibold text-charcoal">Import Attendance For This Sunday</h3>
+                    <p className="mt-1 text-xs text-text-light">
+                      Paste one household per line like `Smith Family 4` or `Jones 0`. If a line has no number, that household will be cleared for this Sunday and its start date will be driven by the earliest Sunday with a real value.
+                    </p>
+                    <textarea
+                      value={historicalImportText}
+                      onChange={(event) => setHistoricalImportText(event.target.value)}
+                      rows={6}
+                      placeholder={`Smith Family 4\nRenli, Mason 2\nHousehold With Blank`}
+                      className="mt-3 w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                    />
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleImportHistoricalAttendance}
+                        disabled={importingHistoricalAttendance}
+                        className="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {importingHistoricalAttendance ? 'Importing...' : 'Import Sunday History'}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
             {loading ? (
               <div className="flex min-h-[240px] items-center justify-center">
                 <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D6805F]"></div>
@@ -660,12 +855,16 @@ export default function AttendanceAdminPage() {
             ) : (
               <div className="space-y-3">
                 {filteredHouseholds.map((household) => {
-                  const history = records.slice(0, 6).map((record) => ({
-                    id: record.id,
-                    label: format(record.serviceDate, 'MMM d'),
-                    value: record.counts[household.id],
-                    exempt: !!record.exemptions?.[household.id],
-                  }));
+                  const history = records
+                    .filter((record) => isHouseholdAvailableForSunday(household, record.serviceDate))
+                    .sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime())
+                    .slice(0, 6)
+                    .map((record) => ({
+                      id: record.id,
+                      label: format(record.serviceDate, 'MMM d'),
+                      value: record.counts[household.id],
+                      exempt: !!record.exemptions?.[household.id],
+                    }));
                   const exemptionNote = draftExemptions[household.id] || '';
                   const isExempt = exemptionNote.trim().length > 0;
                   const visitorDetails = draftVisitorDetails[household.id] || {
@@ -933,31 +1132,56 @@ export default function AttendanceAdminPage() {
                   No visitor households have reached 2 visits yet.
                 </div>
               ) : (
-                recurringVisitors.map((visitor) => (
-                  <div key={visitor.householdId} className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="font-semibold text-charcoal">{visitor.householdName}</p>
-                        <p className="mt-1 text-xs text-text-light">Total visits: {visitor.visits}</p>
-                      </div>
-                      <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
-                        Recurring visitor
-                      </span>
-                    </div>
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {visitor.wantedMoreInformation ? (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                          Wanted more information
-                        </span>
-                      ) : null}
-                      {visitor.hasBeenContacted ? (
-                        <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
-                          Contacted{visitor.contactedBy ? ` by ${visitor.contactedBy}` : ''}
-                        </span>
-                      ) : null}
+                <>
+                  <div className="rounded-lg border border-border bg-slate-50 p-4">
+                    <label className="block">
+                      <span className="mb-2 block text-sm font-medium text-charcoal">Send this list to</span>
+                      <input
+                        type="text"
+                        value={recurringVisitorEmailRecipients}
+                        onChange={(event) => setRecurringVisitorEmailRecipients(event.target.value)}
+                        placeholder="name@example.com, second@example.com"
+                        className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                      />
+                    </label>
+                    <div className="mt-3 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={handleSendRecurringVisitorEmail}
+                        disabled={sendingRecurringVisitorEmail}
+                        className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
+                      >
+                        <Mail className="mr-2 h-4 w-4" />
+                        {sendingRecurringVisitorEmail ? 'Sending...' : 'Send Email'}
+                      </button>
                     </div>
                   </div>
-                ))
+                  {recurringVisitors.map((visitor) => (
+                    <div key={visitor.householdId} className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-4">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-charcoal">{visitor.householdName}</p>
+                          <p className="mt-1 text-xs text-text-light">Total visits: {visitor.visits}</p>
+                        </div>
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
+                          Recurring visitor
+                        </span>
+                      </div>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {visitor.wantedMoreInformation ? (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            Wanted more information
+                          </span>
+                        ) : null}
+                        {visitor.hasBeenContacted ? (
+                          <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                            Contacted{visitor.contactedBy ? ` by ${visitor.contactedBy}` : ''}
+                          </span>
+                        ) : null}
+                      </div>
+                    </div>
+                  ))}
+                </>
               )}
             </div>
           </section>

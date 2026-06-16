@@ -5,6 +5,7 @@ import {
   getSundayForDate,
   getSundayKey,
   isHouseholdAvailableForSunday,
+  parseHistoricalAttendanceLines,
   parseAttendanceHouseholds,
   type AttendanceHousehold,
   type AttendanceRecord,
@@ -15,6 +16,14 @@ test('parseAttendanceHouseholds trims bullets, numbering, and duplicates', () =>
     parseAttendanceHouseholds('1. Smith Family\n- Jones Household\n\nsmith family\n\u2022 Brown'),
     ['Smith Family', 'Jones Household', 'Brown'],
   );
+});
+
+test('parseHistoricalAttendanceLines keeps blank-count households and trailing counts', () => {
+  assert.deepEqual(parseHistoricalAttendanceLines('Renli, Mason 4\nSmith Family\nJones 0'), [
+    { householdName: 'Renli, Mason', normalizedName: 'renli, mason', count: 4 },
+    { householdName: 'Smith Family', normalizedName: 'smith family' },
+    { householdName: 'Jones', normalizedName: 'jones', count: 0 },
+  ]);
 });
 
 test('getSunday helpers normalize a weekday to that week Sunday', () => {
