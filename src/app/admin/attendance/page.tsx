@@ -303,6 +303,15 @@ export default function AttendanceAdminPage() {
     setMessage(null);
   };
 
+  const handleSundayPickerChange = (value: string) => {
+    if (!value) {
+      return;
+    }
+
+    setSelectedSundayKey(getSundayKey(new Date(`${value}T12:00:00`)));
+    setMessage(null);
+  };
+
   const isViewingMostRecentSunday = selectedSunday.getTime() >= mostRecentSunday.getTime();
 
   const handleCountChange = (householdId: string, value: string) => {
@@ -837,9 +846,15 @@ export default function AttendanceAdminPage() {
                   >
                     <ChevronLeft className="h-4 w-4" />
                   </button>
-                  <div className="flex-1 rounded-md border border-border px-3 py-2 text-center text-sm font-medium text-charcoal">
+                  <label className="flex-1 cursor-pointer rounded-md border border-border px-3 py-2 text-center text-sm font-medium text-charcoal hover:border-coral">
                     {format(selectedSunday, 'MMM d, yyyy')}
-                  </div>
+                    <input
+                      type="date"
+                      value={selectedSundayKey}
+                      onChange={(event) => handleSundayPickerChange(event.target.value)}
+                      className="sr-only"
+                    />
+                  </label>
                   <button
                     type="button"
                     onClick={() => handleSundayChange(1)}
