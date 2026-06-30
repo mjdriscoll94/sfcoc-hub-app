@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Timestamp, collection, getDocs, orderBy, query, updateDoc, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { ChevronDown, ChevronRight, Plus } from 'lucide-react';
+import { ChevronDown, ChevronRight, Pencil, Plus } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
@@ -251,15 +251,17 @@ export default function AttendanceMembersPage() {
                               {member.importantEvents.map((event) => (
                                 <div key={event.id} className="text-sm text-charcoal">
                                   <span className="text-text-light">{EVENT_TYPE_LABELS[event.type]} — </span>
+                                  <span className="font-medium">{event.title}</span>
+                                  <span className="text-text-light"> • {format(new Date(`${event.date}T12:00:00`), 'MMMM d, yyyy')}</span>
+                                  {event.notes ? <span className="text-text-light"> • {event.notes}</span> : null}
                                   <button
                                     type="button"
                                     onClick={() => openEditEventModal(member, event)}
-                                    className="font-medium text-left transition hover:text-coral"
+                                    className="ml-2 inline-flex items-center rounded-md border border-border p-1 text-charcoal transition hover:border-coral hover:text-coral"
+                                    aria-label={`Edit ${event.title}`}
                                   >
-                                    {event.title}
+                                    <Pencil className="h-3.5 w-3.5" />
                                   </button>
-                                  <span className="text-text-light"> • {format(new Date(`${event.date}T12:00:00`), 'MMMM d, yyyy')}</span>
-                                  {event.notes ? <span className="text-text-light"> • {event.notes}</span> : null}
                                 </div>
                               ))}
                             </div>

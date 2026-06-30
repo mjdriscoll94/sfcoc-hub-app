@@ -115,7 +115,10 @@ export default function AttendanceAdminPage() {
         setLoading(true);
         setError(null);
 
-        const householdsSnapshot = await getDocs(query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc')));
+        const [householdsSnapshot, recordsSnapshot] = await Promise.all([
+          getDocs(query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc'))),
+          getDocs(query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'desc'), limit(12))),
+        ]);
         const loadedHouseholds = householdsSnapshot.docs
           .map((snapshot) => {
             const data = snapshot.data() as FirestoreAttendanceHousehold;
@@ -133,9 +136,6 @@ export default function AttendanceAdminPage() {
           })
           .filter((household) => household.active);
 
-        const recordsSnapshot = await getDocs(
-          query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'desc'), limit(12)),
-        );
         const loadedRecords = recordsSnapshot.docs.map((snapshot) => {
           const data = snapshot.data() as FirestoreAttendanceRecord;
           return {
