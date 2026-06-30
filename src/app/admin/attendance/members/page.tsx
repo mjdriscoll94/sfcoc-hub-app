@@ -43,6 +43,15 @@ const EVENT_TYPE_LABELS: Record<ImportantEvent['type'], string> = {
   other: 'Other',
 };
 
+const sortImportantEvents = (events: ImportantEvent[]) =>
+  [...events].sort((a, b) => {
+    const typeCompare = EVENT_TYPE_LABELS[a.type].localeCompare(EVENT_TYPE_LABELS[b.type]);
+    if (typeCompare !== 0) {
+      return typeCompare;
+    }
+    return a.date.localeCompare(b.date);
+  });
+
 export default function AttendanceMembersPage() {
   useEffect(() => {
     document.title = 'Attendance Members List | Sioux Falls Church of Christ';
@@ -98,7 +107,7 @@ export default function AttendanceMembersPage() {
               householdName: member.householdName,
               normalizedName: member.normalizedName,
               availableFrom: member.availableFrom,
-              importantEvents: [...member.importantEvents].sort((a, b) => a.date.localeCompare(b.date)),
+              importantEvents: sortImportantEvents(member.importantEvents),
             })),
         );
       } catch (loadError) {
@@ -163,11 +172,11 @@ export default function AttendanceMembersPage() {
         title: eventTitle.trim(),
         ...(eventNotes.trim() ? { notes: eventNotes.trim() } : {}),
       };
-      const nextEvents = editingEventId
-        ? selectedMember.importantEvents
-            .map((event) => (event.id === editingEventId ? nextEvent : event))
-            .sort((a, b) => a.date.localeCompare(b.date))
-        : [...selectedMember.importantEvents, nextEvent].sort((a, b) => a.date.localeCompare(b.date));
+      const nextEvents = sortImportantEvents(
+        editingEventId
+          ? selectedMember.importantEvents.map((event) => (event.id === editingEventId ? nextEvent : event))
+          : [...selectedMember.importantEvents, nextEvent],
+      );
 
       await updateDoc(doc(db, 'attendanceHouseholds', selectedMember.id), {
         importantEvents: nextEvents,
@@ -196,6 +205,10 @@ export default function AttendanceMembersPage() {
           <h1 className="text-3xl font-bold text-charcoal">Members List</h1>
           <p className="mt-2 text-sm text-text-light">All imported attendance households and when they started attending.</p>
         </div>
+      </div>
+
+      <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
+        Click a member name to add an important event, or expand the row to view and edit existing events.
       </div>
 
       {error ? (
