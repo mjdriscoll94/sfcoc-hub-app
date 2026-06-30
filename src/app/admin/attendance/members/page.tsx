@@ -53,6 +53,7 @@ export default function AttendanceMembersPage() {
   const [members, setMembers] = useState<AttendanceMemberRow[]>([]);
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const [selectedMember, setSelectedMember] = useState<AttendanceMemberRow | null>(null);
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [eventType, setEventType] = useState<ImportantEvent['type']>('birthday');
   const [eventDate, setEventDate] = useState('');
   const [eventTitle, setEventTitle] = useState('');
@@ -123,14 +124,25 @@ export default function AttendanceMembersPage() {
 
   const openEventModal = (member: AttendanceMemberRow) => {
     setSelectedMember(member);
+    setEditingEventId(null);
     setEventType('birthday');
     setEventDate('');
     setEventTitle('');
     setEventNotes('');
   };
 
+  const openEditEventModal = (member: AttendanceMemberRow, importantEvent: ImportantEvent) => {
+    setSelectedMember(member);
+    setEditingEventId(importantEvent.id);
+    setEventType(importantEvent.type);
+    setEventDate(importantEvent.date);
+    setEventTitle(importantEvent.title);
+    setEventNotes(importantEvent.notes || '');
+  };
+
   const closeEventModal = () => {
     setSelectedMember(null);
+    setEditingEventId(null);
     setSavingEvent(false);
   };
 
@@ -145,13 +157,17 @@ export default function AttendanceMembersPage() {
       setError(null);
 
       const nextEvent: ImportantEvent = {
-        id: crypto.randomUUID(),
+        id: editingEventId || crypto.randomUUID(),
         type: eventType,
         date: eventDate,
         title: eventTitle.trim(),
         ...(eventNotes.trim() ? { notes: eventNotes.trim() } : {}),
       };
-      const nextEvents = [...selectedMember.importantEvents, nextEvent].sort((a, b) => a.date.localeCompare(b.date));
+      const nextEvents = editingEventId
+        ? selectedMember.importantEvents
+            .map((event) => (event.id === editingEventId ? nextEvent : event))
+            .sort((a, b) => a.date.localeCompare(b.date))
+        : [...selectedMember.importantEvents, nextEvent].sort((a, b) => a.date.localeCompare(b.date));
 
       await updateDoc(doc(db, 'attendanceHouseholds', selectedMember.id), {
         importantEvents: nextEvents,
@@ -231,18 +247,18 @@ export default function AttendanceMembersPage() {
                           {member.importantEvents.length === 0 ? (
                             <p className="text-sm text-text-light">No important events recorded yet.</p>
                           ) : (
-                            <div className="space-y-2">
+                            <div className="space-y-1">
                               {member.importantEvents.map((event) => (
-                                <div key={event.id} className="rounded-lg border border-border bg-white px-3 py-2">
-                                  <div className="flex items-center justify-between gap-4">
-                                    <div>
-                                      <p className="font-medium text-charcoal">{event.title}</p>
-                                      <p className="text-xs text-text-light">
-                                        {EVENT_TYPE_LABELS[event.type]} • {format(new Date(`${event.date}T12:00:00`), 'MMMM d, yyyy')}
-                                      </p>
-                                    </div>
-                                    {event.notes ? <span className="text-xs text-text-light">{event.notes}</span> : null}
-                                  </div>
+                                <div key={event.id} className="text-sm text-charcoal">
+                                  <button
+                                    type="button"
+                                    onClick={() => openEditEventModal(member, event)}
+                                    className="font-medium text-left transition hover:text-coral"
+                                  >
+                                    {event.title}
+                                  </button>
+                                  <span className="text-text-light"> — {EVENT_TYPE_LABELS[event.type]} • {format(new Date(`${event.date}T12:00:00`), 'MMMM d, yyyy')}</span>
+                                  {event.notes ? <span className="text-text-light"> • {event.notes}</span> : null}
                                 </div>
                               ))}
                             </div>
@@ -265,7 +281,9 @@ export default function AttendanceMembersPage() {
             <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
               <div className="border-b border-border px-6 py-4">
                 <h2 className="text-lg font-semibold text-charcoal">{selectedMember.householdName}</h2>
-                <p className="mt-1 text-sm text-text-light">Add an important event for this household.</p>
+                <p className="mt-1 text-sm text-text-light">
+                  {editingEventId ? 'Edit this important event.' : 'Add an important event for this household.'}
+                </p>
               </div>
               <div className="space-y-4 px-6 py-4">
                 <label className="block">
@@ -297,7 +315,7 @@ export default function AttendanceMembersPage() {
                     type="text"
                     value={eventTitle}
                     onChange={(event) => setEventTitle(event.target.value)}
-                    placeholder="Example: Mason Birthday"
+                    placeholder="Who is this for?"
                     className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
                   />
                 </label>
@@ -327,7 +345,7 @@ export default function AttendanceMembersPage() {
                   className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  {savingEvent ? 'Saving...' : 'Add Event'}
+                  {savingEvent ? 'Saving...' : editingEventId ? 'Save Changes' : 'Add Event'}
                 </button>
               </div>
             </div>
