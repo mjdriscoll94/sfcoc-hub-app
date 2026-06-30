@@ -250,6 +250,7 @@ export default function AttendanceMembersPage() {
                             <div className="space-y-1">
                               {member.importantEvents.map((event) => (
                                 <div key={event.id} className="text-sm text-charcoal">
+                                  <span className="text-text-light">{EVENT_TYPE_LABELS[event.type]} — </span>
                                   <button
                                     type="button"
                                     onClick={() => openEditEventModal(member, event)}
@@ -257,7 +258,7 @@ export default function AttendanceMembersPage() {
                                   >
                                     {event.title}
                                   </button>
-                                  <span className="text-text-light"> — {EVENT_TYPE_LABELS[event.type]} • {format(new Date(`${event.date}T12:00:00`), 'MMMM d, yyyy')}</span>
+                                  <span className="text-text-light"> • {format(new Date(`${event.date}T12:00:00`), 'MMMM d, yyyy')}</span>
                                   {event.notes ? <span className="text-text-light"> • {event.notes}</span> : null}
                                 </div>
                               ))}
