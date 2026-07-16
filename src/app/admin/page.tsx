@@ -6,10 +6,47 @@ import { useRouter } from 'next/navigation';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
-import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail, ClipboardList } from 'lucide-react';
+import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail, ClipboardList, ChevronDown, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
+
+function AdminMenu({
+  label,
+  icon: Icon,
+  items,
+}: {
+  label: string;
+  icon: LucideIcon;
+  items: { href: string; label: string; description: string; icon: LucideIcon }[];
+}) {
+  if (!items.length) return null;
+
+  return (
+    <details className="group rounded-lg border border-border bg-white shadow-sm">
+      <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-charcoal hover:bg-gray-50">
+        <Icon className="h-5 w-5 text-coral" aria-hidden="true" />
+        <span className="flex-1 font-semibold">{label}</span>
+        <ChevronDown className="h-5 w-5 text-text-light transition-transform group-open:rotate-180" aria-hidden="true" />
+      </summary>
+      <div className="border-t border-border px-3 py-2">
+        {items.map(({ href, label: itemLabel, description, icon: ItemIcon }) => (
+          <Link
+            key={href}
+            href={href}
+            className="flex items-center gap-3 rounded-md px-3 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
+          >
+            <ItemIcon className="h-5 w-5 flex-shrink-0 text-coral" aria-hidden="true" />
+            <span>
+              <span className="block text-sm font-medium text-charcoal">{itemLabel}</span>
+              <span className="block text-sm text-text-light">{description}</span>
+            </span>
+          </Link>
+        ))}
+      </div>
+    </details>
+  );
+}
 
 export default function AdminDashboard() {
   useEffect(() => {
@@ -56,240 +93,51 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        {/* Quick Actions - organized by function */}
-        <div className="space-y-8">
-          {/* Members & Community */}
-          {(userProfile?.isAdmin || canManageLifeGroups) && (
-            <div>
-              <h2 className="text-lg font-semibold text-charcoal mb-3">Members & Community</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {userProfile?.isAdmin && (
-                  <Link
-                    href="/admin/users"
-                    className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                  >
-                    <div className="flex-shrink-0">
-                      <Users className="h-6 w-6 text-coral" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-semibold text-charcoal">User Management</p>
-                      <p className="text-sm text-text-light">Manage user accounts and approvals</p>
-                    </div>
-                  </Link>
-                )}
-                <Link
-                  href="/admin/life-groups"
-                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                >
-                  <div className="flex-shrink-0">
-                    <Users className="h-6 w-6 text-coral" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-charcoal">Life Groups</p>
-                    <p className="text-sm text-text-light">Manage life groups and members</p>
-                  </div>
-                </Link>
-                {userProfile?.isAdmin && (
-                  <Link
-                    href="/admin/attendance"
-                    className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                  >
-                    <div className="flex-shrink-0">
-                      <ClipboardList className="h-6 w-6 text-coral" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-charcoal">Attendance</p>
-                      <p className="text-sm text-text-light">Track Sunday household attendance</p>
-                    </div>
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Content & Resources */}
-          {(canAccessAdmin || userProfile?.isAdmin) && (
-            <div>
-              <h2 className="text-lg font-semibold text-charcoal mb-3">Content & Resources</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                {canAccessAdmin && (
-                  <Link
-                    href="/admin/announcements/new"
-                    className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                  >
-                    <div className="flex-shrink-0">
-                      <PlusIcon className="h-6 w-6 text-coral" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-charcoal">Add Announcement</p>
-                      <p className="text-sm text-text-light">Create a new announcement</p>
-                    </div>
-                  </Link>
-                )}
-                {userProfile?.isAdmin && (
-                  <>
-                    <Link
-                      href="/admin/bulletin"
-                      className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                    >
-                      <div className="flex-shrink-0">
-                        <FileText className="h-6 w-6 text-coral" aria-hidden="true" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <p className="text-sm font-medium text-charcoal">Upload Bulletin</p>
-                        <p className="text-sm text-text-light">Manage and upload weekly bulletins</p>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/lesson-notes"
-                      className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                    >
-                      <div className="flex-shrink-0">
-                        <Upload className="h-6 w-6 text-coral" aria-hidden="true" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <p className="text-sm font-medium text-charcoal">Upload Sermon Notes</p>
-                        <p className="text-sm text-text-light">Manage and upload lesson notes</p>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/send-email"
-                      className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                    >
-                      <div className="flex-shrink-0">
-                        <Mail className="h-6 w-6 text-coral" aria-hidden="true" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <p className="text-sm font-medium text-charcoal">Send Email</p>
-                        <p className="text-sm text-text-light">
-                          Broadcast to members or send a one-address test (SES)
-                        </p>
-                      </div>
-                    </Link>
-                    <Link
-                      href="/admin/send-email/lists"
-                      className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                    >
-                      <div className="flex-shrink-0">
-                        <Users className="h-6 w-6 text-coral" aria-hidden="true" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="absolute inset-0" aria-hidden="true" />
-                        <p className="text-sm font-medium text-charcoal">Email Lists</p>
-                        <p className="text-sm text-text-light">Create and manage custom email lists and groups</p>
-                      </div>
-                    </Link>
-                  </>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Service & Events */}
-          {(canManageVolunteer || canAssignServiceRoles) && (
-            <div>
-              <h2 className="text-lg font-semibold text-charcoal mb-3">Service & Events</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Link
-                  href="/admin/calendar"
-                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                >
-                  <div className="flex-shrink-0">
-                    <CalendarDays className="h-6 w-6 text-coral" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-charcoal">Calendar</p>
-                    <p className="text-sm text-text-light">Add and manage church calendar events</p>
-                  </div>
-                </Link>
-                {canAssignServiceRoles && (
-                  <Link
-                    href="/service-roles"
-                    className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                  >
-                    <div className="flex-shrink-0">
-                      <Users className="h-6 w-6 text-coral" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-charcoal">Service Roles</p>
-                      <p className="text-sm text-text-light">Manage Sunday service role assignments</p>
-                    </div>
-                  </Link>
-                )}
-                {canManageVolunteer && (
-                  <Link
-                    href="/admin/volunteer"
-                    className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                  >
-                    <div className="flex-shrink-0">
-                      <UsersRound className="h-6 w-6 text-coral" aria-hidden="true" />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="absolute inset-0" aria-hidden="true" />
-                      <p className="text-sm font-medium text-charcoal">Volunteer Opportunities</p>
-                      <p className="text-sm text-text-light">Manage volunteer opportunities</p>
-                    </div>
-                  </Link>
-                )}
-              </div>
-            </div>
-          )}
-
-          {/* Site Management */}
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <AdminMenu
+            label="People & Groups"
+            icon={Users}
+            items={[
+              ...(userProfile?.isAdmin ? [{ href: '/admin/users', label: 'User Management', description: 'Manage user accounts and approvals', icon: Users }] : []),
+              ...(canManageLifeGroups ? [{ href: '/admin/life-groups', label: 'Life Groups', description: 'Manage life groups and members', icon: Users }] : []),
+              ...(userProfile?.isAdmin ? [{ href: '/admin/attendance', label: 'Attendance', description: 'Track Sunday household attendance', icon: ClipboardList }] : []),
+            ]}
+          />
+          <AdminMenu
+            label="Email & Communication"
+            icon={Mail}
+            items={[
+              ...(canAccessAdmin ? [{ href: '/admin/announcements/new', label: 'Add Announcement', description: 'Create a new announcement', icon: PlusIcon as unknown as LucideIcon }] : []),
+              ...(userProfile?.isAdmin ? [
+                { href: '/admin/send-email', label: 'Send Email', description: 'Broadcast to members or send a test', icon: Mail },
+                { href: '/admin/send-email/lists', label: 'Email Lists', description: 'Manage custom email lists and groups', icon: Users },
+                { href: '/admin/announcements', label: 'Manage Announcements', description: 'View, edit, or delete announcements', icon: Megaphone },
+              ] : []),
+            ]}
+          />
+          <AdminMenu
+            label="Events & Scheduling"
+            icon={CalendarDays}
+            items={[
+              ...(userProfile?.isAdmin || canManageVolunteer || canAssignServiceRoles ? [{ href: '/admin/calendar', label: 'Calendar', description: 'Add and manage church calendar events', icon: CalendarDays }] : []),
+              ...(canAssignServiceRoles ? [{ href: '/service-roles', label: 'Service Roles', description: 'Manage Sunday service assignments', icon: Users }] : []),
+              ...(canManageVolunteer ? [{ href: '/admin/volunteer', label: 'Volunteer Opportunities', description: 'Manage volunteer opportunities', icon: UsersRound }] : []),
+              ...(userProfile?.isAdmin ? [{ href: '/admin/events', label: 'Home Page Events', description: 'Manage events shown on the home page', icon: CalendarDays }] : []),
+            ]}
+          />
+          <AdminMenu
+            label="Content Management"
+            icon={FileText}
+            items={userProfile?.isAdmin ? [
+              { href: '/admin/bulletin', label: 'Upload Bulletin', description: 'Manage and upload weekly bulletins', icon: FileText },
+              { href: '/admin/lesson-notes', label: 'Upload Sermon Notes', description: 'Manage and upload lesson notes', icon: Upload },
+            ] : []}
+          />
           {userProfile?.isAdmin && (
-            <div>
-              <h2 className="text-lg font-semibold text-charcoal mb-3">Site Management</h2>
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                <Link
-                  href="/admin/events"
-                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                >
-                  <div className="flex-shrink-0">
-                    <CalendarDays className="h-6 w-6 text-coral" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-charcoal">Home Page Events</p>
-                    <p className="text-sm text-text-light">Manage events displayed on the home page</p>
-                  </div>
-                </Link>
-                <Link
-                  href="/admin/prayer-requests"
-                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                >
-                  <div className="flex-shrink-0">
-                    <FileText className="h-6 w-6 text-coral" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-charcoal">Manage Prayer Requests</p>
-                    <p className="text-sm text-text-light">View, edit, or delete prayer requests and praise reports</p>
-                  </div>
-                </Link>
-                <Link
-                  href="/admin/announcements"
-                  className="relative rounded-lg border border-border bg-white px-6 py-5 shadow hover:shadow-md flex items-center space-x-3 hover:border-coral transition-all focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-primary"
-                >
-                  <div className="flex-shrink-0">
-                    <Megaphone className="h-6 w-6 text-coral" aria-hidden="true" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <span className="absolute inset-0" aria-hidden="true" />
-                    <p className="text-sm font-medium text-charcoal">Manage Announcements</p>
-                    <p className="text-sm text-text-light">View, edit, or delete announcements</p>
-                  </div>
-                </Link>
-              </div>
-            </div>
+            <Link href="/admin/prayer-requests" className="flex items-center gap-3 rounded-lg border border-border bg-white px-5 py-4 font-semibold text-charcoal shadow-sm hover:border-coral hover:shadow-md">
+              <FileText className="h-5 w-5 text-coral" aria-hidden="true" />
+              Manage Prayer Requests
+            </Link>
           )}
         </div>
 
