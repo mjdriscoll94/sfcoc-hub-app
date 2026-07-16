@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
-import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail, ClipboardList, ChevronDown, type LucideIcon } from 'lucide-react';
+import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail, ClipboardList, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
@@ -23,12 +23,11 @@ function AdminMenu({
   if (!items.length) return null;
 
   return (
-    <details className="group rounded-lg border border-border bg-white shadow-sm">
-      <summary className="flex cursor-pointer list-none items-center gap-3 px-5 py-4 text-charcoal hover:bg-gray-50">
+    <div className="rounded-lg border border-border bg-white shadow-sm">
+      <div className="flex items-center gap-3 px-5 py-4 text-charcoal">
         <Icon className="h-5 w-5 text-coral" aria-hidden="true" />
         <span className="flex-1 font-semibold">{label}</span>
-        <ChevronDown className="h-5 w-5 text-text-light transition-transform group-open:rotate-180" aria-hidden="true" />
-      </summary>
+      </div>
       <div className="border-t border-border px-3 py-2">
         {items.map(({ href, label: itemLabel, description, icon: ItemIcon }) => (
           <Link
@@ -44,7 +43,7 @@ function AdminMenu({
           </Link>
         ))}
       </div>
-    </details>
+    </div>
   );
 }
 
@@ -93,7 +92,7 @@ export default function AdminDashboard() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 items-start gap-4 md:grid-cols-2">
           <AdminMenu
             label="People & Groups"
             icon={Users}
