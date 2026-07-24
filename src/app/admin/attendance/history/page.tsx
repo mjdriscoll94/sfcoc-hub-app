@@ -72,8 +72,7 @@ export default function AttendanceHistoryPage() {
                 active: data.active !== false,
                 availableFrom: data.availableFrom?.toDate() || data.createdAt?.toDate() || new Date(2000, 0, 2, 12, 0, 0, 0),
               };
-            })
-            .filter((household) => household.active),
+            }),
         );
 
         setRecords(
@@ -104,6 +103,27 @@ export default function AttendanceHistoryPage() {
 
   const totalPages = Math.max(1, Math.ceil(records.length / COLUMNS_PER_PAGE));
   const pagedRecords = records.slice(page * COLUMNS_PER_PAGE, (page + 1) * COLUMNS_PER_PAGE);
+  const displayedHouseholds = households.filter((household) => household.active);
+  const metricYears = Array.from({ length: 3 }, (_, index) => new Date().getFullYear() - index);
+  const yearlyMetrics = metricYears.map((year) => {
+    const serviceRecords = records.filter((record) => !record.noService && record.serviceDate.getFullYear() === year);
+    const totalAttendance = serviceRecords.reduce(
+      (total, record) => total + Object.values(record.counts).reduce((recordTotal, count) => recordTotal + count, 0),
+      0,
+    );
+    const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
+    const endOfPreviousYear = new Date(year - 1, 11, 31, 23, 59, 59, 999);
+    const familyTotal = households.filter((household) => household.availableFrom <= endOfYear).length;
+    const previousFamilyTotal = households.filter((household) => household.availableFrom <= endOfPreviousYear).length;
+
+    return {
+      year,
+      averageAttendance: serviceRecords.length ? totalAttendance / serviceRecords.length : null,
+      serviceCount: serviceRecords.length,
+      familyTotal,
+      familyIncrease: familyTotal - previousFamilyTotal,
+    };
+  });
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -140,6 +160,42 @@ export default function AttendanceHistoryPage() {
         </div>
       </div>
 
+      {!error && !loading ? (
+        <section className="mb-8">
+          <div className="mb-3">
+            <h2 className="text-xl font-semibold text-charcoal">Attendance Metrics</h2>
+            <p className="mt-1 text-sm text-text-light">Average weekly attendance excludes Sundays marked No Service or Count Kept.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-3">
+            {yearlyMetrics.map((metric) => (
+              <div key={metric.year} className="rounded-xl border border-border bg-white p-5 shadow-sm">
+                <h3 className="text-lg font-semibold text-charcoal">{metric.year}</h3>
+                <dl className="mt-4 space-y-3 text-sm">
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-text-light">Average attendance</dt>
+                    <dd className="text-xl font-bold text-charcoal">{metric.averageAttendance === null ? '—' : metric.averageAttendance.toFixed(1)}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-text-light">Services counted</dt>
+                    <dd className="font-semibold text-charcoal">{metric.serviceCount}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-text-light">Families by year-end</dt>
+                    <dd className="font-semibold text-charcoal">{metric.familyTotal}</dd>
+                  </div>
+                  <div className="flex items-baseline justify-between gap-4">
+                    <dt className="text-text-light">Family increase</dt>
+                    <dd className={metric.familyIncrease > 0 ? 'font-semibold text-emerald-700' : 'font-semibold text-charcoal'}>
+                      {metric.familyIncrease > 0 ? '+' : ''}{metric.familyIncrease}
+                    </dd>
+                  </div>
+                </dl>
+              </div>
+            ))}
+          </div>
+        </section>
+      ) : null}
+
       {error ? (
         <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
       ) : loading ? (
@@ -169,7 +225,7 @@ export default function AttendanceHistoryPage() {
               </tr>
             </thead>
             <tbody>
-              {households.map((household) => (
+              {displayedHouseholds.map((household) => (
                 <tr key={household.id} className="odd:bg-white even:bg-slate-50/40">
                   <td className="sticky left-0 z-10 border-r border-t border-border bg-inherit px-4 py-3 font-medium text-charcoal">
                     {household.householdName}
