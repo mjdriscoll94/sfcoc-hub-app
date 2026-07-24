@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { Timestamp, collection, getDocs, orderBy, query, updateDoc, doc } from 'firebase/firestore';
 import { format } from 'date-fns';
@@ -43,6 +44,30 @@ const EVENT_TYPE_LABELS: Record<ImportantEvent['type'], string> = {
   other: 'Other',
 };
 
+const isCelebrationEvent = (type: ImportantEvent['type']) => type === 'birthday' || type === 'anniversary';
+
+const getMonthDayParts = (date: string) => {
+  const match = /^(?:(\d{4})-)?(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return null;
+
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsedDate = new Date(2000, month - 1, day);
+  return parsedDate.getMonth() === month - 1 && parsedDate.getDate() === day ? { month, day } : null;
+};
+
+const getDaysInMonth = (month: number) => new Date(2000, month, 0).getDate();
+
+const formatImportantEventDate = (event: ImportantEvent) => {
+  if (isCelebrationEvent(event.type)) {
+    const dateParts = getMonthDayParts(event.date);
+    return dateParts ? format(new Date(2000, dateParts.month - 1, dateParts.day), 'MMMM d') : event.date;
+  }
+
+  const date = new Date(`${event.date}T12:00:00`);
+  return Number.isNaN(date.getTime()) ? event.date : format(date, 'MMMM d, yyyy');
+};
+
 const sortImportantEvents = (events: ImportantEvent[]) =>
   [...events].sort((a, b) => {
     const typeCompare = EVENT_TYPE_LABELS[a.type].localeCompare(EVENT_TYPE_LABELS[b.type]);
@@ -65,6 +90,8 @@ export default function AttendanceMembersPage() {
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
   const [eventType, setEventType] = useState<ImportantEvent['type']>('birthday');
   const [eventDate, setEventDate] = useState('');
+  const [eventMonth, setEventMonth] = useState(new Date().getMonth() + 1);
+  const [eventDay, setEventDay] = useState(new Date().getDate());
   const [eventTitle, setEventTitle] = useState('');
   const [eventNotes, setEventNotes] = useState('');
   const [savingEvent, setSavingEvent] = useState(false);
@@ -136,6 +163,8 @@ export default function AttendanceMembersPage() {
     setEditingEventId(null);
     setEventType('birthday');
     setEventDate('');
+    setEventMonth(new Date().getMonth() + 1);
+    setEventDay(new Date().getDate());
     setEventTitle('');
     setEventNotes('');
   };
@@ -145,6 +174,9 @@ export default function AttendanceMembersPage() {
     setEditingEventId(importantEvent.id);
     setEventType(importantEvent.type);
     setEventDate(importantEvent.date);
+    const dateParts = getMonthDayParts(importantEvent.date);
+    setEventMonth(dateParts?.month || new Date().getMonth() + 1);
+    setEventDay(dateParts?.day || new Date().getDate());
     setEventTitle(importantEvent.title);
     setEventNotes(importantEvent.notes || '');
   };
@@ -156,7 +188,8 @@ export default function AttendanceMembersPage() {
   };
 
   const handleSaveEvent = async () => {
-    if (!selectedMember || !eventDate || !eventTitle.trim()) {
+    const celebrationEvent = isCelebrationEvent(eventType);
+    if (!selectedMember || (!celebrationEvent && !eventDate) || !eventTitle.trim()) {
       setError('Event title and date are required.');
       return;
     }
@@ -168,7 +201,7 @@ export default function AttendanceMembersPage() {
       const nextEvent: ImportantEvent = {
         id: editingEventId || crypto.randomUUID(),
         type: eventType,
-        date: eventDate,
+        date: celebrationEvent ? `${String(eventMonth).padStart(2, '0')}-${String(eventDay).padStart(2, '0')}` : eventDate,
         title: eventTitle.trim(),
         ...(eventNotes.trim() ? { notes: eventNotes.trim() } : {}),
       };
@@ -199,12 +232,18 @@ export default function AttendanceMembersPage() {
 
   return (
     <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8 flex items-center">
+      <div className="mb-8 flex items-center gap-4">
         <BackButton className="mr-4" />
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-charcoal">Members List</h1>
           <p className="mt-2 text-sm text-text-light">All imported attendance households and when they started attending.</p>
         </div>
+        <Link
+          href="/admin/attendance/members/events"
+          className="inline-flex shrink-0 items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
+        >
+          Birthday and Anniversary List
+        </Link>
       </div>
 
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
@@ -265,7 +304,7 @@ export default function AttendanceMembersPage() {
                                 <div key={event.id} className="text-sm text-charcoal">
                                   <span className="text-text-light">{EVENT_TYPE_LABELS[event.type]} — </span>
                                   <span className="font-medium">{event.title}</span>
-                                  <span className="text-text-light"> • {format(new Date(`${event.date}T12:00:00`), 'MMMM d, yyyy')}</span>
+                                  <span className="text-text-light"> • {formatImportantEventDate(event)}</span>
                                   {event.notes ? <span className="text-text-light"> • {event.notes}</span> : null}
                                   <button
                                     type="button"
@@ -316,15 +355,51 @@ export default function AttendanceMembersPage() {
                     ))}
                   </select>
                 </label>
-                <label className="block">
-                  <span className="mb-2 block text-sm font-medium text-charcoal">Date</span>
-                  <input
-                    type="date"
-                    value={eventDate}
-                    onChange={(event) => setEventDate(event.target.value)}
-                    className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
-                  />
-                </label>
+                {isCelebrationEvent(eventType) ? (
+                  <div>
+                    <span className="mb-2 block text-sm font-medium text-charcoal">Date</span>
+                    <div className="grid grid-cols-2 gap-3">
+                      <label>
+                        <span className="sr-only">Month</span>
+                        <select
+                          value={eventMonth}
+                          onChange={(event) => {
+                            const nextMonth = Number(event.target.value);
+                            setEventMonth(nextMonth);
+                            setEventDay((currentDay) => Math.min(currentDay, getDaysInMonth(nextMonth)));
+                          }}
+                          className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                        >
+                          {Array.from({ length: 12 }, (_, month) => (
+                            <option key={month} value={month + 1}>{format(new Date(2000, month, 1), 'MMMM')}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label>
+                        <span className="sr-only">Day</span>
+                        <select
+                          value={eventDay}
+                          onChange={(event) => setEventDay(Number(event.target.value))}
+                          className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                        >
+                          {Array.from({ length: getDaysInMonth(eventMonth) }, (_, day) => (
+                            <option key={day} value={day + 1}>{day + 1}</option>
+                          ))}
+                        </select>
+                      </label>
+                    </div>
+                  </div>
+                ) : (
+                  <label className="block">
+                    <span className="mb-2 block text-sm font-medium text-charcoal">Date</span>
+                    <input
+                      type="date"
+                      value={eventDate}
+                      onChange={(event) => setEventDate(event.target.value)}
+                      className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+                    />
+                  </label>
+                )}
                 <label className="block">
                   <span className="mb-2 block text-sm font-medium text-charcoal">Title</span>
                   <input
