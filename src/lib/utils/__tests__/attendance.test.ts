@@ -5,6 +5,7 @@ import {
   getSundayForDate,
   getSundayKey,
   isHouseholdAvailableForSunday,
+  parseAttendanceImport,
   parseHistoricalAttendanceLines,
   parseAttendanceHouseholds,
   type AttendanceHousehold,
@@ -31,6 +32,30 @@ test('parseHistoricalAttendanceLines accepts pasted bullets and parenthesized co
     { householdName: 'Smith Family', normalizedName: 'smith family', count: 4 },
     { householdName: 'Jones', normalizedName: 'jones', count: 0 },
   ]);
+});
+
+test('parseAttendanceImport reads dated attendance blocks', () => {
+  const result = parseAttendanceImport('2/23/25\nSmith Family 4\nJones 0\n\n2/16/25\nSmith Family 3');
+
+  assert.equal(result.errors.length, 0);
+  assert.deepEqual(
+    result.sundays.map((sunday) => ({
+      date: getSundayKey(sunday.serviceDate),
+      entries: sunday.entries.map((entry) => [entry.householdName, entry.count]),
+    })),
+    [
+      { date: '2025-02-23', entries: [['Smith Family', 4], ['Jones', 0]] },
+      { date: '2025-02-16', entries: [['Smith Family', 3]] },
+    ],
+  );
+});
+
+test('parseAttendanceImport keeps date-only blocks as no-service Sundays', () => {
+  const result = parseAttendanceImport('1/19/25\n\n1/12/25\nSmith Family 3');
+
+  assert.equal(result.errors.length, 0);
+  assert.equal(result.sundays[0].noService, true);
+  assert.equal(result.sundays[0].entries.length, 0);
 });
 
 test('getSunday helpers normalize a weekday to that week Sunday', () => {

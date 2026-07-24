@@ -84,6 +84,17 @@ export interface ParsedHistoricalAttendanceLine {
   count?: number;
 }
 
+export interface AttendanceImportSunday {
+  serviceDate: Date;
+  entries: ParsedHistoricalAttendanceLine[];
+  noService: boolean;
+}
+
+export interface AttendanceImportParseResult {
+  sundays: AttendanceImportSunday[];
+  errors: string[];
+}
+
 export const parseHistoricalAttendanceLines = (value: string): ParsedHistoricalAttendanceLine[] => {
   const lines: ParsedHistoricalAttendanceLine[] = [];
 
@@ -111,6 +122,56 @@ export const parseHistoricalAttendanceLines = (value: string): ParsedHistoricalA
   }
 
   return lines;
+};
+
+export const parseAttendanceImport = (value: string): AttendanceImportParseResult => {
+  const sundays: AttendanceImportSunday[] = [];
+  const errors: string[] = [];
+  let currentDate: Date | null = null;
+  let currentLines: string[] = [];
+
+  const saveCurrentSunday = () => {
+    if (!currentDate) return;
+
+    const entries = parseHistoricalAttendanceLines(currentLines.join('\n')).filter((entry) => typeof entry.count === 'number');
+    sundays.push({ serviceDate: currentDate, entries, noService: entries.length === 0 });
+  };
+
+  const lines = value.split('\n');
+  for (let index = 0; index < lines.length; index += 1) {
+    const rawLine = lines[index];
+    const line = rawLine.trim();
+    if (!line) continue;
+
+    const dateMatch = /^(\d{1,2})\/(\d{1,2})\/(\d{2}|\d{4})$/.exec(line);
+    if (dateMatch) {
+      saveCurrentSunday();
+      const year = dateMatch[3].length === 2 ? 2000 + Number(dateMatch[3]) : Number(dateMatch[3]);
+      const serviceDate = new Date(year, Number(dateMatch[1]) - 1, Number(dateMatch[2]), 12, 0, 0, 0);
+      if (
+        serviceDate.getFullYear() !== year ||
+        serviceDate.getMonth() !== Number(dateMatch[1]) - 1 ||
+        serviceDate.getDate() !== Number(dateMatch[2])
+      ) {
+        errors.push(`Invalid date on line ${index + 1}: ${line}`);
+        currentDate = null;
+        currentLines = [];
+      } else {
+        currentDate = getSundayForDate(serviceDate);
+        currentLines = [];
+      }
+      continue;
+    }
+
+    if (!currentDate) {
+      errors.push(`Attendance entry before a date on line ${index + 1}: ${line}`);
+      continue;
+    }
+    currentLines.push(line);
+  }
+
+  saveCurrentSunday();
+  return { sundays, errors };
 };
 
 export const getSundayForDate = (value: Date): Date => {

@@ -832,6 +832,12 @@ export default function AttendanceAdminPage() {
         >
           Members List
         </Link>
+        <Link
+          href="/admin/attendance/import"
+          className="ml-2 inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
+        >
+          Mass Import
+        </Link>
       </div>
 
       {error && (
