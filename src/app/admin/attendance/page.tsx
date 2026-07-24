@@ -8,7 +8,6 @@ import {
   collection,
   doc,
   getDocs,
-  limit,
   orderBy,
   query,
   setDoc,
@@ -44,6 +43,7 @@ interface FirestoreAttendanceHousehold {
   attentionResetAt?: Timestamp;
   visitorResetAt?: Timestamp;
 }
+
 
 interface FirestoreAttendanceRecord {
   serviceDate?: Timestamp;
@@ -117,7 +117,7 @@ export default function AttendanceAdminPage() {
 
         const [householdsSnapshot, recordsSnapshot] = await Promise.all([
           getDocs(query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc'))),
-          getDocs(query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'desc'), limit(12))),
+          getDocs(query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'desc'))),
         ]);
         const loadedHouseholds = householdsSnapshot.docs
           .map((snapshot) => {
@@ -556,7 +556,7 @@ export default function AttendanceAdminPage() {
 
       setRecords((current) => {
         const withoutCurrent = current.filter((record) => record.id !== selectedSundayKey);
-        return [...withoutCurrent, nextRecord].sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime()).slice(0, 12);
+        return [...withoutCurrent, nextRecord].sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime());
       });
       setMessage(`Saved attendance for ${format(selectedSunday, 'MMMM d, yyyy')}.`);
     } catch (saveError) {
@@ -687,15 +687,35 @@ export default function AttendanceAdminPage() {
       setMessage(null);
 
       const existingByName = new Map(households.map((household) => [household.normalizedName, household]));
-      const unmatched: string[] = [];
       const matchedHouseholdIds = new Set<string>();
+      const createdHouseholds: AttendanceHousehold[] = [];
+      const createdHouseholdIds = new Set<string>();
       const nextCounts = { ...(selectedRecord?.counts || {}) };
+      const batch = writeBatch(db);
 
       for (const line of parsedLines) {
-        const household = existingByName.get(line.normalizedName);
+        let household = existingByName.get(line.normalizedName);
         if (!household) {
-          unmatched.push(line.householdName);
-          continue;
+          const householdRef = doc(collection(db, 'attendanceHouseholds'));
+          household = {
+            id: householdRef.id,
+            householdName: line.householdName,
+            normalizedName: line.normalizedName,
+            active: true,
+            availableFrom: selectedSunday,
+          };
+          batch.set(householdRef, {
+            householdName: household.householdName,
+            normalizedName: household.normalizedName,
+            active: true,
+            availableFrom: Timestamp.fromDate(selectedSunday),
+            isVisitor: false,
+            createdAt: Timestamp.now(),
+            updatedAt: Timestamp.now(),
+          });
+          existingByName.set(household.normalizedName, household);
+          createdHouseholds.push(household);
+          createdHouseholdIds.add(household.id);
         }
 
         matchedHouseholdIds.add(household.id);
@@ -707,7 +727,29 @@ export default function AttendanceAdminPage() {
         }
       }
 
-      await setDoc(
+      const allRecordsSnapshot = await getDocs(query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'asc')));
+      const allRecords = allRecordsSnapshot.docs.map((snapshot) => {
+        const data = snapshot.data() as FirestoreAttendanceRecord;
+        return {
+          id: snapshot.id,
+          serviceDate: data.serviceDate?.toDate() || getDateFromSundayKey(snapshot.id),
+          noService: data.noService === true,
+          counts: data.counts || {},
+        };
+      });
+
+      const nextRecord: AttendanceRecord = {
+        id: selectedSundayKey,
+        serviceDate: selectedSunday,
+        noService,
+        counts: nextCounts,
+        exemptions: selectedRecord?.exemptions || {},
+        visitorDetails: selectedRecord?.visitorDetails || {},
+      };
+      const recordsIncludingImport = [...allRecords.filter((record) => record.id !== selectedSundayKey), nextRecord]
+        .sort((a, b) => a.serviceDate.getTime() - b.serviceDate.getTime());
+
+      batch.set(
         doc(db, 'attendanceRecords', selectedSundayKey),
         {
           serviceDate: Timestamp.fromDate(selectedSunday),
@@ -721,20 +763,11 @@ export default function AttendanceAdminPage() {
         { merge: true },
       );
 
-      const allRecordsSnapshot = await getDocs(query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'asc')));
-      const allRecords = allRecordsSnapshot.docs.map((snapshot) => {
-        const data = snapshot.data() as FirestoreAttendanceRecord;
-        return {
-          id: snapshot.id,
-          serviceDate: data.serviceDate?.toDate() || getDateFromSundayKey(snapshot.id),
-          noService: data.noService === true,
-          counts: data.counts || {},
-        };
-      });
-
-      const batch = writeBatch(db);
       matchedHouseholdIds.forEach((householdId) => {
-        const earliestRecord = allRecords.find((record) => typeof record.counts[householdId] === 'number');
+        if (createdHouseholdIds.has(householdId)) {
+          return;
+        }
+        const earliestRecord = recordsIncludingImport.find((record) => typeof record.counts[householdId] === 'number');
         if (!earliestRecord) {
           return;
         }
@@ -746,27 +779,18 @@ export default function AttendanceAdminPage() {
       });
       await batch.commit();
 
-      const nextRecord: AttendanceRecord = {
-        id: selectedSundayKey,
-        serviceDate: selectedSunday,
-        noService,
-        counts: nextCounts,
-        exemptions: selectedRecord?.exemptions || {},
-        visitorDetails: selectedRecord?.visitorDetails || {},
-      };
-
       setRecords((current) => {
         const withoutCurrent = current.filter((record) => record.id !== selectedSundayKey);
-        return [...withoutCurrent, nextRecord].sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime()).slice(0, 12);
+        return [...withoutCurrent, nextRecord].sort((a, b) => b.serviceDate.getTime() - a.serviceDate.getTime());
       });
 
       setHouseholds((current) =>
-        current.map((household) => {
+        [...current, ...createdHouseholds].map((household) => {
           if (!matchedHouseholdIds.has(household.id)) {
             return household;
           }
 
-          const earliestRecord = allRecords.find((record) => typeof record.counts[household.id] === 'number');
+          const earliestRecord = recordsIncludingImport.find((record) => typeof record.counts[household.id] === 'number');
           return earliestRecord
             ? { ...household, availableFrom: getSundayForDate(earliestRecord.serviceDate) }
             : household;
@@ -774,11 +798,9 @@ export default function AttendanceAdminPage() {
       );
 
       setHistoricalImportText('');
-      const matchedCount = parsedLines.length - unmatched.length;
+      const matchedCount = parsedLines.length - createdHouseholds.length;
       setMessage(
-        `Imported ${matchedCount} matched line${matchedCount === 1 ? '' : 's'} for ${format(selectedSunday, 'MMMM d, yyyy')}${
-          unmatched.length ? `. Unmatched: ${unmatched.join(', ')}` : '.'
-        }`,
+        `Imported ${parsedLines.length} household line${parsedLines.length === 1 ? '' : 's'} for ${format(selectedSunday, 'MMMM d, yyyy')}: ${matchedCount} matched and ${createdHouseholds.length} created.`,
       );
     } catch (importError) {
       console.error('Error importing historical attendance:', importError);
@@ -1378,4 +1400,3 @@ export default function AttendanceAdminPage() {
     </div>
   );
 }
-

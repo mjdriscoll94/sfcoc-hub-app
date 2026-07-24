@@ -26,6 +26,13 @@ test('parseHistoricalAttendanceLines keeps blank-count households and trailing c
   ]);
 });
 
+test('parseHistoricalAttendanceLines accepts pasted bullets and parenthesized counts', () => {
+  assert.deepEqual(parseHistoricalAttendanceLines('\u2022 Smith Family (4)\n- Jones 0'), [
+    { householdName: 'Smith Family', normalizedName: 'smith family', count: 4 },
+    { householdName: 'Jones', normalizedName: 'jones', count: 0 },
+  ]);
+});
+
 test('getSunday helpers normalize a weekday to that week Sunday', () => {
   const sunday = getSundayForDate(new Date(2026, 5, 18, 9, 30));
   assert.equal(getSundayKey(sunday), '2026-06-14');

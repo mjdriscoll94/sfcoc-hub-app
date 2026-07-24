@@ -88,12 +88,14 @@ export const parseHistoricalAttendanceLines = (value: string): ParsedHistoricalA
   const lines: ParsedHistoricalAttendanceLine[] = [];
 
   for (const rawLine of value.split('\n')) {
-    const cleaned = rawLine.trim();
+    const cleaned = rawLine
+      .trim()
+      .replace(/^\s*(?:[-*]|\u2022|\d+[.)])\s*/, '');
     if (!cleaned) {
       continue;
     }
 
-    const match = cleaned.match(/^(.*\S)\s+(\d+)\s*$/);
+    const match = cleaned.match(/^(.*\S)\s+\(?(\d+)\)?\s*$/);
     const householdName = (match ? match[1] : cleaned).trim();
     const count = match ? Number(match[2]) : undefined;
 
