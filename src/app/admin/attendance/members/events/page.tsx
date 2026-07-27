@@ -26,6 +26,13 @@ interface CelebrationEvent {
   month: number;
 }
 
+interface HouseholdPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  importantEvents?: ImportantEvent[];
+}
+
 const MONTHS = Array.from({ length: 12 }, (_, month) => format(new Date(2026, month, 1), 'MMMM'));
 
 const getEventDateParts = (date: string) => {
@@ -66,22 +73,28 @@ export default function BirthdayAndAnniversaryListPage() {
 
         const snapshot = await getDocs(collection(db, 'attendanceHouseholds'));
         const celebrations = snapshot.docs.flatMap((household) => {
-          const data = household.data() as { householdName?: string; active?: boolean; importantEvents?: ImportantEvent[] };
-          if (data.active === false || !Array.isArray(data.importantEvents)) return [];
-
-          return data.importantEvents.flatMap((event) => {
+          const data = household.data() as { householdName?: string; active?: boolean; importantEvents?: ImportantEvent[]; members?: HouseholdPerson[] };
+          if (data.active === false) return [];
+          const householdName = data.householdName || 'Unnamed Household';
+          const toCelebrations = (events: ImportantEvent[], personName?: string) => events.flatMap((event) => {
             if (event.type !== 'birthday' && event.type !== 'anniversary') return [];
             const dateParts = getEventDateParts(event.date);
             if (!dateParts) return [];
-
             return [{
-              id: event.id,
-              householdName: data.householdName || 'Unnamed Household',
+              id: `${personName || 'household'}-${event.id}`,
+              householdName,
               type: event.type,
-              title: event.title || (event.type === 'birthday' ? 'Birthday' : 'Anniversary'),
+              title: personName || event.title || (event.type === 'birthday' ? 'Birthday' : 'Anniversary'),
               ...dateParts,
             }];
           });
+
+          return [
+            ...toCelebrations(Array.isArray(data.importantEvents) ? data.importantEvents : []),
+            ...(Array.isArray(data.members) ? data.members.flatMap((person) =>
+              toCelebrations(person.importantEvents || [], `${person.firstName} ${person.lastName}`.trim()),
+            ) : []),
+          ];
         });
 
         const groupedEvents = MONTHS.map((_, month) =>
