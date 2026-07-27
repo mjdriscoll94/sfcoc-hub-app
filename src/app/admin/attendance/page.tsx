@@ -1017,7 +1017,7 @@ export default function AttendanceAdminPage() {
                         <div className="flex items-start justify-between gap-4">
                           <div>
                             <p className="group relative inline-block text-base font-semibold text-charcoal">
-                              <span tabIndex={0} className="cursor-help border-b border-dotted border-text-light focus:outline-none">
+                              <span className="cursor-help border-b border-dotted border-text-light">
                                 {household.householdName}
                               </span>
                               {household.members?.length ? (
