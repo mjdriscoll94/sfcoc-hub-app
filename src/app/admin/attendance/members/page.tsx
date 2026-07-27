@@ -3,13 +3,13 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Timestamp, collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
+import { Timestamp, addDoc, collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ChevronDown, ChevronRight, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
-import { normalizeAttendanceName } from '@/lib/utils/attendance';
+import { getSundayForDate, normalizeAttendanceName } from '@/lib/utils/attendance';
 
 type ImportantEventType = 'birthday' | 'baptism' | 'attendanceStart' | 'anniversary' | 'other';
 
@@ -75,6 +75,7 @@ export default function AttendanceMembersPage() {
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
   const [editingHousehold, setEditingHousehold] = useState<AttendanceHousehold | null>(null);
   const [householdName, setHouseholdName] = useState('');
+  const [addingHousehold, setAddingHousehold] = useState(false);
   const [personEditor, setPersonEditor] = useState<{ household: AttendanceHousehold; person?: HouseholdPerson } | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -154,6 +155,50 @@ export default function AttendanceMembersPage() {
       setError('Failed to save household name.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const createHousehold = async () => {
+    if (!householdName.trim()) return;
+    try {
+      setSaving(true);
+      const name = householdName.trim();
+      const availableFrom = getSundayForDate(new Date());
+      const householdRef = await addDoc(collection(db, 'attendanceHouseholds'), {
+        householdName: name,
+        normalizedName: normalizeAttendanceName(name),
+        active: true,
+        availableFrom: Timestamp.fromDate(availableFrom),
+        members: [],
+        importantEvents: [],
+        createdAt: Timestamp.now(),
+        updatedAt: Timestamp.now(),
+      });
+      setHouseholds((current) => [...current, {
+        id: householdRef.id,
+        householdName: name,
+        normalizedName: normalizeAttendanceName(name),
+        availableFrom,
+        members: [],
+        importantEvents: [],
+      }].sort((a, b) => a.householdName.localeCompare(b.householdName)));
+      setAddingHousehold(false);
+    } catch (createError) {
+      console.error('Error creating household:', createError);
+      setError('Failed to create household.');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const deleteHousehold = async (household: AttendanceHousehold) => {
+    if (!window.confirm(`Delete ${household.householdName} from attendance tracking? Its historical attendance records will be preserved.`)) return;
+    try {
+      await updateDoc(doc(db, 'attendanceHouseholds', household.id), { active: false, updatedAt: Timestamp.now() });
+      setHouseholds((current) => current.filter((currentHousehold) => currentHousehold.id !== household.id));
+    } catch (deleteError) {
+      console.error('Error deleting household:', deleteError);
+      setError('Failed to delete household.');
     }
   };
 
@@ -252,6 +297,9 @@ export default function AttendanceMembersPage() {
         <Link href="/admin/attendance/members/events" className="inline-flex shrink-0 items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral">
           Birthday and Anniversary List
         </Link>
+        <button type="button" onClick={() => { setHouseholdName(''); setAddingHousehold(true); }} className="inline-flex shrink-0 items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d]">
+          <Plus className="mr-1.5 h-4 w-4" />Add Household
+        </button>
       </div>
 
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">Attendance remains household-based: enter one number for each household on the Attendance page. Add people here to connect events to the right person.</div>
@@ -269,7 +317,7 @@ export default function AttendanceMembersPage() {
                 return (
                   <>
                     <tr key={household.id} className="odd:bg-white even:bg-slate-50/40">
-                      <td className="border-t border-border px-4 py-3 text-charcoal"><div className="flex items-center gap-2"><button type="button" onClick={() => setExpandedIds((current) => current.includes(household.id) ? current.filter((id) => id !== household.id) : [...current, household.id])} className="rounded-md border border-border p-1 transition hover:border-coral hover:text-coral" aria-label={expanded ? 'Collapse household' : 'Expand household'}>{expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</button><span className="font-medium">{household.householdName}</span><button type="button" onClick={() => openHouseholdEditor(household)} className="rounded p-1 text-text-light transition hover:text-coral" aria-label={`Edit ${household.householdName}`}><Pencil className="h-3.5 w-3.5" /></button></div></td>
+                      <td className="border-t border-border px-4 py-3 text-charcoal"><div className="flex items-center gap-2"><button type="button" onClick={() => setExpandedIds((current) => current.includes(household.id) ? current.filter((id) => id !== household.id) : [...current, household.id])} className="rounded-md border border-border p-1 transition hover:border-coral hover:text-coral" aria-label={expanded ? 'Collapse household' : 'Expand household'}>{expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</button><span className="font-medium">{household.householdName}</span><button type="button" onClick={() => openHouseholdEditor(household)} className="rounded p-1 text-text-light transition hover:text-coral" aria-label={`Edit ${household.householdName}`}><Pencil className="h-3.5 w-3.5" /></button><button type="button" onClick={() => deleteHousehold(household)} className="rounded p-1 text-red-700 transition hover:text-red-900" aria-label={`Delete ${household.householdName}`}><Trash2 className="h-3.5 w-3.5" /></button></div></td>
                       <td className="border-t border-border px-4 py-3 text-charcoal">{format(household.availableFrom, 'MMMM d, yyyy')}</td>
                     </tr>
                     {expanded ? <tr key={`${household.id}-members`} className="bg-slate-50/60"><td colSpan={2} className="border-t border-border p-4"><div className="flex items-center justify-between"><h2 className="font-semibold text-charcoal">Household Members</h2><button type="button" onClick={() => openPersonEditor(household)} className="inline-flex items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"><UserPlus className="mr-1.5 h-4 w-4" />Add Member</button></div>
@@ -285,6 +333,7 @@ export default function AttendanceMembersPage() {
       )}
 
       {editingHousehold ? <Modal title="Edit Household" onClose={() => setEditingHousehold(null)}><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name</span><input value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><ModalActions saving={saving} onCancel={() => setEditingHousehold(null)} onSave={saveHouseholdName} label="Save Household" /></Modal> : null}
+      {addingHousehold ? <Modal title="Add Household" onClose={() => setAddingHousehold(false)}><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name</span><input value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><ModalActions saving={saving} onCancel={() => setAddingHousehold(false)} onSave={createHousehold} label="Add Household" /></Modal> : null}
       {personEditor ? <Modal title={personEditor.person ? 'Edit Member' : 'Add Member'} onClose={() => setPersonEditor(null)}><div className="grid grid-cols-2 gap-3"><label><span className="mb-2 block text-sm font-medium text-charcoal">First Name</span><input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label><span className="mb-2 block text-sm font-medium text-charcoal">Last Name</span><input value={lastName} onChange={(event) => setLastName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label></div><ModalActions saving={saving} onCancel={() => setPersonEditor(null)} onSave={savePerson} label={personEditor.person ? 'Save Member' : 'Add Member'} /></Modal> : null}
       {eventEditor ? <Modal title={`${eventEditor.person.firstName}'s Important Event`} onClose={() => setEventEditor(null)}><div className="space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Type</span><select value={eventType} onChange={(event) => setEventType(event.target.value as ImportantEventType)} className="w-full rounded-md border border-border px-3 py-2">{Object.entries(EVENT_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>{isCelebrationEvent(eventType) ? <div><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><div className="grid grid-cols-2 gap-3"><select value={eventMonth} onChange={(event) => { const month = Number(event.target.value); setEventMonth(month); setEventDay((day) => Math.min(day, getDaysInMonth(month))); }} className="rounded-md border border-border px-3 py-2">{Array.from({ length: 12 }, (_, month) => <option key={month} value={month + 1}>{format(new Date(2000, month, 1), 'MMMM')}</option>)}</select><select value={eventDay} onChange={(event) => setEventDay(Number(event.target.value))} className="rounded-md border border-border px-3 py-2">{Array.from({ length: getDaysInMonth(eventMonth) }, (_, day) => <option key={day} value={day + 1}>{day + 1}</option>)}</select></div></div> : <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label>}{eventType === 'other' ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Description</span><input value={eventTitle} onChange={(event) => setEventTitle(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label> : null}<label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Notes</span><textarea value={eventNotes} onChange={(event) => setEventNotes(event.target.value)} rows={3} className="w-full rounded-md border border-border px-3 py-2" /></label></div><ModalActions saving={saving} onCancel={() => setEventEditor(null)} onSave={savePersonEvent} label={eventEditor.event ? 'Save Event' : 'Add Event'} /></Modal> : null}
     </div>

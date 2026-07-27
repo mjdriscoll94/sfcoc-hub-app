@@ -8,6 +8,11 @@ export interface AttendanceHousehold {
   longTermExempt?: boolean;
   attentionResetAt?: Date;
   visitorResetAt?: Date;
+  members?: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+  }>;
 }
 
 export interface AttendanceRecord {

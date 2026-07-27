@@ -42,6 +42,11 @@ interface FirestoreAttendanceHousehold {
   longTermExempt?: boolean;
   attentionResetAt?: Timestamp;
   visitorResetAt?: Timestamp;
+  members?: Array<{
+    id: string;
+    firstName: string;
+    lastName: string;
+  }>;
 }
 
 
@@ -132,6 +137,7 @@ export default function AttendanceAdminPage() {
               longTermExempt: data.longTermExempt === true,
               attentionResetAt: data.attentionResetAt?.toDate(),
               visitorResetAt: data.visitorResetAt?.toDate(),
+              members: Array.isArray(data.members) ? data.members : [],
             };
           })
           .filter((household) => household.active);
@@ -1010,8 +1016,16 @@ export default function AttendanceAdminPage() {
                       <div className="flex flex-col gap-4">
                         <div className="flex items-start justify-between gap-4">
                           <div>
-                            <p className="text-base font-semibold text-charcoal">
-                              {household.householdName}
+                            <p className="group relative inline-block text-base font-semibold text-charcoal">
+                              <span tabIndex={0} className="cursor-help border-b border-dotted border-text-light focus:outline-none">
+                                {household.householdName}
+                              </span>
+                              {household.members?.length ? (
+                                <span role="tooltip" className="invisible absolute left-0 top-full z-30 mt-2 w-max max-w-xs rounded-md bg-charcoal px-3 py-2 text-sm font-normal text-white opacity-0 shadow-lg transition group-hover:visible group-hover:opacity-100 group-focus-within:visible group-focus-within:opacity-100">
+                                  <span className="mb-1 block text-xs font-semibold uppercase tracking-wide text-white/70">Household members</span>
+                                  {household.members.map((member) => `${member.firstName} ${member.lastName}`.trim()).join(', ')}
+                                </span>
+                              ) : null}
                               {household.isVisitor ? (
                                 <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-medium text-emerald-700">
                                   Visitor
