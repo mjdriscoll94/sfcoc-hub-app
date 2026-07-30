@@ -20,6 +20,7 @@ interface ImportantEvent {
   date: string;
   title: string;
   notes?: string;
+  memberIds?: string[];
 }
 
 interface HouseholdPerson {
@@ -81,13 +82,14 @@ export default function AttendanceMembersPage() {
   const [personEditor, setPersonEditor] = useState<{ household: AttendanceHousehold; person?: HouseholdPerson } | null>(null);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
-  const [eventEditor, setEventEditor] = useState<{ household: AttendanceHousehold; person: HouseholdPerson; event?: ImportantEvent } | null>(null);
+  const [eventEditor, setEventEditor] = useState<{ household: AttendanceHousehold; person?: HouseholdPerson; event?: ImportantEvent } | null>(null);
   const [eventType, setEventType] = useState<ImportantEventType>('birthday');
   const [eventDate, setEventDate] = useState('');
   const [eventMonth, setEventMonth] = useState(new Date().getMonth() + 1);
   const [eventDay, setEventDay] = useState(new Date().getDate());
   const [eventTitle, setEventTitle] = useState('');
   const [eventNotes, setEventNotes] = useState('');
+  const [anniversaryMemberIds, setAnniversaryMemberIds] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -259,28 +261,62 @@ export default function AttendanceMembersPage() {
     setEventDay(dateParts?.day || new Date().getDate());
     setEventTitle(event?.title === 'Other' ? '' : event?.title || '');
     setEventNotes(event?.notes || '');
+    setAnniversaryMemberIds([]);
+  };
+
+  const openHouseholdAnniversaryEditor = (household: AttendanceHousehold, event?: ImportantEvent) => {
+    setEventEditor({ household, event });
+    setEventType('anniversary');
+    setEventDate(event?.date || '');
+    const dateParts = event ? getMonthDayParts(event.date) : null;
+    setEventMonth(dateParts?.month || new Date().getMonth() + 1);
+    setEventDay(dateParts?.day || new Date().getDate());
+    setEventTitle('');
+    setEventNotes(event?.notes || '');
+    setAnniversaryMemberIds(event?.memberIds || []);
   };
 
   const savePersonEvent = async () => {
     if (!eventEditor || (!isCelebrationEvent(eventType) && !eventDate) || (eventType === 'other' && !eventTitle.trim())) return;
+    if (!eventEditor.person && anniversaryMemberIds.length !== 2) {
+      setError('Select the two household members celebrating this anniversary.');
+      return;
+    }
     try {
       setSaving(true);
+      const anniversaryNames = eventEditor.household.members
+        .filter((person) => anniversaryMemberIds.includes(person.id))
+        .map((person) => `${person.firstName} ${person.lastName}`.trim());
       const nextEvent: ImportantEvent = {
         id: eventEditor.event?.id || crypto.randomUUID(),
         type: eventType,
         date: isCelebrationEvent(eventType) ? `${String(eventMonth).padStart(2, '0')}-${String(eventDay).padStart(2, '0')}` : eventDate,
-        title: eventType === 'other' ? eventTitle.trim() : EVENT_TYPE_LABELS[eventType],
+        title: eventEditor.person ? (eventType === 'other' ? eventTitle.trim() : EVENT_TYPE_LABELS[eventType]) : anniversaryNames.join(' & '),
         ...(eventNotes.trim() ? { notes: eventNotes.trim() } : {}),
+        ...(!eventEditor.person ? { memberIds: anniversaryMemberIds } : {}),
       };
-      const nextMembers = eventEditor.household.members.map((person) => {
-        if (person.id !== eventEditor.person.id) return person;
-        const events = eventEditor.event
-          ? person.importantEvents.map((event) => event.id === eventEditor.event?.id ? nextEvent : event)
-          : [...person.importantEvents, nextEvent];
-        return { ...person, importantEvents: sortEvents(events) };
+      const nextHousehold = eventEditor.person
+        ? {
+            ...eventEditor.household,
+            members: eventEditor.household.members.map((person) => {
+              if (person.id !== eventEditor.person?.id) return person;
+              const events = eventEditor.event
+                ? person.importantEvents.map((event) => event.id === eventEditor.event?.id ? nextEvent : event)
+                : [...person.importantEvents, nextEvent];
+              return { ...person, importantEvents: sortEvents(events) };
+            }),
+          }
+        : {
+            ...eventEditor.household,
+            importantEvents: sortEvents(eventEditor.event
+              ? eventEditor.household.importantEvents.map((event) => event.id === eventEditor.event?.id ? nextEvent : event)
+              : [...eventEditor.household.importantEvents, nextEvent]),
+          };
+      await updateDoc(doc(db, 'attendanceHouseholds', nextHousehold.id), {
+        members: nextHousehold.members,
+        importantEvents: nextHousehold.importantEvents,
+        updatedAt: Timestamp.now(),
       });
-      const nextHousehold = { ...eventEditor.household, members: nextMembers };
-      await updateDoc(doc(db, 'attendanceHouseholds', nextHousehold.id), { members: nextMembers, updatedAt: Timestamp.now() });
       updateLocalHousehold(nextHousehold);
       setEventEditor(null);
     } catch (saveError) {
@@ -288,6 +324,34 @@ export default function AttendanceMembersPage() {
       setError('Failed to save member event.');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const deletePersonEvent = async (household: AttendanceHousehold, person: HouseholdPerson, event: ImportantEvent) => {
+    if (!window.confirm(`Delete this ${EVENT_TYPE_LABELS[event.type].toLowerCase()} for ${person.firstName}?`)) return;
+    try {
+      const members = household.members.map((current) => current.id === person.id
+        ? { ...current, importantEvents: current.importantEvents.filter((currentEvent) => currentEvent.id !== event.id) }
+        : current);
+      const nextHousehold = { ...household, members };
+      await updateDoc(doc(db, 'attendanceHouseholds', household.id), { members, updatedAt: Timestamp.now() });
+      updateLocalHousehold(nextHousehold);
+    } catch (deleteError) {
+      console.error('Error deleting member event:', deleteError);
+      setError('Failed to delete member event.');
+    }
+  };
+
+  const deleteHouseholdEvent = async (household: AttendanceHousehold, event: ImportantEvent) => {
+    if (!window.confirm(`Delete this ${EVENT_TYPE_LABELS[event.type].toLowerCase()}?`)) return;
+    try {
+      const importantEvents = household.importantEvents.filter((currentEvent) => currentEvent.id !== event.id);
+      const nextHousehold = { ...household, importantEvents };
+      await updateDoc(doc(db, 'attendanceHouseholds', household.id), { importantEvents, updatedAt: Timestamp.now() });
+      updateLocalHousehold(nextHousehold);
+    } catch (deleteError) {
+      console.error('Error deleting household event:', deleteError);
+      setError('Failed to delete household event.');
     }
   };
 
@@ -326,8 +390,8 @@ export default function AttendanceMembersPage() {
                       <td className="border-t border-border px-4 py-3 text-charcoal">{format(household.availableFrom, 'MMMM d, yyyy')}</td>
                     </tr>
                     {expanded ? <tr key={`${household.id}-members`} className="bg-slate-50/60"><td colSpan={2} className="border-t border-border p-4"><div className="flex items-center justify-between"><h2 className="font-semibold text-charcoal">Household Members</h2><button type="button" onClick={() => openPersonEditor(household)} className="inline-flex items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"><UserPlus className="mr-1.5 h-4 w-4" />Add Member</button></div>
-                      {household.members.length === 0 ? <p className="mt-3 text-sm text-text-light">No members added yet.</p> : <div className="mt-3 space-y-3">{household.members.map((person) => <div key={person.id} className="rounded-lg border border-border bg-white p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-medium text-charcoal">{person.firstName} {person.lastName}</h3>{person.importantEvents.length ? <div className="mt-2 space-y-1">{person.importantEvents.map((event) => <div key={event.id} className="text-sm text-text-light"><span className="font-medium text-charcoal">{EVENT_TYPE_LABELS[event.type]}</span> • {formatEventDate(event)}{event.notes ? ` • ${event.notes}` : ''}<button type="button" onClick={() => openEventEditor(household, person, event)} className="ml-2 text-coral hover:underline">Edit</button></div>)}</div> : <p className="mt-1 text-sm text-text-light">No important events yet.</p>}</div><div className="flex gap-1"><button type="button" onClick={() => openEventEditor(household, person)} className="rounded border border-border p-1.5 transition hover:border-coral hover:text-coral" aria-label={`Add event for ${person.firstName}`}><Plus className="h-4 w-4" /></button><button type="button" onClick={() => openPersonEditor(household, person)} className="rounded border border-border p-1.5 transition hover:border-coral hover:text-coral" aria-label={`Edit ${person.firstName}`}><Pencil className="h-4 w-4" /></button><button type="button" onClick={() => deletePerson(household, person)} className="rounded border border-border p-1.5 text-red-700 transition hover:border-red-400" aria-label={`Delete ${person.firstName}`}><Trash2 className="h-4 w-4" /></button></div></div></div>)}</div>}
-                      {household.importantEvents.length ? <div className="mt-4 border-t border-border pt-4"><h3 className="text-sm font-semibold text-charcoal">Unassigned household events</h3><p className="mt-1 text-xs text-text-light">These are older events. New events should be added to a specific member above.</p><div className="mt-2 space-y-1">{household.importantEvents.map((event) => <p key={event.id} className="text-sm text-text-light"><span className="font-medium text-charcoal">{EVENT_TYPE_LABELS[event.type]}</span> — {event.title} • {formatEventDate(event)}</p>)}</div></div> : null}
+                      {household.members.length === 0 ? <p className="mt-3 text-sm text-text-light">No members added yet.</p> : <div className="mt-3 space-y-3">{household.members.map((person) => <div key={person.id} className="rounded-lg border border-border bg-white p-4"><div className="flex items-start justify-between gap-3"><div><h3 className="font-medium text-charcoal">{person.firstName} {person.lastName}</h3>{person.importantEvents.length ? <div className="mt-2 space-y-1">{person.importantEvents.map((event) => <div key={event.id} className="flex items-center text-sm text-text-light"><span className="font-medium text-charcoal">{EVENT_TYPE_LABELS[event.type]}</span> • {formatEventDate(event)}{event.notes ? ` • ${event.notes}` : ''}<button type="button" onClick={() => openEventEditor(household, person, event)} className="ml-2 text-coral hover:underline">Edit</button><button type="button" onClick={() => deletePersonEvent(household, person, event)} className="ml-2 text-red-700 hover:underline">Delete</button></div>)}</div> : <p className="mt-1 text-sm text-text-light">No important events yet.</p>}</div><div className="flex gap-1"><button type="button" onClick={() => openEventEditor(household, person)} className="rounded border border-border p-1.5 transition hover:border-coral hover:text-coral" aria-label={`Add event for ${person.firstName}`}><Plus className="h-4 w-4" /></button><button type="button" onClick={() => openPersonEditor(household, person)} className="rounded border border-border p-1.5 transition hover:border-coral hover:text-coral" aria-label={`Edit ${person.firstName}`}><Pencil className="h-4 w-4" /></button><button type="button" onClick={() => deletePerson(household, person)} className="rounded border border-border p-1.5 text-red-700 transition hover:border-red-400" aria-label={`Delete ${person.firstName}`}><Trash2 className="h-4 w-4" /></button></div></div></div>)}</div>}
+                      <div className="mt-4 border-t border-border pt-4"><div className="flex items-center justify-between gap-3"><div><h3 className="text-sm font-semibold text-charcoal">Household events</h3><p className="mt-1 text-xs text-text-light">Select the two household members celebrating an anniversary.</p></div><button type="button" onClick={() => openHouseholdAnniversaryEditor(household)} disabled={household.members.length < 2} className="inline-flex shrink-0 items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral disabled:cursor-not-allowed disabled:opacity-50"><Plus className="mr-1.5 h-4 w-4" />Add Anniversary</button></div>{household.importantEvents.length ? <div className="mt-2 space-y-1">{household.importantEvents.map((event) => <div key={event.id} className="flex items-center text-sm text-text-light"><span className="font-medium text-charcoal">{EVENT_TYPE_LABELS[event.type]}</span> — {event.title} • {formatEventDate(event)}{event.type === 'anniversary' ? <button type="button" onClick={() => openHouseholdAnniversaryEditor(household, event)} className="ml-2 text-coral hover:underline">Edit</button> : null}<button type="button" onClick={() => deleteHouseholdEvent(household, event)} className="ml-2 text-red-700 hover:underline">Delete</button></div>)}</div> : null}</div>
                     </td></tr> : null}
                   </>
                 );
@@ -340,7 +404,7 @@ export default function AttendanceMembersPage() {
       {editingHousehold ? <Modal title="Edit Household" onClose={() => setEditingHousehold(null)}><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name</span><input value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><ModalActions saving={saving} onCancel={() => setEditingHousehold(null)} onSave={saveHouseholdName} label="Save Household" /></Modal> : null}
       {addingHousehold ? <Modal title="Add Household" onClose={() => setAddingHousehold(false)}><div className="space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name</span><input value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Started Attending</span><input type="date" value={householdStartDate} onChange={(event) => setHouseholdStartDate(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /><span className="mt-1 block text-xs text-text-light">Attendance is tracked by Sunday; another day will be saved to that week&apos;s Sunday.</span></label></div><ModalActions saving={saving} onCancel={() => setAddingHousehold(false)} onSave={createHousehold} label="Add Household" /></Modal> : null}
       {personEditor ? <Modal title={personEditor.person ? 'Edit Member' : 'Add Member'} onClose={() => setPersonEditor(null)}><div className="grid grid-cols-2 gap-3"><label><span className="mb-2 block text-sm font-medium text-charcoal">First Name</span><input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label><span className="mb-2 block text-sm font-medium text-charcoal">Last Name</span><input value={lastName} onChange={(event) => setLastName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label></div><ModalActions saving={saving} onCancel={() => setPersonEditor(null)} onSave={savePerson} label={personEditor.person ? 'Save Member' : 'Add Member'} /></Modal> : null}
-      {eventEditor ? <Modal title={`${eventEditor.person.firstName}'s Important Event`} onClose={() => setEventEditor(null)}><div className="space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Type</span><select value={eventType} onChange={(event) => setEventType(event.target.value as ImportantEventType)} className="w-full rounded-md border border-border px-3 py-2">{Object.entries(EVENT_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>{isCelebrationEvent(eventType) ? <div><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><div className="grid grid-cols-2 gap-3"><select value={eventMonth} onChange={(event) => { const month = Number(event.target.value); setEventMonth(month); setEventDay((day) => Math.min(day, getDaysInMonth(month))); }} className="rounded-md border border-border px-3 py-2">{Array.from({ length: 12 }, (_, month) => <option key={month} value={month + 1}>{format(new Date(2000, month, 1), 'MMMM')}</option>)}</select><select value={eventDay} onChange={(event) => setEventDay(Number(event.target.value))} className="rounded-md border border-border px-3 py-2">{Array.from({ length: getDaysInMonth(eventMonth) }, (_, day) => <option key={day} value={day + 1}>{day + 1}</option>)}</select></div></div> : <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label>}{eventType === 'other' ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Description</span><input value={eventTitle} onChange={(event) => setEventTitle(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label> : null}<label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Notes</span><textarea value={eventNotes} onChange={(event) => setEventNotes(event.target.value)} rows={3} className="w-full rounded-md border border-border px-3 py-2" /></label></div><ModalActions saving={saving} onCancel={() => setEventEditor(null)} onSave={savePersonEvent} label={eventEditor.event ? 'Save Event' : 'Add Event'} /></Modal> : null}
+      {eventEditor ? <Modal title={eventEditor.person ? `${eventEditor.person.firstName}'s Important Event` : 'Household Anniversary'} onClose={() => setEventEditor(null)}><div className="space-y-4">{eventEditor.person ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Type</span><select value={eventType} onChange={(event) => setEventType(event.target.value as ImportantEventType)} className="w-full rounded-md border border-border px-3 py-2">{Object.entries(EVENT_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label> : <p className="text-sm text-text-light">This anniversary will be stored at the household level.</p>}{isCelebrationEvent(eventType) ? <div><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><div className="grid grid-cols-2 gap-3"><select value={eventMonth} onChange={(event) => { const month = Number(event.target.value); setEventMonth(month); setEventDay((day) => Math.min(day, getDaysInMonth(month))); }} className="rounded-md border border-border px-3 py-2">{Array.from({ length: 12 }, (_, month) => <option key={month} value={month + 1}>{format(new Date(2000, month, 1), 'MMMM')}</option>)}</select><select value={eventDay} onChange={(event) => setEventDay(Number(event.target.value))} className="rounded-md border border-border px-3 py-2">{Array.from({ length: getDaysInMonth(eventMonth) }, (_, day) => <option key={day} value={day + 1}>{day + 1}</option>)}</select></div></div> : <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label>}{!eventEditor.person ? <fieldset><legend className="mb-2 block text-sm font-medium text-charcoal">Members celebrating</legend><div className="space-y-2">{eventEditor.household.members.map((person) => <label key={person.id} className="flex items-center gap-2 text-sm text-charcoal"><input type="checkbox" checked={anniversaryMemberIds.includes(person.id)} onChange={() => setAnniversaryMemberIds((current) => current.includes(person.id) ? current.filter((id) => id !== person.id) : current.length < 2 ? [...current, person.id] : current)} className="h-4 w-4 rounded border-border text-coral focus:ring-coral" /><span>{person.firstName} {person.lastName}</span></label>)}</div><p className="mt-2 text-xs text-text-light">Choose exactly two members.</p></fieldset> : null}{eventType === 'other' ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Description</span><input value={eventTitle} onChange={(event) => setEventTitle(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label> : null}<label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Notes</span><textarea value={eventNotes} onChange={(event) => setEventNotes(event.target.value)} rows={3} className="w-full rounded-md border border-border px-3 py-2" /></label></div><ModalActions saving={saving} onCancel={() => setEventEditor(null)} onSave={savePersonEvent} label={eventEditor.event ? 'Save Event' : 'Add Anniversary'} /></Modal> : null}
     </div>
   );
 }
