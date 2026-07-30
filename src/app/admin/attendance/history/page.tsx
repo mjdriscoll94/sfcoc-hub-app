@@ -38,6 +38,7 @@ export default function AttendanceHistoryPage() {
   const [households, setHouseholds] = useState<AttendanceHousehold[]>([]);
   const [records, setRecords] = useState<HistoryRecord[]>([]);
   const [page, setPage] = useState(0);
+  const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,6 +106,9 @@ export default function AttendanceHistoryPage() {
   const totalPages = Math.max(1, Math.ceil(records.length / COLUMNS_PER_PAGE));
   const pagedRecords = records.slice(page * COLUMNS_PER_PAGE, (page + 1) * COLUMNS_PER_PAGE);
   const displayedHouseholds = households.filter((household) => household.active);
+  const filteredHouseholds = displayedHouseholds.filter((household) =>
+    household.householdName.toLowerCase().includes(searchQuery.trim().toLowerCase()),
+  );
   const metricYears = Array.from({ length: 3 }, (_, index) => new Date().getFullYear() - index);
   const yearlyMetrics = metricYears.map((year) => {
     const serviceRecords = records.filter((record) => !record.noService && record.serviceDate.getFullYear() === year);
@@ -208,51 +212,69 @@ export default function AttendanceHistoryPage() {
           No attendance history found.
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-xl border border-border bg-white shadow-sm">
-          <table className="min-w-full border-collapse text-sm">
-            <thead>
-              <tr className="bg-slate-50">
-                <th className="sticky left-0 z-10 min-w-[220px] border-b border-r border-border bg-slate-50 px-4 py-3 text-left font-semibold text-charcoal">
-                  Household
-                </th>
-                {pagedRecords.map((record) => (
-                  <th key={record.id} className="min-w-[120px] border-b border-border px-3 py-3 text-center font-semibold text-charcoal">
-                    <div>{format(record.serviceDate, 'MMM d, yyyy')}</div>
-                    <div className="mt-1 text-xs font-normal text-text-light">
-                      {record.noService ? 'No Service' : 'Service'}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {displayedHouseholds.map((household) => (
-                <tr key={household.id} className="odd:bg-white even:bg-slate-50/40">
-                  <td className="sticky left-0 z-10 border-r border-t border-border bg-inherit px-4 py-3 font-medium text-charcoal">
-                    {household.householdName}
-                  </td>
-                  {pagedRecords.map((record) => {
-                    const unavailable = household.availableFrom.getTime() > record.serviceDate.getTime();
-                    const count = record.counts[household.id];
-                    return (
-                      <td key={record.id} className="border-t border-border px-3 py-3 text-center text-charcoal">
-                        {record.noService ? (
-                          <span className="text-xs text-text-light">-</span>
-                        ) : unavailable ? (
-                          <span className="text-xs text-text-light">N/A</span>
-                        ) : typeof count === 'number' ? (
-                          <span className={count === 0 ? 'font-semibold text-red-700' : 'font-semibold text-charcoal'}>{count}</span>
-                        ) : (
-                          <span className="text-xs text-text-light">-</span>
-                        )}
+        <>
+          <label className="mb-4 block">
+            <span className="mb-2 block text-sm font-medium text-charcoal">Find Household</span>
+            <input
+              type="search"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Search households..."
+              className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
+            />
+          </label>
+          {filteredHouseholds.length === 0 ? (
+            <div className="rounded-lg border border-dashed border-border p-8 text-center text-sm text-text-light">
+              No households match that search.
+            </div>
+          ) : (
+            <div className="overflow-x-auto rounded-xl border border-border bg-white shadow-sm">
+              <table className="min-w-full border-collapse text-sm">
+                <thead>
+                  <tr className="bg-slate-50">
+                    <th className="sticky left-0 z-10 min-w-[220px] border-b border-r border-border bg-slate-50 px-4 py-3 text-left font-semibold text-charcoal">
+                      Household
+                    </th>
+                    {pagedRecords.map((record) => (
+                      <th key={record.id} className="min-w-[120px] border-b border-border px-3 py-3 text-center font-semibold text-charcoal">
+                        <div>{format(record.serviceDate, 'MMM d, yyyy')}</div>
+                        <div className="mt-1 text-xs font-normal text-text-light">
+                          {record.noService ? 'No Service' : 'Service'}
+                        </div>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredHouseholds.map((household) => (
+                    <tr key={household.id} className="odd:bg-white even:bg-slate-50/40">
+                      <td className="sticky left-0 z-10 border-r border-t border-border bg-inherit px-4 py-3 font-medium text-charcoal">
+                        {household.householdName}
                       </td>
-                    );
-                  })}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                      {pagedRecords.map((record) => {
+                        const unavailable = household.availableFrom.getTime() > record.serviceDate.getTime();
+                        const count = record.counts[household.id];
+                        return (
+                          <td key={record.id} className="border-t border-border px-3 py-3 text-center text-charcoal">
+                            {record.noService ? (
+                              <span className="text-xs text-text-light">-</span>
+                            ) : unavailable ? (
+                              <span className="text-xs text-text-light">N/A</span>
+                            ) : typeof count === 'number' ? (
+                              <span className={count === 0 ? 'font-semibold text-red-700' : 'font-semibold text-charcoal'}>{count}</span>
+                            ) : (
+                              <span className="text-xs text-text-light">-</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
