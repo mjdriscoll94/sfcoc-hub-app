@@ -839,12 +839,14 @@ export default function AttendanceAdminPage() {
         >
           Members List
         </Link>
-        <Link
-          href="/admin/attendance/import"
-          className="ml-2 inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
-        >
-          Mass Import
-        </Link>
+        {userProfile?.isAdmin ? (
+          <Link
+            href="/admin/attendance/import"
+            className="ml-2 inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
+          >
+            Mass Import
+          </Link>
+        ) : null}
       </div>
 
       {error && (
@@ -869,9 +871,21 @@ export default function AttendanceAdminPage() {
                   Enter `0` when a household misses so the follow-up conditions can be tracked.
                 </p>
               </div>
-              <div className="rounded-lg bg-slate-50 px-4 py-3 text-right">
-                <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Present</p>
-                <p className="text-2xl font-bold text-charcoal">{totalAttendance}</p>
+              <div className="flex items-center gap-2">
+                <div className="rounded-lg bg-slate-50 px-4 py-3 text-right">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Total Present</p>
+                  <p className="text-2xl font-bold text-charcoal">{totalAttendance}</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSaveAttendance}
+                  disabled={saving || loading || households.length === 0}
+                  className="inline-flex h-11 w-11 items-center justify-center rounded-md bg-[#D6805F] text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
+                  aria-label={saving ? 'Saving attendance' : 'Save attendance'}
+                  title={saving ? 'Saving attendance' : 'Save attendance'}
+                >
+                  <Save className="h-5 w-5" />
+                </button>
               </div>
             </div>
 
