@@ -7,6 +7,7 @@ import { Timestamp, addDoc, collection, doc, getDocs, orderBy, query, updateDoc 
 import { format } from 'date-fns';
 import { ChevronDown, ChevronRight, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import AttendanceTabs from '@/components/AttendanceTabs';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { getSundayForDate, getSundayKey, normalizeAttendanceName } from '@/lib/utils/attendance';
@@ -370,6 +371,8 @@ export default function AttendanceMembersPage() {
           <Plus className="mr-1.5 h-4 w-4" />Add Household
         </button>
       </div>
+
+      <AttendanceTabs activeTab="members" />
 
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">Attendance remains household-based: enter one number for each household on the Attendance page. Add people here to connect events to the right person.</div>
 

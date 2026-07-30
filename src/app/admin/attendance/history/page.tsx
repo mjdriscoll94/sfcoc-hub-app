@@ -6,6 +6,7 @@ import { Timestamp, collection, getDocs, orderBy, query } from 'firebase/firesto
 import { format } from 'date-fns';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import AttendanceTabs from '@/components/AttendanceTabs';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { getDateFromSundayKey, normalizeAttendanceName, type AttendanceHousehold } from '@/lib/utils/attendance';
@@ -164,6 +165,8 @@ export default function AttendanceHistoryPage() {
           </button>
         </div>
       </div>
+
+      <AttendanceTabs activeTab="history" />
 
       {!error && !loading ? (
         <section className="mb-8">

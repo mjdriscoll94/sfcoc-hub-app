@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
   Timestamp,
   collection,
@@ -17,6 +16,7 @@ import {
 import { format } from 'date-fns';
 import { AlertCircle, BedSingle, CalendarDays, ChevronLeft, ChevronRight, Mail, Save, Upload, Users } from 'lucide-react';
 import BackButton from '@/components/BackButton';
+import AttendanceTabs from '@/components/AttendanceTabs';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import {
@@ -827,27 +827,9 @@ export default function AttendanceAdminPage() {
             Track Sunday attendance by household and flag follow-up patterns.
           </p>
         </div>
-        <Link
-          href="/admin/attendance/history"
-          className="inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
-        >
-          History
-        </Link>
-        <Link
-          href="/admin/attendance/members"
-          className="ml-2 inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
-        >
-          Members List
-        </Link>
-        {userProfile?.isAdmin ? (
-          <Link
-            href="/admin/attendance/import"
-            className="ml-2 inline-flex items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
-          >
-            Mass Import
-          </Link>
-        ) : null}
       </div>
+
+      <AttendanceTabs activeTab="entry" />
 
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
