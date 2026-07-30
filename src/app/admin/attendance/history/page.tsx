@@ -133,13 +133,17 @@ export default function AttendanceHistoryPage() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mb-8 flex items-center">
+        <BackButton className="mr-4" />
+        <h1 className="text-3xl font-bold text-charcoal">Attendance and Members</h1>
+      </div>
+
+      <AttendanceTabs activeTab="history" />
+
       <div className="mb-8 flex items-center justify-between gap-4">
-        <div className="flex items-center">
-          <BackButton className="mr-4" />
-          <div>
-            <h1 className="text-3xl font-bold text-charcoal">Attendance History</h1>
-            <p className="mt-2 text-sm text-text-light">Browse attendance by Sunday in a paged column view.</p>
-          </div>
+        <div>
+          <h2 className="text-2xl font-bold text-charcoal">Attendance History</h2>
+          <p className="mt-2 text-sm text-text-light">Browse attendance by Sunday in a paged column view.</p>
         </div>
         <div className="flex items-center gap-2">
           <button
@@ -165,8 +169,6 @@ export default function AttendanceHistoryPage() {
           </button>
         </div>
       </div>
-
-      <AttendanceTabs activeTab="history" />
 
       {!error && !loading ? (
         <section className="mb-8">

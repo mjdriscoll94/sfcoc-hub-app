@@ -821,15 +821,17 @@ export default function AttendanceAdminPage() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
         <BackButton className="mr-4" />
-        <div className="flex-1">
-          <h1 className="text-3xl font-bold text-charcoal">Attendance</h1>
-          <p className="mt-2 text-sm text-text-light">
-            Track Sunday attendance by household and flag follow-up patterns.
-          </p>
-        </div>
+        <h1 className="text-3xl font-bold text-charcoal">Attendance and Members</h1>
       </div>
 
       <AttendanceTabs activeTab="entry" />
+
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-charcoal">Attendance Entry</h2>
+        <p className="mt-2 text-sm text-text-light">
+          Track Sunday attendance by household and flag follow-up patterns.
+        </p>
+      </div>
 
       {error && (
         <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">

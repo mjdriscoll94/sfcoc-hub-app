@@ -360,8 +360,14 @@ export default function AttendanceMembersPage() {
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
       <div className="mb-8 flex items-center gap-4">
         <BackButton className="mr-4" />
+        <h1 className="text-3xl font-bold text-charcoal">Attendance and Members</h1>
+      </div>
+
+      <AttendanceTabs activeTab="members" />
+
+      <div className="mb-8 flex items-center gap-4">
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-charcoal">Members List</h1>
+          <h2 className="text-2xl font-bold text-charcoal">Members, Events &amp; Households</h2>
           <p className="mt-2 text-sm text-text-light">Manage household names, household members, and member-specific important events.</p>
         </div>
         <Link href="/admin/attendance/members/events" className="inline-flex shrink-0 items-center rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral">
@@ -371,8 +377,6 @@ export default function AttendanceMembersPage() {
           <Plus className="mr-1.5 h-4 w-4" />Add Household
         </button>
       </div>
-
-      <AttendanceTabs activeTab="members" />
 
       <div className="mb-6 rounded-lg border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">Attendance remains household-based: enter one number for each household on the Attendance page. Add people here to connect events to the right person.</div>
 
