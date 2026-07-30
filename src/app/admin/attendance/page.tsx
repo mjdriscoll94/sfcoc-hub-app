@@ -31,6 +31,7 @@ import {
   type AttendanceHousehold,
   type AttendanceRecord,
 } from '@/lib/utils/attendance';
+import { canManageAttendance } from '@/types/roles';
 
 interface FirestoreAttendanceHousehold {
   householdName?: string;
@@ -105,13 +106,13 @@ export default function AttendanceAdminPage() {
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) {
+    if (userProfile && !canManageAttendance(userProfile)) {
       router.push('/');
     }
   }, [router, userProfile]);
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) {
+    if (!userProfile || !canManageAttendance(userProfile)) {
       return;
     }
 
@@ -223,7 +224,7 @@ export default function AttendanceAdminPage() {
     setNoService(false);
   }, [households, records, selectedSundayKey]);
 
-  if (!userProfile?.isAdmin) {
+  if (!userProfile || !canManageAttendance(userProfile)) {
     return null;
   }
 

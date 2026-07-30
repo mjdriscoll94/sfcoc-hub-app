@@ -9,6 +9,7 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { getDateFromSundayKey, getSundayKey, normalizeAttendanceName, parseAttendanceImport } from '@/lib/utils/attendance';
+import { canManageAttendance } from '@/types/roles';
 
 interface StoredHousehold {
   id: string;
@@ -59,10 +60,10 @@ export default function AttendanceMassImportPage() {
   }, []);
 
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) router.push('/');
+    if (userProfile && !canManageAttendance(userProfile)) router.push('/');
   }, [router, userProfile]);
 
-  if (!userProfile?.isAdmin) return null;
+  if (!userProfile || !canManageAttendance(userProfile)) return null;
 
   const handleImport = async () => {
     if (parsedImport.sundays.length === 0) {

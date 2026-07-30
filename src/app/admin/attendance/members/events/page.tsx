@@ -7,6 +7,7 @@ import { format } from 'date-fns';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
+import { canManageAttendance } from '@/types/roles';
 
 type CelebrationType = 'birthday' | 'anniversary';
 
@@ -58,13 +59,13 @@ export default function BirthdayAndAnniversaryListPage() {
   }, []);
 
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) {
+    if (userProfile && !canManageAttendance(userProfile)) {
       router.push('/');
     }
   }, [router, userProfile]);
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) return;
+    if (!userProfile || !canManageAttendance(userProfile)) return;
 
     const loadCelebrations = async () => {
       try {
@@ -114,7 +115,7 @@ export default function BirthdayAndAnniversaryListPage() {
     loadCelebrations();
   }, [userProfile]);
 
-  if (!userProfile?.isAdmin) return null;
+  if (!userProfile || !canManageAttendance(userProfile)) return null;
 
   const hasEvents = eventsByMonth.some((events) => events.length > 0);
 

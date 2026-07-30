@@ -9,6 +9,7 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { getDateFromSundayKey, normalizeAttendanceName, type AttendanceHousehold } from '@/lib/utils/attendance';
+import { canManageAttendance } from '@/types/roles';
 
 interface FirestoreAttendanceHousehold {
   householdName?: string;
@@ -41,13 +42,13 @@ export default function AttendanceHistoryPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) {
+    if (userProfile && !canManageAttendance(userProfile)) {
       router.push('/');
     }
   }, [router, userProfile]);
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) {
+    if (!userProfile || !canManageAttendance(userProfile)) {
       return;
     }
 
@@ -97,7 +98,7 @@ export default function AttendanceHistoryPage() {
     loadHistory();
   }, [userProfile]);
 
-  if (!userProfile?.isAdmin) {
+  if (!userProfile || !canManageAttendance(userProfile)) {
     return null;
   }
 

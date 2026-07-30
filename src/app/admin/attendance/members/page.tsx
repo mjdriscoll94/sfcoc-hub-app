@@ -10,6 +10,7 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { getSundayForDate, getSundayKey, normalizeAttendanceName } from '@/lib/utils/attendance';
+import { canManageAttendance } from '@/types/roles';
 
 type ImportantEventType = 'birthday' | 'baptism' | 'attendanceStart' | 'anniversary' | 'other';
 
@@ -96,11 +97,11 @@ export default function AttendanceMembersPage() {
   }, []);
 
   useEffect(() => {
-    if (userProfile && !userProfile.isAdmin) router.push('/');
+    if (userProfile && !canManageAttendance(userProfile)) router.push('/');
   }, [router, userProfile]);
 
   useEffect(() => {
-    if (!userProfile?.isAdmin) return;
+    if (!userProfile || !canManageAttendance(userProfile)) return;
     const loadHouseholds = async () => {
       try {
         setLoading(true);
@@ -128,7 +129,7 @@ export default function AttendanceMembersPage() {
     loadHouseholds();
   }, [userProfile]);
 
-  if (!userProfile?.isAdmin) return null;
+  if (!userProfile || !canManageAttendance(userProfile)) return null;
 
   const updateLocalHousehold = (nextHousehold: AttendanceHousehold) => {
     setHouseholds((current) => current.map((household) => household.id === nextHousehold.id ? nextHousehold : household));
