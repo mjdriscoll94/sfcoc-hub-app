@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getEmailFromInformationHub, transporter } from '@/lib/email/config';
-import { wrapMemberEmailHtml } from '@/lib/email/memberEmailTemplate';
+import { wrapMemberEmailFormattedHtml } from '@/lib/email/memberEmailTemplate';
 
 interface AttentionEmailItem {
   householdName?: string;
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
       return `<li><strong>${escapeHtml(item.householdName!.trim())}</strong>: ${escapeHtml(labels)}</li>`;
     });
 
-    const html = wrapMemberEmailHtml(`
+    const html = wrapMemberEmailFormattedHtml(`
       <p>${escapeHtml((intro || 'The following households currently need attendance follow-up:').trim())}</p>
       <ul>${lines.join('')}</ul>
     `);
