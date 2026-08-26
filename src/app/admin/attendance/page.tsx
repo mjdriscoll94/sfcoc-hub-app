@@ -577,6 +577,7 @@ export default function AttendanceAdminPage() {
     items,
     subject,
     intro,
+    reportType,
     setSending,
   }: {
     items: Array<{
@@ -587,6 +588,7 @@ export default function AttendanceAdminPage() {
     }>;
     subject: string;
     intro: string;
+    reportType: 'attendance' | 'visitor';
     setSending: (value: boolean) => void;
   }): Promise<boolean> => {
     if (items.length === 0) {
@@ -612,6 +614,7 @@ export default function AttendanceAdminPage() {
         body: JSON.stringify({
           subject,
           intro,
+          reportType,
           items: items.map((item) => ({
             householdName: item.householdName,
             labels: item.labels.map((label) => ({ label })),
@@ -655,6 +658,7 @@ export default function AttendanceAdminPage() {
       ),
       subject: `Attendance follow-up needed (${attentionItems.length})`,
       intro: 'The following households currently need attendance follow-up:',
+      reportType: 'attendance',
       setSending: setSendingAttentionEmail,
     });
     if (sent) {
@@ -674,6 +678,7 @@ export default function AttendanceAdminPage() {
       })),
       subject: `Recurring visitors report (${recurringVisitors.length})`,
       intro: 'The following visitor households have become recurring visitors:',
+      reportType: 'visitor',
       setSending: setSendingRecurringVisitorEmail,
     });
     if (sent) {

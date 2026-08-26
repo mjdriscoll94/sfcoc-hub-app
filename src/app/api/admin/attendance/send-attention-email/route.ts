@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getAuth } from 'firebase-admin/auth';
+import { FieldValue } from 'firebase-admin/firestore';
 import { getEmailFromInformationHub, transporter } from '@/lib/email/config';
 import { wrapMemberEmailFormattedHtml } from '@/lib/email/memberEmailTemplate';
 import { getAdminApp, getAdminDb } from '@/lib/firebase/admin';
@@ -42,10 +43,11 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { items, subject, intro } = body as {
+    const { items, subject, intro, reportType } = body as {
       items?: AttentionEmailItem[];
       subject?: string;
       intro?: string;
+      reportType?: 'attendance' | 'visitor';
     };
 
     const settingsSnapshot = await getAdminDb().collection('adminSettings').doc('attendance').get();
@@ -114,15 +116,56 @@ export async function POST(request: Request) {
       ${reportContent}
     `);
 
-    const result = await transporter.sendMail({
+    const finalSubject = subject?.trim() || `Attendance follow-up needed (${attentionItems.length})`;
+    const historyItems = attentionItems.map((item) => ({
+      householdName: item.householdName!.trim(),
+      labels: (item.labels || []).map((condition) => condition.label?.trim()).filter(Boolean),
+      ...(item.category?.trim() ? { category: item.category.trim() } : {}),
+      ...(Array.isArray(item.recentCounts) ? {
+        recentCounts: item.recentCounts
+          .filter((count) => typeof count === 'number' && Number.isFinite(count))
+          .slice(0, 6),
+      } : {}),
+    }));
+    const historyRef = getAdminDb().collection('attendanceEmailHistory').doc();
+    await historyRef.set({
+      reportType: reportType === 'visitor' ? 'visitor' : 'attendance',
+      subject: finalSubject,
+      recipients,
+      items: historyItems,
+      itemCount: historyItems.length,
+      status: 'sending',
+      requestedAt: FieldValue.serverTimestamp(),
+      sentBy: decodedToken.uid,
+      sentByEmail: decodedToken.email || userProfile?.email || '',
+    });
+
+    let result;
+    try {
+      result = await transporter.sendMail({
       from: getEmailFromInformationHub(),
       to: recipients,
-      subject: (subject?.trim() || `Attendance follow-up needed (${attentionItems.length})`),
+      subject: finalSubject,
       html,
+      });
+    } catch (sendError) {
+      await historyRef.update({
+        status: 'failed',
+        failedAt: FieldValue.serverTimestamp(),
+        error: sendError instanceof Error ? sendError.message.slice(0, 500) : 'Failed to send report',
+      }).catch((historyError) => console.error('Failed to record attendance email failure:', historyError));
+      throw sendError;
+    }
+
+    await historyRef.update({
+      status: 'sent',
+      sentAt: FieldValue.serverTimestamp(),
+      messageId: result.messageId || '',
     });
 
     return NextResponse.json({
       success: true,
+      historyId: historyRef.id,
       recipientCount: recipients.length,
       itemCount: attentionItems.length,
       messageId: result.messageId,
