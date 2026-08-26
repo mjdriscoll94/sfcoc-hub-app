@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import {
   Timestamp,
   collection,
@@ -79,7 +80,7 @@ export default function AttendanceAdminPage() {
     document.title = 'Attendance | Sioux Falls Church of Christ';
   }, []);
 
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
 
   const [households, setHouseholds] = useState<AttendanceHousehold[]>([]);
@@ -97,9 +98,7 @@ export default function AttendanceAdminPage() {
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
   const [sendingAttentionEmail, setSendingAttentionEmail] = useState(false);
-  const [attentionEmailRecipients, setAttentionEmailRecipients] = useState('');
   const [sendingRecurringVisitorEmail, setSendingRecurringVisitorEmail] = useState(false);
-  const [recurringVisitorEmailRecipients, setRecurringVisitorEmailRecipients] = useState('');
   const [historicalImportText, setHistoricalImportText] = useState('');
   const [importingHistoricalAttendance, setImportingHistoricalAttendance] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -575,30 +574,16 @@ export default function AttendanceAdminPage() {
   };
 
   const sendAttendanceSectionEmail = async ({
-    recipientsText,
     items,
     subject,
     intro,
     setSending,
-    clearRecipients,
   }: {
-    recipientsText: string;
     items: Array<{ householdName: string; labels: string[] }>;
     subject: string;
     intro: string;
     setSending: (value: boolean) => void;
-    clearRecipients: () => void;
   }): Promise<boolean> => {
-    const recipients = recipientsText
-      .split(',')
-      .map((value) => value.trim())
-      .filter(Boolean);
-
-    if (recipients.length === 0) {
-      setError('Enter at least one email address for the report.');
-      return false;
-    }
-
     if (items.length === 0) {
       setError('There are no households to include in this email.');
       return false;
@@ -608,14 +593,18 @@ export default function AttendanceAdminPage() {
       setSending(true);
       setError(null);
       setMessage(null);
+      const idToken = await user?.getIdToken();
+      if (!idToken) {
+        throw new Error('Please sign in again before sending the report.');
+      }
 
       const response = await fetch('/api/admin/attendance/send-attention-email', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          Authorization: `Bearer ${idToken}`,
         },
         body: JSON.stringify({
-          to: recipients,
           subject,
           intro,
           items: items.map((item) => ({
@@ -631,7 +620,6 @@ export default function AttendanceAdminPage() {
       }
 
       setMessage(`Sent email to ${responseData.recipientCount} recipient${responseData.recipientCount === 1 ? '' : 's'}.`);
-      clearRecipients();
       return true;
     } catch (sendError) {
       console.error('Error sending attendance section email:', sendError);
@@ -644,7 +632,6 @@ export default function AttendanceAdminPage() {
 
   const handleSendAttentionEmail = async () => {
     const sent = await sendAttendanceSectionEmail({
-      recipientsText: attentionEmailRecipients,
       items: attentionItems.map((item) => ({
         householdName: item.householdName,
         labels: item.conditions.map((condition) => condition.label),
@@ -652,7 +639,6 @@ export default function AttendanceAdminPage() {
       subject: `Attendance follow-up needed (${attentionItems.length})`,
       intro: 'The following households currently need attendance follow-up:',
       setSending: setSendingAttentionEmail,
-      clearRecipients: () => setAttentionEmailRecipients(''),
     });
     if (sent) {
       await resetHouseholds(attentionItems.map((item) => item.householdId), 'attentionResetAt');
@@ -661,7 +647,6 @@ export default function AttendanceAdminPage() {
 
   const handleSendRecurringVisitorEmail = async () => {
     const sent = await sendAttendanceSectionEmail({
-      recipientsText: recurringVisitorEmailRecipients,
       items: recurringVisitors.map((visitor) => ({
         householdName: visitor.householdName,
         labels: [
@@ -673,7 +658,6 @@ export default function AttendanceAdminPage() {
       subject: `Recurring visitors report (${recurringVisitors.length})`,
       intro: 'The following visitor households have become recurring visitors:',
       setSending: setSendingRecurringVisitorEmail,
-      clearRecipients: () => setRecurringVisitorEmailRecipients(''),
     });
     if (sent) {
       await resetHouseholds(recurringVisitors.map((visitor) => visitor.householdId), 'visitorResetAt');
@@ -1205,17 +1189,15 @@ export default function AttendanceAdminPage() {
               ) : (
                 <>
                   <div className="rounded-lg border border-border bg-slate-50 p-4">
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-charcoal">Send this list to</span>
-                      <input
-                        type="text"
-                        value={attentionEmailRecipients}
-                        onChange={(event) => setAttentionEmailRecipients(event.target.value)}
-                        placeholder="name@example.com, second@example.com"
-                        className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
-                      />
-                    </label>
-                    <div className="mt-3 flex justify-end">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm text-text-light">
+                        This report will be sent to the recipients configured in{' '}
+                        {userProfile.isAdmin ? (
+                          <Link href="/admin/settings" className="font-medium text-coral hover:underline">Admin Settings</Link>
+                        ) : (
+                          'Admin Settings'
+                        )}.
+                      </p>
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -1231,7 +1213,7 @@ export default function AttendanceAdminPage() {
                           className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <Mail className="mr-2 h-4 w-4" />
-                          {sendingAttentionEmail ? 'Sending...' : 'Send Email'}
+                          {sendingAttentionEmail ? 'Sending...' : 'Send Attendance Report'}
                         </button>
                       </div>
                     </div>
@@ -1300,17 +1282,15 @@ export default function AttendanceAdminPage() {
               ) : (
                 <>
                   <div className="rounded-lg border border-border bg-slate-50 p-4">
-                    <label className="block">
-                      <span className="mb-2 block text-sm font-medium text-charcoal">Send this list to</span>
-                      <input
-                        type="text"
-                        value={recurringVisitorEmailRecipients}
-                        onChange={(event) => setRecurringVisitorEmailRecipients(event.target.value)}
-                        placeholder="name@example.com, second@example.com"
-                        className="w-full rounded-md border border-border px-3 py-2 text-sm text-charcoal focus:border-coral focus:outline-none"
-                      />
-                    </label>
-                    <div className="mt-3 flex justify-end">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <p className="text-sm text-text-light">
+                        This report uses the attendance recipients configured in{' '}
+                        {userProfile.isAdmin ? (
+                          <Link href="/admin/settings" className="font-medium text-coral hover:underline">Admin Settings</Link>
+                        ) : (
+                          'Admin Settings'
+                        )}.
+                      </p>
                       <div className="flex gap-2">
                         <button
                           type="button"
@@ -1326,7 +1306,7 @@ export default function AttendanceAdminPage() {
                           className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
                         >
                           <Mail className="mr-2 h-4 w-4" />
-                          {sendingRecurringVisitorEmail ? 'Sending...' : 'Send Email'}
+                          {sendingRecurringVisitorEmail ? 'Sending...' : 'Send Visitor Report'}
                         </button>
                       </div>
                     </div>

@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
+import { getAuth } from 'firebase-admin/auth';
 import { getEmailFromInformationHub, transporter } from '@/lib/email/config';
 import { wrapMemberEmailFormattedHtml } from '@/lib/email/memberEmailTemplate';
+import { getAdminApp, getAdminDb } from '@/lib/firebase/admin';
 
 interface AttentionEmailItem {
   householdName?: string;
@@ -24,17 +26,36 @@ function escapeHtml(value: string): string {
 
 export async function POST(request: Request) {
   try {
+    const authorization = request.headers.get('authorization');
+    if (!authorization?.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
+    }
+
+    const decodedToken = await getAuth(getAdminApp()).verifyIdToken(authorization.slice(7));
+    const userSnapshot = await getAdminDb().collection('users').doc(decodedToken.uid).get();
+    const userProfile = userSnapshot.data();
+    const canSendAttendance = userProfile?.isAdmin === true || ['admin', 'organizer'].includes(userProfile?.role);
+    if (!canSendAttendance) {
+      return NextResponse.json({ error: 'You do not have permission to send attendance reports' }, { status: 403 });
+    }
+
     const body = await request.json();
-    const { to, items, subject, intro } = body as {
-      to?: string[];
+    const { items, subject, intro } = body as {
       items?: AttentionEmailItem[];
       subject?: string;
       intro?: string;
     };
 
-    const recipients = (to || []).map((email) => email.trim()).filter(Boolean);
+    const settingsSnapshot = await getAdminDb().collection('adminSettings').doc('attendance').get();
+    const configuredRecipients = settingsSnapshot.data()?.reportRecipients;
+    const recipients = (Array.isArray(configuredRecipients) ? configuredRecipients : [])
+      .map((email) => typeof email === 'string' ? email.trim() : '')
+      .filter(Boolean);
     if (recipients.length === 0) {
-      return NextResponse.json({ error: 'At least one recipient is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'No attendance report recipients are configured. Add them in Admin Settings.' },
+        { status: 400 },
+      );
     }
 
     const invalidRecipient = recipients.find((email) => !isValidEmail(email));

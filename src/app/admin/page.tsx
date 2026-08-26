@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
-import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail, ClipboardList, type LucideIcon } from 'lucide-react';
+import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail, ClipboardList, Settings, type LucideIcon } from 'lucide-react';
 import Link from 'next/link';
 import { PlusIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
@@ -130,6 +130,13 @@ export default function AdminDashboard() {
             items={userProfile?.isAdmin ? [
               { href: '/admin/bulletin', label: 'Upload Bulletin', description: 'Manage and upload weekly bulletins', icon: FileText },
               { href: '/admin/lesson-notes', label: 'Upload Sermon Notes', description: 'Manage and upload lesson notes', icon: Upload },
+            ] : []}
+          />
+          <AdminMenu
+            label="Administration"
+            icon={Settings}
+            items={userProfile?.isAdmin ? [
+              { href: '/admin/settings', label: 'Settings', description: 'Configure attendance reports and other app options', icon: Settings },
             ] : []}
           />
           {userProfile?.isAdmin && (
