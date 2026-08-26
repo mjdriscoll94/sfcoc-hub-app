@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { collection, getDocs, limit, orderBy, query, Timestamp } from 'firebase/firestore';
 import { format } from 'date-fns';
-import { Mail } from 'lucide-react';
+import { ChevronDown, Mail } from 'lucide-react';
 import AttendanceTabs from '@/components/AttendanceTabs';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
@@ -113,7 +113,7 @@ export default function AttendanceReportHistoryPage() {
           No attendance reports have been sent yet.
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="overflow-hidden rounded-xl border border-border bg-white shadow-sm divide-y divide-border">
           {reports.map((report) => {
             const categories = report.reportType === 'attendance'
               ? ATTENDANCE_CATEGORIES.map((category) => ({
@@ -124,59 +124,68 @@ export default function AttendanceReportHistoryPage() {
             const reportDate = report.sentAt || report.requestedAt;
 
             return (
-              <section key={report.id} className="rounded-xl border border-border bg-white p-6 shadow-sm">
-                <div className="flex flex-wrap items-start justify-between gap-4 border-b border-border pb-4">
-                  <div className="flex items-start gap-3">
-                    <Mail className="mt-1 h-5 w-5 text-coral" aria-hidden="true" />
-                    <div>
-                      <h3 className="text-lg font-semibold text-charcoal">{report.subject}</h3>
-                      <p className="mt-1 text-sm text-text-light">
-                        {reportDate ? format(reportDate, "MMMM d, yyyy 'at' h:mm a") : 'Date unavailable'}
-                        {report.sentByEmail ? ` · Sent by ${report.sentByEmail}` : ''}
-                      </p>
+              <details key={report.id} className="group">
+                <summary className="grid cursor-pointer list-none grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral [&::-webkit-details-marker]:hidden sm:grid-cols-[auto_minmax(0,1fr)_auto_auto_auto]">
+                  <Mail className="h-4 w-4 text-coral" aria-hidden="true" />
+                  <div className="min-w-0">
+                    <h3 className="truncate text-sm font-semibold text-charcoal">{report.subject}</h3>
+                    <p className="truncate text-xs text-text-light">
+                      {reportDate ? format(reportDate, "MMM d, yyyy 'at' h:mm a") : 'Date unavailable'}
+                      {report.sentByEmail ? ` · ${report.sentByEmail}` : ''}
+                    </p>
+                  </div>
+                  <span className="hidden whitespace-nowrap text-xs text-text-light sm:block">
+                    {report.recipients.length} recipient{report.recipients.length === 1 ? '' : 's'}
+                  </span>
+                  <span className="hidden whitespace-nowrap text-xs text-text-light sm:block">
+                    {report.items.length} household{report.items.length === 1 ? '' : 's'}
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                      report.status === 'sent'
+                        ? 'bg-emerald-100 text-emerald-700'
+                        : report.status === 'failed'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-amber-100 text-amber-700'
+                    }`}>
+                      {report.status === 'sent' ? 'Sent' : report.status === 'failed' ? 'Failed' : 'Sending'}
+                    </span>
+                    <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" aria-hidden="true" />
+                  </div>
+                </summary>
+
+                <div className="border-t border-border bg-slate-50/60 px-4 py-4 sm:px-11">
+                  <div>
+                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recipients</p>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
+                      {report.recipients.map((recipient) => (
+                        <span key={recipient} className="rounded-full bg-white px-2.5 py-1 text-xs text-slate-700 ring-1 ring-border">{recipient}</span>
+                      ))}
                     </div>
                   </div>
-                  <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${
-                    report.status === 'sent'
-                      ? 'bg-emerald-100 text-emerald-700'
-                      : report.status === 'failed'
-                        ? 'bg-red-100 text-red-700'
-                        : 'bg-amber-100 text-amber-700'
-                  }`}>
-                    {report.status === 'sent' ? 'Sent' : report.status === 'failed' ? 'Failed' : 'Sending'}
-                  </span>
-                </div>
 
-                <div className="mt-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Recipients</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    {report.recipients.map((recipient) => (
-                      <span key={recipient} className="rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700">{recipient}</span>
+                  <div className="mt-4 grid gap-4 lg:grid-cols-3">
+                    {categories.map((group) => (
+                      <div key={group.category}>
+                        <h4 className="mb-2 text-sm font-semibold text-charcoal">{group.category}</h4>
+                        <div className="overflow-hidden rounded-md border border-border bg-white divide-y divide-border">
+                          {group.items.map((item, index) => (
+                            <div key={`${item.householdName}-${index}`} className="px-3 py-2.5">
+                              <p className="text-sm font-medium text-charcoal">{item.householdName}</p>
+                              <p className="mt-0.5 text-xs text-text-light">{item.labels.join(', ')}</p>
+                              {item.recentCounts?.length ? (
+                                <p className="mt-1 text-xs text-slate-600">
+                                  Newest → oldest: <strong>{item.recentCounts.join(' | ')}</strong>
+                                </p>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
                     ))}
                   </div>
                 </div>
-
-                <div className="mt-6 grid gap-6 lg:grid-cols-3">
-                  {categories.map((group) => (
-                    <div key={group.category}>
-                      <h4 className="font-semibold text-charcoal">{group.category}</h4>
-                      <div className="mt-3 space-y-3">
-                        {group.items.map((item, index) => (
-                          <div key={`${item.householdName}-${index}`} className="rounded-lg border border-border p-3">
-                            <p className="font-medium text-charcoal">{item.householdName}</p>
-                            <p className="mt-1 text-xs text-text-light">{item.labels.join(', ')}</p>
-                            {item.recentCounts?.length ? (
-                              <p className="mt-2 text-xs text-slate-600">
-                                Newest → oldest: <strong>{item.recentCounts.join(' | ')}</strong>
-                              </p>
-                            ) : null}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </section>
+              </details>
             );
           })}
         </div>
