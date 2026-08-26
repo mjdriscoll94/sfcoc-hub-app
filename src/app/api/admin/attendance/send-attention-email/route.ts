@@ -6,6 +6,8 @@ import { getAdminApp, getAdminDb } from '@/lib/firebase/admin';
 
 interface AttentionEmailItem {
   householdName?: string;
+  category?: string;
+  recentCounts?: number[];
   labels?: Array<{
     label?: string;
   }>;
@@ -70,17 +72,46 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No attention items were provided' }, { status: 400 });
     }
 
-    const lines = attentionItems.map((item) => {
+    const renderItem = (item: AttentionEmailItem) => {
       const labels = (item.labels || [])
         .map((condition) => condition.label?.trim())
         .filter(Boolean)
         .join(', ');
-      return `<li><strong>${escapeHtml(item.householdName!.trim())}</strong>: ${escapeHtml(labels)}</li>`;
-    });
+      const recentCounts = (Array.isArray(item.recentCounts) ? item.recentCounts : [])
+        .filter((count) => typeof count === 'number' && Number.isFinite(count))
+        .slice(0, 6);
+      const countsHtml = recentCounts.length > 0
+        ? `<div style="margin-top: 4px; color: #555; font-size: 13px;">
+            Last 6 recorded weeks (newest &rarr; oldest):
+            <strong>${recentCounts.map((count) => escapeHtml(String(count))).join(' &nbsp;|&nbsp; ')}</strong>
+          </div>`
+        : '';
+      return `<li style="margin-bottom: 12px;">
+        <strong>${escapeHtml(item.householdName!.trim())}</strong>
+        <div style="margin-top: 2px; color: #666; font-size: 13px;">Reason: ${escapeHtml(labels)}</div>
+        ${countsHtml}
+      </li>`;
+    };
+
+    const categoryOrder = ['Consistently Gone', 'Increasingly Missing', 'Recently Missing'];
+    const hasCategories = attentionItems.some((item) => item.category?.trim());
+    const reportContent = hasCategories
+      ? categoryOrder
+          .map((category) => {
+            const categoryItems = attentionItems.filter((item) => item.category === category);
+            if (categoryItems.length === 0) return '';
+            return `
+              <h2 style="margin: 24px 0 8px; color: #333; font-size: 18px;">${escapeHtml(category)}</h2>
+              <ul style="margin-top: 0; padding-left: 22px;">${categoryItems.map(renderItem).join('')}</ul>
+            `;
+          })
+          .join('')
+      : `<ul>${attentionItems.map(renderItem).join('')}</ul>`;
 
     const html = wrapMemberEmailFormattedHtml(`
       <p>${escapeHtml((intro || 'The following households currently need attendance follow-up:').trim())}</p>
-      <ul>${lines.join('')}</ul>
+      ${hasCategories ? '<p style="color: #666; font-size: 13px;">Attendance counts are shown with the most recent week on the left.</p>' : ''}
+      ${reportContent}
     `);
 
     const result = await transporter.sendMail({

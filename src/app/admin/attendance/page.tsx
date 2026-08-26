@@ -579,7 +579,12 @@ export default function AttendanceAdminPage() {
     intro,
     setSending,
   }: {
-    items: Array<{ householdName: string; labels: string[] }>;
+    items: Array<{
+      householdName: string;
+      labels: string[];
+      category?: string;
+      recentCounts?: number[];
+    }>;
     subject: string;
     intro: string;
     setSending: (value: boolean) => void;
@@ -610,6 +615,8 @@ export default function AttendanceAdminPage() {
           items: items.map((item) => ({
             householdName: item.householdName,
             labels: item.labels.map((label) => ({ label })),
+            ...(item.category ? { category: item.category } : {}),
+            ...(item.recentCounts ? { recentCounts: item.recentCounts } : {}),
           })),
         }),
       });
@@ -631,11 +638,21 @@ export default function AttendanceAdminPage() {
   };
 
   const handleSendAttentionEmail = async () => {
+    const reportGroups = [
+      { category: 'Consistently Gone', items: categorizedAttention.consistentlyGone },
+      { category: 'Increasingly Missing', items: categorizedAttention.increasinglyMissing },
+      { category: 'Recently Missing', items: categorizedAttention.recentlyMissing },
+    ];
     const sent = await sendAttendanceSectionEmail({
-      items: attentionItems.map((item) => ({
-        householdName: item.householdName,
-        labels: item.conditions.map((condition) => condition.label),
-      })),
+      items: reportGroups.flatMap((group) =>
+        group.items.map((item) => ({
+          householdName: item.householdName,
+          labels: item.conditions.map((condition) => condition.label),
+          category: group.category,
+          // buildAttendanceAttention returns counts newest first.
+          recentCounts: item.recentCounts.slice(0, 6),
+        })),
+      ),
       subject: `Attendance follow-up needed (${attentionItems.length})`,
       intro: 'The following households currently need attendance follow-up:',
       setSending: setSendingAttentionEmail,
