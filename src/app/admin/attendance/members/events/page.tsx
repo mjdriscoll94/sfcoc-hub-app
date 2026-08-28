@@ -1,9 +1,11 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { collection, getDocs } from 'firebase/firestore';
 import { format } from 'date-fns';
+import { Upload } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
@@ -121,12 +123,15 @@ export default function BirthdayAndAnniversaryListPage() {
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mb-8 flex items-center">
+      <div className="mb-8 flex items-center gap-4">
         <BackButton className="mr-4" />
-        <div>
+        <div className="flex-1">
           <h1 className="text-3xl font-bold text-charcoal">Birthday and Anniversary List</h1>
           <p className="mt-2 text-sm text-text-light">Birthdays and anniversaries from member important events, organized by month.</p>
         </div>
+        <Link href="/admin/attendance/members/events/import" className="inline-flex shrink-0 items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d]">
+          <Upload className="mr-1.5 h-4 w-4" />Import Birthdays
+        </Link>
       </div>
 
       {error ? (
