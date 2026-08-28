@@ -15,7 +15,7 @@ type CelebrationType = 'birthday' | 'anniversary';
 
 interface ImportantEvent {
   id: string;
-  type: CelebrationType | 'baptism' | 'attendanceStart' | 'other';
+  type: CelebrationType | 'baptism' | 'attendanceStart' | 'passedAway' | 'other';
   date: string;
   title: string;
 }
@@ -160,7 +160,7 @@ export default function BirthdayAndAnniversaryListPage() {
                         <p className="font-medium text-charcoal">{event.title}</p>
                         <p className="text-sm text-text-light">{event.householdName}</p>
                       </div>
-                      <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-700">
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${event.type === 'anniversary' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700'}`}>
                         {event.type === 'birthday' ? 'Birthday' : 'Anniversary'}
                       </span>
                     </li>

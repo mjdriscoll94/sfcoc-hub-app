@@ -13,7 +13,7 @@ import { canManageAttendance } from '@/types/roles';
 
 interface ImportantEvent {
   id: string;
-  type: 'birthday' | 'baptism' | 'attendanceStart' | 'anniversary' | 'other';
+  type: 'birthday' | 'baptism' | 'attendanceStart' | 'anniversary' | 'passedAway' | 'other';
   date: string;
   title: string;
   notes?: string;
