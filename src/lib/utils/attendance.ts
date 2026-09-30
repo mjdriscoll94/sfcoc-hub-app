@@ -6,6 +6,7 @@ export interface AttendanceHousehold {
   availableFrom: Date;
   isVisitor?: boolean;
   longTermExempt?: boolean;
+  /** Legacy value retained for compatibility; contact/report activity no longer resets attendance analysis. */
   attentionResetAt?: Date;
   visitorResetAt?: Date;
   members?: Array<{
@@ -216,7 +217,6 @@ export const buildAttendanceAttention = (
       const recentHistory = sortedRecords
         .filter((record) => !record.noService)
         .filter((record) => isHouseholdAvailableForSunday(household, record.serviceDate))
-        .filter((record) => !household.attentionResetAt || record.serviceDate.getTime() > household.attentionResetAt.getTime())
         .map<AttendanceHistoryEntry>((record) => ({
           count: record.counts[household.id],
           exempt: typeof record.exemptions?.[household.id] === 'string' && record.exemptions[household.id].trim().length > 0,

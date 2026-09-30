@@ -6,6 +6,7 @@ import { wrapMemberEmailFormattedHtml } from '@/lib/email/memberEmailTemplate';
 import { getAdminApp, getAdminDb } from '@/lib/firebase/admin';
 
 interface AttentionEmailItem {
+  householdId?: string;
   householdName?: string;
   category?: string;
   recentCounts?: number[];
@@ -13,6 +14,12 @@ interface AttentionEmailItem {
     label?: string;
   }>;
 }
+
+const CONTACT_ACTIONS = [
+  { outcome: 'contacted_with_response', label: 'Contacted with response', icon: '&#128172;' },
+  { outcome: 'not_coming_back', label: 'Contacted, not coming back', icon: '&#128683;' },
+  { outcome: 'reached_out_no_response', label: 'Reached out, no response', icon: '&#9993;&#65039;' },
+] as const;
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim());
@@ -68,12 +75,14 @@ export async function POST(request: Request) {
     }
 
     const attentionItems = (items || []).filter(
-      (item) => item.householdName?.trim() && Array.isArray(item.labels) && item.labels.length > 0,
+      (item) => item.householdId?.trim() && item.householdName?.trim() && Array.isArray(item.labels) && item.labels.length > 0,
     );
     if (attentionItems.length === 0) {
       return NextResponse.json({ error: 'No attention items were provided' }, { status: 400 });
     }
 
+    const historyRef = getAdminDb().collection('attendanceEmailHistory').doc();
+    const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || 'https://app.siouxfallschurchofchrist.org').replace(/\/$/, '');
     const renderItem = (item: AttentionEmailItem) => {
       const labels = (item.labels || [])
         .map((condition) => condition.label?.trim())
@@ -88,10 +97,23 @@ export async function POST(request: Request) {
             <strong>${recentCounts.map((count) => escapeHtml(String(count))).join(' &nbsp;|&nbsp; ')}</strong>
           </div>`
         : '';
+      const actionButtons = CONTACT_ACTIONS.map((action) => {
+        const query = new URLSearchParams({
+          reportId: historyRef.id,
+          householdId: item.householdId!.trim(),
+          outcome: action.outcome,
+        });
+        const href = `${baseUrl}/admin/attendance/contact?${query.toString()}`;
+        return `<a href="${escapeHtml(href)}" title="${escapeHtml(action.label)}" aria-label="${escapeHtml(action.label)}" style="display: inline-block; width: 34px; height: 34px; margin-right: 8px; border: 1px solid #d8d8d8; border-radius: 6px; color: #333; text-align: center; text-decoration: none; font-size: 18px; line-height: 34px;">${action.icon}</a>`;
+      }).join('');
       return `<li style="margin-bottom: 12px;">
         <strong>${escapeHtml(item.householdName!.trim())}</strong>
         <div style="margin-top: 2px; color: #666; font-size: 13px;">Reason: ${escapeHtml(labels)}</div>
         ${countsHtml}
+        <div style="margin-top: 8px;">
+          ${actionButtons}
+          <span style="color: #777; font-size: 12px; vertical-align: 11px;">Hover over an icon to see its action.</span>
+        </div>
       </li>`;
     };
 
@@ -118,6 +140,7 @@ export async function POST(request: Request) {
 
     const finalSubject = subject?.trim() || `Attendance follow-up needed (${attentionItems.length})`;
     const historyItems = attentionItems.map((item) => ({
+      householdId: item.householdId!.trim(),
       householdName: item.householdName!.trim(),
       labels: (item.labels || []).map((condition) => condition.label?.trim()).filter(Boolean),
       ...(item.category?.trim() ? { category: item.category.trim() } : {}),
@@ -127,7 +150,6 @@ export async function POST(request: Request) {
           .slice(0, 6),
       } : {}),
     }));
-    const historyRef = getAdminDb().collection('attendanceEmailHistory').doc();
     await historyRef.set({
       reportType: reportType === 'visitor' ? 'visitor' : 'attendance',
       subject: finalSubject,

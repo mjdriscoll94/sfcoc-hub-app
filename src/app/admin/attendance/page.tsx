@@ -32,6 +32,11 @@ import {
   type AttendanceHousehold,
   type AttendanceRecord,
 } from '@/lib/utils/attendance';
+import {
+  ATTENDANCE_CONTACT_OUTCOME_LABELS,
+  isAttendanceContactOutcome,
+  type AttendanceContactOutcome,
+} from '@/lib/utils/attendanceContacts';
 import { canManageAttendance } from '@/types/roles';
 
 interface FirestoreAttendanceHousehold {
@@ -42,7 +47,6 @@ interface FirestoreAttendanceHousehold {
   availableFrom?: Timestamp;
   isVisitor?: boolean;
   longTermExempt?: boolean;
-  attentionResetAt?: Timestamp;
   visitorResetAt?: Timestamp;
   members?: Array<{
     id: string;
@@ -75,6 +79,13 @@ interface VisitorDetailDraft {
   contactedBy: string;
 }
 
+interface AttendanceContactSummary {
+  outcome: AttendanceContactOutcome;
+  contactedAt: Date;
+  contactedByEmail: string;
+  notes?: string;
+}
+
 export default function AttendanceAdminPage() {
   useEffect(() => {
     document.title = 'Attendance | Sioux Falls Church of Christ';
@@ -85,6 +96,7 @@ export default function AttendanceAdminPage() {
 
   const [households, setHouseholds] = useState<AttendanceHousehold[]>([]);
   const [records, setRecords] = useState<AttendanceRecord[]>([]);
+  const [latestContacts, setLatestContacts] = useState<Record<string, AttendanceContactSummary>>({});
   const [selectedSundayKey, setSelectedSundayKey] = useState(getSundayKey(getSundayForDate(new Date())));
   const [draftCounts, setDraftCounts] = useState<Record<string, string>>({});
   const [draftExemptions, setDraftExemptions] = useState<Record<string, string>>({});
@@ -120,9 +132,13 @@ export default function AttendanceAdminPage() {
         setLoading(true);
         setError(null);
 
-        const [householdsSnapshot, recordsSnapshot] = await Promise.all([
+        const [householdsSnapshot, recordsSnapshot, contactsSnapshot] = await Promise.all([
           getDocs(query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc'))),
           getDocs(query(collection(db, 'attendanceRecords'), orderBy('serviceDate', 'desc'))),
+          getDocs(query(collection(db, 'attendanceContacts'), orderBy('contactedAt', 'desc'))).catch((contactError) => {
+            console.error('Failed to load attendance contact history:', contactError);
+            return null;
+          }),
         ]);
         const loadedHouseholds = householdsSnapshot.docs
           .map((snapshot) => {
@@ -135,7 +151,6 @@ export default function AttendanceAdminPage() {
               availableFrom: data.availableFrom?.toDate() || data.createdAt?.toDate() || new Date(2000, 0, 2, 12, 0, 0, 0),
               isVisitor: data.isVisitor === true,
               longTermExempt: data.longTermExempt === true,
-              attentionResetAt: data.attentionResetAt?.toDate(),
               visitorResetAt: data.visitorResetAt?.toDate(),
               members: Array.isArray(data.members) ? data.members : [],
             };
@@ -156,6 +171,25 @@ export default function AttendanceAdminPage() {
 
         setHouseholds(loadedHouseholds);
         setRecords(loadedRecords);
+        const nextLatestContacts: Record<string, AttendanceContactSummary> = {};
+        contactsSnapshot?.docs.forEach((contactSnapshot) => {
+          const data = contactSnapshot.data();
+          if (
+            typeof data.householdId !== 'string' ||
+            nextLatestContacts[data.householdId] ||
+            !isAttendanceContactOutcome(data.outcome) ||
+            !(data.contactedAt instanceof Timestamp)
+          ) {
+            return;
+          }
+          nextLatestContacts[data.householdId] = {
+            outcome: data.outcome,
+            contactedAt: data.contactedAt.toDate(),
+            contactedByEmail: typeof data.contactedByEmail === 'string' ? data.contactedByEmail : '',
+            ...(typeof data.notes === 'string' && data.notes.trim() ? { notes: data.notes.trim() } : {}),
+          };
+        });
+        setLatestContacts(nextLatestContacts);
       } catch (loadError) {
         console.error('Error loading attendance data:', loadError);
         setError('Failed to load attendance data.');
@@ -276,7 +310,7 @@ export default function AttendanceAdminPage() {
     ),
   };
 
-  const resetHouseholds = async (householdIds: string[], field: 'attentionResetAt' | 'visitorResetAt') => {
+  const resetVisitors = async (householdIds: string[]) => {
     if (householdIds.length === 0) {
       return;
     }
@@ -284,7 +318,7 @@ export default function AttendanceAdminPage() {
     const batch = writeBatch(db);
     householdIds.forEach((id) => {
       batch.update(doc(db, 'attendanceHouseholds', id), {
-        [field]: resetAt,
+        visitorResetAt: resetAt,
         updatedAt: Timestamp.now(),
       });
     });
@@ -292,7 +326,7 @@ export default function AttendanceAdminPage() {
     setHouseholds((current) =>
       current.map((household) =>
         householdIds.includes(household.id)
-          ? { ...household, [field]: resetAt.toDate() }
+          ? { ...household, visitorResetAt: resetAt.toDate() }
           : household,
       ),
     );
@@ -581,6 +615,7 @@ export default function AttendanceAdminPage() {
     setSending,
   }: {
     items: Array<{
+      householdId: string;
       householdName: string;
       labels: string[];
       category?: string;
@@ -616,6 +651,7 @@ export default function AttendanceAdminPage() {
           intro,
           reportType,
           items: items.map((item) => ({
+            householdId: item.householdId,
             householdName: item.householdName,
             labels: item.labels.map((label) => ({ label })),
             ...(item.category ? { category: item.category } : {}),
@@ -646,9 +682,10 @@ export default function AttendanceAdminPage() {
       { category: 'Increasingly Missing', items: categorizedAttention.increasinglyMissing },
       { category: 'Recently Missing', items: categorizedAttention.recentlyMissing },
     ];
-    const sent = await sendAttendanceSectionEmail({
+    await sendAttendanceSectionEmail({
       items: reportGroups.flatMap((group) =>
         group.items.map((item) => ({
+          householdId: item.householdId,
           householdName: item.householdName,
           labels: item.conditions.map((condition) => condition.label),
           category: group.category,
@@ -661,14 +698,12 @@ export default function AttendanceAdminPage() {
       reportType: 'attendance',
       setSending: setSendingAttentionEmail,
     });
-    if (sent) {
-      await resetHouseholds(attentionItems.map((item) => item.householdId), 'attentionResetAt');
-    }
   };
 
   const handleSendRecurringVisitorEmail = async () => {
-    const sent = await sendAttendanceSectionEmail({
+    await sendAttendanceSectionEmail({
       items: recurringVisitors.map((visitor) => ({
+        householdId: visitor.householdId,
         householdName: visitor.householdName,
         labels: [
           `${visitor.visits} total visits`,
@@ -681,9 +716,6 @@ export default function AttendanceAdminPage() {
       reportType: 'visitor',
       setSending: setSendingRecurringVisitorEmail,
     });
-    if (sent) {
-      await resetHouseholds(recurringVisitors.map((visitor) => visitor.householdId), 'visitorResetAt');
-    }
   };
 
   const handleImportHistoricalAttendance = async () => {
@@ -1223,13 +1255,6 @@ export default function AttendanceAdminPage() {
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => resetHouseholds(attentionItems.map((item) => item.householdId), 'attentionResetAt')}
-                          className="rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
-                        >
-                          Reset All
-                        </button>
-                        <button
-                          type="button"
                           onClick={handleSendAttentionEmail}
                           disabled={sendingAttentionEmail}
                           className="inline-flex items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d] disabled:cursor-not-allowed disabled:opacity-60"
@@ -1256,17 +1281,18 @@ export default function AttendanceAdminPage() {
                                 <p className="mt-1 text-xs text-text-light">
                                   Recent counts: {item.recentCounts.length > 0 ? item.recentCounts.join(', ') : 'No history yet'}
                                 </p>
+                                {latestContacts[item.householdId] ? (
+                                  <div className="mt-2 rounded-md bg-slate-50 px-3 py-2 text-xs text-slate-700">
+                                    <p>
+                                      Last contact: <strong>{ATTENDANCE_CONTACT_OUTCOME_LABELS[latestContacts[item.householdId].outcome]}</strong>
+                                      {' · '}{format(latestContacts[item.householdId].contactedAt, 'MMM d, yyyy')}
+                                      {latestContacts[item.householdId].contactedByEmail ? ` · ${latestContacts[item.householdId].contactedByEmail}` : ''}
+                                    </p>
+                                    {latestContacts[item.householdId].notes ? <p className="mt-1 text-slate-600">{latestContacts[item.householdId].notes}</p> : null}
+                                  </div>
+                                ) : null}
                               </div>
-                              <div className="flex items-center gap-2">
-                                <Users className="h-5 w-5 text-coral" />
-                                <button
-                                  type="button"
-                                  onClick={() => resetHouseholds([item.householdId], 'attentionResetAt')}
-                                  className="rounded-md border border-border px-2 py-1 text-xs font-medium text-charcoal transition hover:border-coral hover:text-coral"
-                                >
-                                  Clear
-                                </button>
-                              </div>
+                              <Users className="h-5 w-5 text-coral" />
                             </div>
                             <div className="mt-3 flex flex-wrap gap-2">
                               {item.conditions.map((condition) => (
@@ -1316,7 +1342,7 @@ export default function AttendanceAdminPage() {
                       <div className="flex gap-2">
                         <button
                           type="button"
-                          onClick={() => resetHouseholds(recurringVisitors.map((visitor) => visitor.householdId), 'visitorResetAt')}
+                          onClick={() => resetVisitors(recurringVisitors.map((visitor) => visitor.householdId))}
                           className="rounded-md border border-border px-4 py-2 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"
                         >
                           Reset All
@@ -1339,6 +1365,16 @@ export default function AttendanceAdminPage() {
                         <div>
                           <p className="font-semibold text-charcoal">{visitor.householdName}</p>
                           <p className="mt-1 text-xs text-text-light">Total visits: {visitor.visits}</p>
+                          {latestContacts[visitor.householdId] ? (
+                            <div className="mt-2 rounded-md bg-white/80 px-3 py-2 text-xs text-slate-700">
+                              <p>
+                                Last contact: <strong>{ATTENDANCE_CONTACT_OUTCOME_LABELS[latestContacts[visitor.householdId].outcome]}</strong>
+                                {' · '}{format(latestContacts[visitor.householdId].contactedAt, 'MMM d, yyyy')}
+                                {latestContacts[visitor.householdId].contactedByEmail ? ` · ${latestContacts[visitor.householdId].contactedByEmail}` : ''}
+                              </p>
+                              {latestContacts[visitor.householdId].notes ? <p className="mt-1 text-slate-600">{latestContacts[visitor.householdId].notes}</p> : null}
+                            </div>
+                          ) : null}
                         </div>
                         <div className="flex items-center gap-2">
                           <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">
@@ -1346,7 +1382,7 @@ export default function AttendanceAdminPage() {
                           </span>
                           <button
                             type="button"
-                            onClick={() => resetHouseholds([visitor.householdId], 'visitorResetAt')}
+                            onClick={() => resetVisitors([visitor.householdId])}
                             className="rounded-md border border-border px-2 py-1 text-xs font-medium text-charcoal transition hover:border-coral hover:text-coral"
                           >
                             Clear

@@ -168,7 +168,7 @@ test('buildAttendanceAttention ignores no-service Sundays', () => {
   assert.equal(attention.length, 0);
 });
 
-test('buildAttendanceAttention honors reset dates and five consecutive misses', () => {
+test('buildAttendanceAttention ignores legacy reset dates and detects five consecutive misses', () => {
   const households: AttendanceHousehold[] = [
     {
       id: 'a',
@@ -191,11 +191,7 @@ test('buildAttendanceAttention honors reset dates and five consecutive misses', 
 
   const attention = buildAttendanceAttention(households, records);
 
-  assert.equal(attention.length, 0);
-
-  households[0].attentionResetAt = undefined;
-  const fullAttention = buildAttendanceAttention(households, records);
-  assert.deepEqual(fullAttention[0].conditions.map((condition) => condition.key), [
+  assert.deepEqual(attention[0].conditions.map((condition) => condition.key), [
     'five_consecutive_misses',
     'two_consecutive_misses',
     'three_misses_in_six_weeks',
