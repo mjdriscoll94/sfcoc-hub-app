@@ -1,0 +1,16 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "target": "ES2017",
+    "incremental": false
+  },
+  "include": [
+    "next-env.d.ts",
+    "src/lib/mcp/**/*.ts",
+    "src/app/mcp/**/*.ts",
+    "src/app/api/mcp/**/*.ts",
+    "src/app/api/health/mcp/**/*.ts",
+    "src/app/.well-known/**/*.ts"
+  ],
+  "exclude": ["node_modules", "src/lib/mcp/**/__tests__/**"]
+}

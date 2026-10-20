@@ -229,6 +229,20 @@ export const buildAttendanceAttention = (
       const recentCounts = recentHistory.map((entry) => (typeof entry.count === 'number' ? entry.count : 0));
 
       const conditions: AttendanceCondition[] = [];
+      const hasTwoConsecutiveMisses =
+        nonExemptCounts.length >= 2 && nonExemptCounts[0] === 0 && nonExemptCounts[1] === 0;
+
+      // A household only needs follow-up while its two latest non-exempt
+      // attendance records are both misses. A single attendance clears the
+      // household until it misses two consecutive Sundays again.
+      if (!hasTwoConsecutiveMisses) {
+        return {
+          householdId: household.id,
+          householdName: household.householdName,
+          recentCounts,
+          conditions,
+        };
+      }
 
       if (nonExemptCounts.length >= 5 && nonExemptCounts.slice(0, 5).every((count) => count === 0)) {
         conditions.push({
@@ -238,13 +252,11 @@ export const buildAttendanceAttention = (
         });
       }
 
-      if (nonExemptCounts.length >= 2 && nonExemptCounts[0] === 0 && nonExemptCounts[1] === 0) {
-        conditions.push({
-          key: 'two_consecutive_misses',
-          label: '2 consecutive misses',
-          detail: 'Absent for the two most recent recorded Sundays.',
-        });
-      }
+      conditions.push({
+        key: 'two_consecutive_misses',
+        label: '2 consecutive misses',
+        detail: 'Absent for the two most recent recorded Sundays.',
+      });
 
       if (nonExemptCounts.slice(0, 6).filter((count) => count === 0).length >= 3) {
         conditions.push({

@@ -1230,7 +1230,7 @@ export default function AttendanceAdminPage() {
               <div>
                 <h2 className="text-xl font-semibold text-charcoal">Attention Needed</h2>
                 <p className="mt-1 text-sm text-text-light">
-                  Current checks: 2 consecutive misses, 3 misses in 6 weeks, and 4 misses in 8 weeks.
+                  Households appear after 2 consecutive misses and are removed after attending once. While listed, 3-in-6 and 4-in-8 patterns are also shown.
                 </p>
               </div>
             </div>

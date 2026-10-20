@@ -6,7 +6,11 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit",
+    "typecheck:mcp": "tsc --noEmit -p tsconfig.mcp.json",
+    "test": "vitest run",
+    "lint:mcp": "eslint src/lib/mcp src/app/mcp src/app/api/mcp src/app/api/health/mcp src/app/.well-known",
     "init-db": "node -r ./src/scripts/loadEnv.js src/scripts/initializeCollections.ts",
     "version:patch": "npm version patch && node scripts/updateVersion.js",
     "version:minor": "npm version minor && node scripts/updateVersion.js",
@@ -16,6 +20,8 @@
     "@aws-sdk/client-ses": "^3.700.0",
     "@headlessui/react": "^2.2.4",
     "@heroicons/react": "^2.2.0",
+    "@modelcontextprotocol/server": "^2.0.0",
+    "@neondatabase/serverless": "^1.1.0",
     "@sendgrid/mail": "^8.1.5",
     "@tiptap/extension-color": "^2.14.0",
     "@tiptap/extension-link": "^2.14.0",
@@ -43,7 +49,8 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-shepherd": "^7.0.0",
-    "web-push": "^3.6.7"
+    "web-push": "^3.6.7",
+    "zod": "^4.6.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
@@ -63,6 +70,7 @@
     "sharp": "^0.34.2",
     "tailwindcss": "^4",
     "ts-node": "^10.9.2",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "vitest": "^3.2.4"
   }
 }
