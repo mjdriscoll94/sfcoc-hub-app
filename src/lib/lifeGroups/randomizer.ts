@@ -53,17 +53,24 @@ const countMatching = (
 export const randomizeLifeGroupHouseholds = (
   households: RandomizerHousehold[],
   groupIds: string[],
-  options: { random?: () => number } = {},
+  options: {
+    random?: () => number;
+    initialHouseholdsByGroupId?: Record<string, RandomizerHousehold[]>;
+  } = {},
 ): RandomizedLifeGroup[] => {
   if (groupIds.length === 0) return [];
 
   const random = options.random || Math.random;
-  const ageGroupFrequency = households.reduce((counts, household) => {
+  const initiallyAssignedIds = new Set(
+    groupIds.flatMap((groupId) => options.initialHouseholdsByGroupId?.[groupId]?.map((household) => household.id) || []),
+  );
+  const householdsToAssign = households.filter((household) => !initiallyAssignedIds.has(household.id));
+  const ageGroupFrequency = householdsToAssign.reduce((counts, household) => {
     counts.set(household.ageGroup, (counts.get(household.ageGroup) || 0) + 1);
     return counts;
   }, new Map<string, number>());
 
-  const ordered = shuffle(households, random).sort((a, b) => {
+  const ordered = shuffle(householdsToAssign, random).sort((a, b) => {
     const ageGroupDifference = (ageGroupFrequency.get(a.ageGroup) || 0) - (ageGroupFrequency.get(b.ageGroup) || 0);
     if (ageGroupDifference !== 0) return ageGroupDifference;
     const participationDifference = PARTICIPATION_WEIGHT[b.participation] - PARTICIPATION_WEIGHT[a.participation];
@@ -71,7 +78,10 @@ export const randomizeLifeGroupHouseholds = (
     return b.memberCount - a.memberCount;
   });
 
-  const groups: RandomizedLifeGroup[] = groupIds.map((id) => summarizeRandomizedLifeGroup(id, []));
+  const groups: RandomizedLifeGroup[] = groupIds.map((id) => summarizeRandomizedLifeGroup(
+    id,
+    [...(options.initialHouseholdsByGroupId?.[id] || [])],
+  ));
 
   ordered.forEach((household) => {
     const candidates = shuffle(groups, random).sort((a, b) => {

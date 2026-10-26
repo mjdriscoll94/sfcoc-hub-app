@@ -62,6 +62,7 @@ interface HouseholdRow extends RandomizerHousehold {
 interface LifeGroupRow {
   id: string;
   name: string;
+  leaderId: string;
   leaderName: string;
   familyUnitIds: string[];
   isActive: boolean;
@@ -137,6 +138,7 @@ export default function LifeGroupRandomizerPage() {
           return {
             id: groupDoc.id,
             name: data.name || 'Unnamed Life Group',
+            leaderId: data.leaderId || '',
             leaderName: data.leaderName || 'Unassigned',
             familyUnitIds: Array.isArray(data.familyUnitIds) ? data.familyUnitIds : [],
             isActive: data.isActive !== false,
@@ -172,6 +174,15 @@ export default function LifeGroupRandomizerPage() {
     if (!normalizedSearch) return households;
     return households.filter((household) => `${household.name} ${household.memberNames.join(' ')}`.toLowerCase().includes(normalizedSearch));
   }, [households, search]);
+
+  const leaderHouseholdGroupIds = useMemo(() => {
+    const result = new Map<string, string>();
+    selectedGroups.forEach((group) => {
+      const householdId = group.leaderId.includes('|') ? group.leaderId.split('|')[0] : '';
+      if (householdId) result.set(householdId, group.id);
+    });
+    return result;
+  }, [selectedGroups]);
 
   const updateHouseholdLocally = (householdId: string, updates: Partial<Pick<HouseholdRow, 'ageGroup' | 'hasKids' | 'participation'>>) => {
     setHouseholds((current) => current.map((household) => household.id === householdId ? { ...household, ...updates } : household));
@@ -212,13 +223,32 @@ export default function LifeGroupRandomizerPage() {
       setError('Select at least two LifeGroups.');
       return;
     }
+
+    const initialHouseholdsByGroupId: Record<string, RandomizerHousehold[]> = {};
+    const claimedLeaderHouseholds = new Set<string>();
+    for (const group of selectedGroups) {
+      const leaderHouseholdId = group.leaderId.includes('|') ? group.leaderId.split('|')[0] : '';
+      const leaderHousehold = households.find((household) => household.id === leaderHouseholdId);
+      if (!leaderHousehold) {
+        setError(`Assign a leader from an active household to ${group.name} before randomizing.`);
+        return;
+      }
+      if (claimedLeaderHouseholds.has(leaderHousehold.id)) {
+        setError(`${leaderHousehold.name} is the leader household for more than one selected group.`);
+        return;
+      }
+      claimedLeaderHouseholds.add(leaderHousehold.id);
+      initialHouseholdsByGroupId[group.id] = [leaderHousehold];
+    }
+
     setError(null);
     setApplied(false);
     setUnassignedHouseholds([]);
-    setProposal(randomizeLifeGroupHouseholds(households, selectedGroupIds));
+    setProposal(randomizeLifeGroupHouseholds(households, selectedGroupIds, { initialHouseholdsByGroupId }));
   };
 
   const moveHousehold = (householdId: string, targetGroupId: string | null) => {
+    if (leaderHouseholdGroupIds.has(householdId)) return;
     const household = proposal.flatMap((group) => group.households).find((item) => item.id === householdId)
       || unassignedHouseholds.find((item) => item.id === householdId);
     if (!household) return;
@@ -274,6 +304,10 @@ export default function LifeGroupRandomizerPage() {
         createdBy: userProfile.uid,
         includeNever: true,
         manuallyUnassignedHouseholdIds: unassignedHouseholds.map((household) => household.id),
+        pinnedLeaderHouseholds: selectedGroups.map((group) => ({
+          groupId: group.id,
+          householdId: group.leaderId.split('|')[0],
+        })),
         householdProfiles: households.map((household) => ({
           id: household.id,
           name: household.name,
@@ -386,7 +420,7 @@ export default function LifeGroupRandomizerPage() {
 
       <section className="mb-8 rounded-lg border border-border bg-white p-6">
         <h2 className="text-xl font-semibold text-charcoal">2. Choose groups</h2>
-        <p className="mt-1 text-sm text-text-light">Existing names and leaders stay in place; only household assignments are replaced.</p>
+        <p className="mt-1 text-sm text-text-light">Assign each group’s leader on the Life Groups page first. The leader’s household is pinned to that group and the remaining households are balanced around it.</p>
         <div className="mt-4 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
           {lifeGroups.filter((group) => group.isActive).map((group) => (
             <label key={group.id} className="flex items-start gap-2 rounded-lg border border-border p-3">
@@ -401,7 +435,15 @@ export default function LifeGroupRandomizerPage() {
                 }}
                 className="mt-1 h-4 w-4 rounded border-border text-coral focus:ring-coral"
               />
-              <span><span className="block font-medium text-charcoal">{group.name}</span><span className="text-xs text-text-light">Leader: {group.leaderName}</span></span>
+              <span>
+                <span className="block font-medium text-charcoal">{group.name}</span>
+                <span className="text-xs text-text-light">Leader: {group.leaderName}</span>
+                <span className="block text-xs text-coral">
+                  {group.leaderId.includes('|') && households.some((household) => household.id === group.leaderId.split('|')[0])
+                    ? `Pinned household: ${households.find((household) => household.id === group.leaderId.split('|')[0])?.name}`
+                    : 'Leader household needs to be set'}
+                </span>
+              </span>
             </label>
           ))}
         </div>
@@ -430,8 +472,12 @@ export default function LifeGroupRandomizerPage() {
                   <div className="mt-3 space-y-2">
                     {result.households.map((household) => (
                       <div key={household.id} className="flex flex-col gap-2 rounded-md bg-white p-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                        <span><span className="font-medium text-charcoal">{household.name}</span><span className="ml-2 text-text-light">{AGE_GROUP_LABELS[household.ageGroup]} · {household.hasKids ? 'With kids' : 'Without kids'} · {PARTICIPATION_LABELS[household.participation]}</span></span>
-                        <span className="flex items-center gap-2">
+                        <span>
+                          <span className="font-medium text-charcoal">{household.name}</span>
+                          <span className="ml-2 text-text-light">{AGE_GROUP_LABELS[household.ageGroup]} · {household.hasKids ? 'With kids' : 'Without kids'} · {PARTICIPATION_LABELS[household.participation]}</span>
+                          {leaderHouseholdGroupIds.get(household.id) === result.id ? <span className="ml-2 font-medium text-coral">Leader household · Pinned</span> : null}
+                        </span>
+                        {leaderHouseholdGroupIds.has(household.id) ? null : <span className="flex items-center gap-2">
                           <label>
                             <span className="sr-only">Move {household.name}</span>
                             <select value={result.id} onChange={(event) => moveHousehold(household.id, event.target.value || null)} className="rounded border border-border bg-white px-2 py-1 text-xs">
@@ -439,7 +485,7 @@ export default function LifeGroupRandomizerPage() {
                             </select>
                           </label>
                           <button type="button" onClick={() => moveHousehold(household.id, null)} className="text-xs font-medium text-red-700 hover:underline">Remove</button>
-                        </span>
+                        </span>}
                       </div>
                     ))}
                   </div>

@@ -62,4 +62,33 @@ describe('randomizeLifeGroupHouseholds', () => {
     expect(group.totalPeople).toBe(9);
     expect(group.expectedAttendance).toBe(5);
   });
+
+  it('keeps leader households pinned and balances the rest around them', () => {
+    const leader: RandomizerHousehold = {
+      id: 'leader',
+      name: 'Leader',
+      memberCount: 5,
+      ageGroup: '30-44',
+      hasKids: true,
+      participation: 'always',
+    };
+    const remaining: RandomizerHousehold[] = Array.from({ length: 6 }, (_, index) => ({
+      id: `household-${index}`,
+      name: `Household ${index}`,
+      memberCount: 2,
+      ageGroup: '30-44',
+      hasKids: true,
+      participation: 'always',
+    }));
+
+    const groups = randomizeLifeGroupHouseholds([leader, ...remaining], ['a', 'b'], {
+      random: deterministicRandom,
+      initialHouseholdsByGroupId: { a: [leader] },
+    });
+
+    expect(groups.find((group) => group.id === 'a')?.households[0].id).toBe('leader');
+    expect(groups.flatMap((group) => group.households).filter((household) => household.id === 'leader')).toHaveLength(1);
+    const totals = groups.map((group) => group.totalPeople);
+    expect(Math.max(...totals) - Math.min(...totals)).toBeLessThanOrEqual(2);
+  });
 });
