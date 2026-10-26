@@ -12,6 +12,9 @@
     "test": "vitest run",
     "lint:mcp": "eslint src/lib/mcp src/app/mcp src/app/api/mcp src/app/api/health/mcp src/app/.well-known",
     "init-db": "node -r ./src/scripts/loadEnv.js src/scripts/initializeCollections.ts",
+    "migrate:life-groups:households": "ts-node scripts/migrateLifeGroupsToHouseholds.ts",
+    "export:life-groups:legacy": "ts-node scripts/exportLegacyLifeGroups.ts",
+    "reset:life-groups:assignments": "ts-node scripts/resetLifeGroupAssignments.ts",
     "version:patch": "npm version patch && node scripts/updateVersion.js",
     "version:minor": "npm version minor && node scripts/updateVersion.js",
     "version:major": "npm version major && node scripts/updateVersion.js"

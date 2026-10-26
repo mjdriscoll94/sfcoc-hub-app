@@ -38,6 +38,7 @@ yarn-error.log*
 .firebase/
 firebase-debug.log*
 serviceAccountKey.json
+/migration-exports/
 
 # typescript
 *.tsbuildinfo

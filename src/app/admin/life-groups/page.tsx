@@ -9,6 +9,7 @@ import BackButton from '@/components/BackButton';
 import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember, LifeGroupMemberFacingResource } from '@/types';
 import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import LifeGroupHistoryPanel from '@/components/LifeGroupHistoryPanel';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 
@@ -36,24 +37,7 @@ export default function LifeGroupsManagement() {
   const [uploadingMemberResource, setUploadingMemberResource] = useState(false);
   const [memberResourcesListError, setMemberResourcesListError] = useState<string | null>(null);
   const [familyUnits, setFamilyUnits] = useState<FamilyUnit[]>([]);
-  const [showFamilyForm, setShowFamilyForm] = useState(false);
-  const [editingFamilyId, setEditingFamilyId] = useState<string | null>(null);
   const [expandedFamilies, setExpandedFamilies] = useState<Set<string>>(new Set());
-  const [familyToDelete, setFamilyToDelete] = useState<FamilyUnit | null>(null);
-  const [isDeleteFamilyConfirmationOpen, setIsDeleteFamilyConfirmationOpen] = useState(false);
-  const [familyFormData, setFamilyFormData] = useState({
-    familyName: '',
-    members: [] as Omit<FamilyMember, 'id'>[],
-  });
-  const [newMemberForm, setNewMemberForm] = useState({
-    firstName: '',
-    lastName: '',
-    age: '',
-    relationship: '',
-    phoneNumber: '',
-    isLifeGroupLeader: false,
-  });
-  const [editingMemberIndex, setEditingMemberIndex] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -89,7 +73,7 @@ export default function LifeGroupsManagement() {
             ...data,
             createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
             updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
-            members: (data.members || []).map((member: any) => ({
+            members: (data.members || []).map((member: Omit<LifeGroupMember, 'addedAt'> & { addedAt: Timestamp }) => ({
               ...member,
               addedAt: (member.addedAt as Timestamp)?.toDate() || new Date(),
             })),
@@ -160,34 +144,32 @@ export default function LifeGroupsManagement() {
     return () => unsubscribe();
   }, []);
 
-  // Fetch family units
+  // Attendance households are the source of truth for life group membership.
   useEffect(() => {
-    // Temporarily remove orderBy to test if index is the issue
-    const q = query(collection(db, 'lifegroupParticipants'));
+    const q = query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc'));
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const units = snapshot.docs.map(doc => {
+        const units = snapshot.docs.flatMap(doc => {
           const data = doc.data();
-          return {
+          if (data.active === false) return [];
+          return [{
             id: doc.id,
-            ...data,
+            familyName: data.householdName || 'Unnamed Household',
             createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
             updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
-            members: (data.members || []).map((member: any) => ({
+            members: (data.members || []).map((member: FamilyMember) => ({
               ...member,
             })),
             totalCount: (data.members || []).length, // Auto-calculate
-          } as FamilyUnit;
+          } as FamilyUnit];
         });
-        // Sort manually instead of using orderBy
-        units.sort((a, b) => a.familyName.localeCompare(b.familyName));
         setFamilyUnits(units);
       },
       (err) => {
-        console.error('Error fetching family units:', err);
-        setError('Failed to load family units');
+        console.error('Error fetching attendance households:', err);
+        setError('Failed to load households');
       }
     );
 
@@ -317,7 +299,7 @@ export default function LifeGroupsManagement() {
 
       const currentFamilyUnitIds = group.familyUnitIds || [];
       if (currentFamilyUnitIds.includes(familyUnitId)) {
-        setError('This family unit is already in this group');
+        setError('This household is already in this group');
         return;
       }
 
@@ -325,7 +307,7 @@ export default function LifeGroupsManagement() {
         g => g.id !== groupId && (g.familyUnitIds || []).includes(familyUnitId)
       );
       if (otherGroupWithFamily) {
-        setError(`This family is already in "${otherGroupWithFamily.name}". Remove them from that group first.`);
+        setError(`This household is already in "${otherGroupWithFamily.name}". Remove it from that group first.`);
         return;
       }
 
@@ -336,8 +318,8 @@ export default function LifeGroupsManagement() {
 
       setError(null);
     } catch (err) {
-      console.error('Error adding family unit:', err);
-      setError('Failed to add family unit');
+      console.error('Error adding household:', err);
+      setError('Failed to add household');
     }
   };
 
@@ -354,8 +336,8 @@ export default function LifeGroupsManagement() {
 
       setError(null);
     } catch (err) {
-      console.error('Error removing family unit:', err);
-      setError('Failed to remove family unit');
+      console.error('Error removing household:', err);
+      setError('Failed to remove household');
     }
   };
 
@@ -463,211 +445,6 @@ export default function LifeGroupsManagement() {
     }
   };
 
-  // Family Unit Management Functions
-  const handleCreateFamily = () => {
-    setFamilyFormData({ familyName: '', members: [] });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
-    setEditingMemberIndex(null);
-    setShowFamilyForm(true);
-    setEditingFamilyId(null);
-  };
-
-  const handleEditFamily = (family: FamilyUnit) => {
-    setFamilyFormData({
-      familyName: family.familyName,
-      members: family.members.map(m => ({
-        firstName: m.firstName,
-        lastName: m.lastName,
-        age: m.age,
-        relationship: m.relationship,
-        phoneNumber: m.phoneNumber,
-        isLifeGroupLeader: m.isLifeGroupLeader ?? false,
-      })),
-    });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
-    setEditingMemberIndex(null);
-    setShowFamilyForm(true);
-    setEditingFamilyId(family.id);
-  };
-
-  const handleCancelFamily = () => {
-    setFamilyFormData({ familyName: '', members: [] });
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
-    setEditingMemberIndex(null);
-    setShowFamilyForm(false);
-    setEditingFamilyId(null);
-  };
-
-  const handleEditMemberInForm = (index: number) => {
-    const member = familyFormData.members[index];
-    setNewMemberForm({
-      firstName: member.firstName,
-      lastName: member.lastName,
-      age: member.age !== undefined && member.age !== null ? String(member.age) : '',
-      relationship: member.relationship ?? '',
-      phoneNumber: member.phoneNumber ?? '',
-      isLifeGroupLeader: member.isLifeGroupLeader ?? false,
-    });
-    setEditingMemberIndex(index);
-  };
-
-  const handleCancelEditMember = () => {
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
-    setEditingMemberIndex(null);
-  };
-
-  const handleAddMemberToForm = () => {
-    if (!newMemberForm.firstName.trim() || !newMemberForm.lastName.trim()) {
-      setError('First name and last name are required');
-      return;
-    }
-
-    const member: Omit<FamilyMember, 'id'> = {
-      firstName: newMemberForm.firstName.trim(),
-      lastName: newMemberForm.lastName.trim(),
-      age: newMemberForm.age ? (newMemberForm.age as 'Infant' | 'Toddler' | 'Adolescent' | 'Teenager' | 'Young Adult' | 'Adult' | 'Elder Adult') : undefined,
-      relationship: newMemberForm.relationship.trim() || undefined,
-      phoneNumber: newMemberForm.phoneNumber.trim() || undefined,
-      isLifeGroupLeader: newMemberForm.isLifeGroupLeader || undefined,
-    };
-
-    if (editingMemberIndex !== null) {
-      const nextMembers = [...familyFormData.members];
-      nextMembers[editingMemberIndex] = member;
-      setFamilyFormData({ ...familyFormData, members: nextMembers });
-      setEditingMemberIndex(null);
-    } else {
-      setFamilyFormData({
-        ...familyFormData,
-        members: [...familyFormData.members, member],
-      });
-    }
-
-    setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
-    setError(null);
-  };
-
-  const handleRemoveMemberFromForm = (index: number) => {
-    setFamilyFormData({
-      ...familyFormData,
-      members: familyFormData.members.filter((_, i) => i !== index),
-    });
-    if (editingMemberIndex === index) {
-      setEditingMemberIndex(null);
-      setNewMemberForm({ firstName: '', lastName: '', age: '', relationship: '', phoneNumber: '', isLifeGroupLeader: false });
-    } else if (editingMemberIndex !== null && editingMemberIndex > index) {
-      setEditingMemberIndex(editingMemberIndex - 1);
-    }
-  };
-
-  const handleSaveFamily = async () => {
-    console.log('=== handleSaveFamily CALLED ===');
-    console.log('Family Form Data:', JSON.stringify(familyFormData, null, 2));
-    console.log('User Profile exists:', !!userProfile);
-    console.log('User Profile UID:', userProfile?.uid);
-    console.log('Editing Family ID:', editingFamilyId);
-
-    if (!familyFormData.familyName.trim()) {
-      setError('Family name is required');
-      console.log('ERROR: Family name is empty');
-      return;
-    }
-
-    if (!userProfile) {
-      setError('You must be logged in to save a family unit');
-      console.log('ERROR: No user profile');
-      return;
-    }
-
-    try {
-      const membersWithIds = familyFormData.members.map((member, index) => {
-        const memberData: any = {
-          id: `member-${Date.now()}-${Math.random().toString(36).substr(2, 9)}-${index}`,
-          firstName: member.firstName,
-          lastName: member.lastName,
-        };
-        
-        // Include age if it's a valid category (string) or legacy number
-        if (member.age !== undefined && member.age !== null) {
-          if (typeof member.age === 'string') {
-            memberData.age = member.age;
-          } else if (typeof member.age === 'number' && !isNaN(member.age)) {
-            // Support legacy numeric ages
-            memberData.age = member.age;
-          }
-        }
-        
-        // Only include relationship if it's a valid non-empty string
-        if (member.relationship && typeof member.relationship === 'string' && member.relationship.trim() !== '') {
-          memberData.relationship = member.relationship.trim();
-        }
-        if (member.phoneNumber && typeof member.phoneNumber === 'string' && member.phoneNumber.trim() !== '') {
-          memberData.phoneNumber = member.phoneNumber.trim();
-        }
-        if (member.isLifeGroupLeader) {
-          memberData.isLifeGroupLeader = true;
-        }
-        
-        return memberData;
-      });
-
-      const familyData = {
-        familyName: familyFormData.familyName.trim(),
-        members: membersWithIds,
-        totalCount: membersWithIds.length,
-        updatedAt: Timestamp.now(),
-      };
-
-      console.log('About to save family data:', JSON.stringify(familyData, null, 2));
-      console.log('Collection name: lifegroupParticipants');
-
-      if (editingFamilyId) {
-        console.log('Updating existing family unit:', editingFamilyId);
-        await updateDoc(doc(db, 'lifegroupParticipants', editingFamilyId), familyData);
-        console.log('Family unit updated successfully');
-      } else {
-        console.log('Creating new family unit...');
-        const docRef = await addDoc(collection(db, 'lifegroupParticipants'), {
-          ...familyData,
-          createdAt: Timestamp.now(),
-          createdBy: userProfile.uid,
-        });
-        console.log('Family unit created successfully with ID:', docRef.id);
-        console.log('Document path:', docRef.path);
-      }
-
-      console.log('Save completed, calling handleCancelFamily');
-      handleCancelFamily();
-      setError(null);
-    } catch (err) {
-      console.error('=== ERROR SAVING FAMILY UNIT ===');
-      console.error('Error details:', err);
-      console.error('Error message:', err instanceof Error ? err.message : 'Unknown error');
-      console.error('Error code:', (err as any)?.code);
-      console.error('Error stack:', err instanceof Error ? err.stack : 'No stack');
-      setError(err instanceof Error ? err.message : 'Failed to save family unit');
-    }
-  };
-
-  const handleDeleteFamilyClick = (family: FamilyUnit) => {
-    setFamilyToDelete(family);
-    setIsDeleteFamilyConfirmationOpen(true);
-  };
-
-  const handleDeleteFamilyConfirm = async () => {
-    if (!familyToDelete) return;
-
-    try {
-      await deleteDoc(doc(db, 'lifegroupParticipants', familyToDelete.id));
-      setFamilyToDelete(null);
-      setIsDeleteFamilyConfirmationOpen(false);
-      setError(null);
-    } catch (err) {
-      console.error('Error deleting family unit:', err);
-      setError('Failed to delete family unit');
-      setIsDeleteFamilyConfirmationOpen(false);
-    }
-  };
 
   const toggleFamilyExpand = (familyId: string) => {
     setExpandedFamilies(prev => {
@@ -681,17 +458,16 @@ export default function LifeGroupsManagement() {
     });
   };
 
-  // Life group leader options: family members with isLifeGroupLeader checked
+  // Any household member can be selected as a life group leader. The household
+  // collection intentionally does not duplicate role metadata.
   const lifeGroupLeaderOptions = useMemo(() => {
     const options: { value: string; label: string }[] = [];
     familyUnits.forEach((family) => {
       family.members.forEach((member) => {
-        if (member.isLifeGroupLeader) {
-          options.push({
-            value: `${family.id}|${member.id}`,
-            label: `${member.firstName} ${member.lastName} (${family.familyName})`,
-          });
-        }
+        options.push({
+          value: `${family.id}|${member.id}`,
+          label: `${member.firstName} ${member.lastName} (${family.familyName})`,
+        });
       });
     });
     return options;
@@ -944,7 +720,7 @@ export default function LifeGroupsManagement() {
               </select>
               {lifeGroupLeaderOptions.length === 0 && (
                 <p className="mt-1 text-xs text-text-light">
-                  Add family members and check &quot;Life Group Leader&quot; on them to see leaders here.
+                  Add members in the household manager to select a leader here.
                 </p>
               )}
             </div>
@@ -998,213 +774,29 @@ export default function LifeGroupsManagement() {
         </div>
       )}
 
-      {/* Family Units Management Section */}
+      {/* Household source-of-truth summary */}
       <div className="mb-8 bg-white rounded-lg border border-border p-6">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="text-2xl font-bold text-charcoal">Family Units</h2>
+            <h2 className="text-2xl font-bold text-charcoal">Households</h2>
             <p className="text-text-light mt-1">
-              Manage family units and their members for life groups.
+              Life groups now use the shared attendance household list.
             </p>
           </div>
           <button
-            onClick={handleCreateFamily}
+            onClick={() => router.push('/admin/attendance/members')}
             className="inline-flex items-center px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
-            Add Family Unit
+            Manage Households
           </button>
         </div>
 
-        {/* Create/Edit Family Form */}
-        {showFamilyForm && (
-          <div className="mb-6 border border-border rounded-lg p-4 bg-gray-50">
-            <h3 className="text-lg font-semibold text-charcoal mb-4">
-              {editingFamilyId ? 'Edit Family Unit' : 'Create New Family Unit'}
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-charcoal mb-1">Family Name *</label>
-                <input
-                  type="text"
-                  value={familyFormData.familyName}
-                  onChange={(e) => setFamilyFormData({ ...familyFormData, familyName: e.target.value })}
-                  placeholder="e.g., Smith Family"
-                  className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                  required
-                />
-              </div>
 
-              {/* Add / Edit Member Form */}
-              <div className="border border-border rounded-lg p-4 bg-white">
-                <h4 className="text-sm font-semibold text-charcoal mb-3">
-                  {editingMemberIndex !== null ? 'Edit Family Member' : 'Add Family Member'}
-                </h4>
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                  <div>
-                    <label className="block text-xs font-medium text-charcoal mb-1">First Name *</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.firstName}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, firstName: e.target.value })}
-                      className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-charcoal mb-1">Last Name *</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.lastName}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, lastName: e.target.value })}
-                      className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-charcoal mb-1">Age Category</label>
-                    <select
-                      value={newMemberForm.age}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, age: e.target.value })}
-                      className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
-                    >
-                      <option value="">Select age category</option>
-                      <option value="Infant">Infant</option>
-                      <option value="Toddler">Toddler</option>
-                      <option value="Adolescent">Adolescent</option>
-                      <option value="Teenager">Teenager</option>
-                      <option value="Young Adult">Young Adult</option>
-                      <option value="Adult">Adult</option>
-                      <option value="Elder Adult">Elder Adult</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-charcoal mb-1">Relationship</label>
-                    <input
-                      type="text"
-                      value={newMemberForm.relationship}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, relationship: e.target.value })}
-                      placeholder="e.g., Parent, Child"
-                      className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-xs font-medium text-charcoal mb-1">Phone</label>
-                    <input
-                      type="tel"
-                      value={newMemberForm.phoneNumber}
-                      onChange={(e) => setNewMemberForm({ ...newMemberForm, phoneNumber: e.target.value })}
-                      placeholder="e.g., (555) 123-4567"
-                      className="w-full px-2 py-1 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal text-sm"
-                    />
-                  </div>
-                </div>
-                <div className="mt-3 flex items-center">
-                  <input
-                    type="checkbox"
-                    id="isLifeGroupLeader"
-                    checked={newMemberForm.isLifeGroupLeader}
-                    onChange={(e) => setNewMemberForm({ ...newMemberForm, isLifeGroupLeader: e.target.checked })}
-                    className="h-4 w-4 rounded border-border text-[#E88B5F] focus:ring-[#E88B5F]"
-                  />
-                  <label htmlFor="isLifeGroupLeader" className="ml-2 text-sm font-medium text-charcoal">
-                    Life Group Leader
-                  </label>
-                </div>
-                <div className="mt-3 flex items-center justify-end gap-2">
-                  <button
-                    onClick={handleAddMemberToForm}
-                    className="px-3 py-1 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors text-sm"
-                  >
-                    {editingMemberIndex !== null ? 'Update Member' : 'Add Member'}
-                  </button>
-                  {editingMemberIndex !== null && (
-                    <button
-                      type="button"
-                      onClick={handleCancelEditMember}
-                      className="px-3 py-1 border border-border rounded-md text-charcoal hover:bg-gray-50 text-sm"
-                    >
-                      Cancel
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Current Members List */}
-              {familyFormData.members.length > 0 && (
-                <div>
-                  <h4 className="text-sm font-semibold text-charcoal mb-2">
-                    Family Members ({familyFormData.members.length})
-                  </h4>
-                  <div className="space-y-2">
-                    {familyFormData.members.map((member, index) => (
-                      <div
-                        key={index}
-                        className={`flex items-center justify-between p-2 bg-white border rounded-md ${editingMemberIndex === index ? 'border-[#E88B5F] ring-1 ring-[#E88B5F]' : 'border-border'}`}
-                      >
-                        <span className="text-charcoal text-sm">
-                          {member.firstName} {member.lastName}
-                          {member.isLifeGroupLeader && (
-                            <span className="ml-1.5 inline-flex items-center rounded bg-coral/20 px-1.5 py-0.5 text-xs font-medium text-coral">
-                              Life Group Leader
-                            </span>
-                          )}
-                          {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
-                          {member.relationship && ` - ${member.relationship}`}
-                          {member.phoneNumber && ` · ${member.phoneNumber}`}
-                        </span>
-                        <div className="flex items-center gap-1">
-                          <button
-                            onClick={() => handleEditMemberInForm(index)}
-                            className="p-1 text-coral hover:bg-coral/10 rounded transition-colors"
-                            title="Edit member"
-                          >
-                            <PencilIcon className="h-4 w-4" />
-                          </button>
-                          <button
-                            onClick={() => handleRemoveMemberFromForm(index)}
-                            className="p-1 text-red-600 hover:bg-red-50 rounded transition-colors"
-                            title="Remove member"
-                          >
-                            <XMarkIcon className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              <div className="flex justify-end space-x-2">
-                <button
-                  onClick={handleCancelFamily}
-                  className="px-4 py-2 border border-border rounded-md text-charcoal hover:bg-gray-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  onClick={() => {
-                    console.log('=== CREATE BUTTON CLICKED ===');
-                    console.log('Current state:', { 
-                      familyFormData, 
-                      userProfile: !!userProfile,
-                      editingFamilyId 
-                    });
-                    handleSaveFamily();
-                  }}
-                  disabled={!familyFormData.familyName.trim()}
-                  className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {editingFamilyId ? 'Update' : 'Create'}
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Family Units List */}
+        {/* Household List */}
         <div className="space-y-3">
           {familyUnits.length === 0 ? (
-            <p className="text-text-light text-center py-4">No family units yet. Create your first one!</p>
+            <p className="text-text-light text-center py-4">No active households yet. Add one in the household manager.</p>
           ) : (
             familyUnits.map((family) => (
               <div key={family.id} className="border border-border rounded-lg p-4 bg-gray-50">
@@ -1223,18 +815,11 @@ export default function LifeGroupsManagement() {
                   </button>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => handleEditFamily(family)}
+                      onClick={() => router.push('/admin/attendance/members')}
                       className="p-2 text-coral hover:bg-coral/10 rounded-md transition-colors"
-                      title="Edit"
+                      title="Manage household"
                     >
                       <PencilIcon className="h-5 w-5" />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteFamilyClick(family)}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded-md transition-colors"
-                      title="Delete"
-                    >
-                      <TrashIcon className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
@@ -1244,14 +829,6 @@ export default function LifeGroupsManagement() {
                       {family.members.map((member) => (
                         <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                           {member.firstName} {member.lastName}
-                          {member.isLifeGroupLeader && (
-                            <span className="ml-1.5 inline-flex items-center rounded bg-coral/20 px-1.5 py-0.5 text-xs font-medium text-coral">
-                              Life Group Leader
-                            </span>
-                          )}
-                          {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
-                          {member.relationship && ` - ${member.relationship}`}
-                          {member.phoneNumber && ` · ${member.phoneNumber}`}
                         </div>
                       ))}
                     </div>
@@ -1262,6 +839,12 @@ export default function LifeGroupsManagement() {
           )}
         </div>
       </div>
+
+      <LifeGroupHistoryPanel
+        lifeGroups={lifeGroups}
+        households={familyUnits}
+        userId={userProfile.uid}
+      />
 
       {/* Life Groups List */}
       <div className="space-y-6">
@@ -1298,7 +881,7 @@ export default function LifeGroupsManagement() {
                       } {((group.familyUnitIds || []).reduce((total, familyUnitId) => {
                         const family = familyUnits.find(f => f.id === familyUnitId);
                         return total + (family?.totalCount || 0);
-                      }, 0)) === 1 ? 'person' : 'people'} across {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'family unit' : 'family units'}</div>
+                      }, 0)) === 1 ? 'person' : 'people'} across {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'household' : 'households'}</div>
                     </div>
                   </div>
                   <div className="flex space-x-2 ml-4">
@@ -1319,10 +902,10 @@ export default function LifeGroupsManagement() {
                   </div>
                 </div>
 
-                {/* Family Units Section */}
+                {/* Households Section */}
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-lg font-semibold text-charcoal">Family Units</h4>
+                    <h4 className="text-lg font-semibold text-charcoal">Households</h4>
                     <select
                       onChange={(e) => {
                         if (e.target.value) {
@@ -1332,7 +915,7 @@ export default function LifeGroupsManagement() {
                       }}
                       className="px-3 py-1 border border-border rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
                     >
-                      <option value="">Add Family Unit...</option>
+                      <option value="">Add Household...</option>
                       {familyUnits
                         .filter(family => {
                           const inThisGroup = (group.familyUnitIds || []).includes(family.id);
@@ -1350,7 +933,7 @@ export default function LifeGroupsManagement() {
                     </select>
                   </div>
                   {(group.familyUnitIds || []).length === 0 ? (
-                    <p className="text-text-light text-sm">No family units yet</p>
+                    <p className="text-text-light text-sm">No households yet</p>
                   ) : (
                     <div className="space-y-2">
                       {(group.familyUnitIds || []).map((familyUnitId) => {
@@ -1378,7 +961,7 @@ export default function LifeGroupsManagement() {
                               <button
                                 onClick={() => handleRemoveMember(group.id, familyUnitId)}
                                 className="p-1 text-red-600 hover:bg-red-100 rounded transition-colors ml-2"
-                                title="Remove family unit"
+                                title="Remove household"
                               >
                                 <XMarkIcon className="h-4 w-4" />
                               </button>
@@ -1389,14 +972,6 @@ export default function LifeGroupsManagement() {
                                   {family.members.map((member) => (
                                     <div key={member.id} className="p-2 bg-white rounded-md text-sm text-charcoal">
                                       {member.firstName} {member.lastName}
-                                      {member.isLifeGroupLeader && (
-                                        <span className="ml-1.5 inline-flex items-center rounded bg-coral/20 px-1.5 py-0.5 text-xs font-medium text-coral">
-                                          Life Group Leader
-                                        </span>
-                                      )}
-                                      {member.age && ` (${typeof member.age === 'number' ? `Age: ${member.age}` : member.age})`}
-                                      {member.relationship && ` - ${member.relationship}`}
-                                      {member.phoneNumber && ` · ${member.phoneNumber}`}
                                     </div>
                                   ))}
                                 </div>
@@ -1440,18 +1015,6 @@ export default function LifeGroupsManagement() {
         cancelText="Cancel"
       />
 
-      <ConfirmationModal
-        isOpen={isDeleteFamilyConfirmationOpen}
-        onClose={() => {
-          setIsDeleteFamilyConfirmationOpen(false);
-          setFamilyToDelete(null);
-        }}
-        onConfirm={handleDeleteFamilyConfirm}
-        title="Delete Family Unit"
-        message={familyToDelete ? `Are you sure you want to delete "${familyToDelete.familyName}"? This action cannot be undone.` : ''}
-        confirmText="Delete"
-        cancelText="Cancel"
-      />
     </div>
   );
 }

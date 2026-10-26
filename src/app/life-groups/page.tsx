@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '@/lib/firebase/config';
 import { collection, query, where, orderBy, onSnapshot, Timestamp, getDocs } from 'firebase/firestore';
-import { LifeGroup, FamilyUnit, LifeGroupMemberFacingResource } from '@/types';
+import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember, LifeGroupMemberFacingResource } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { canViewLifeGroupMemberResources } from '@/lib/auth/lifeGroupAccess';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
@@ -39,7 +39,7 @@ export default function LifeGroupsPage() {
             ...data,
             createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
             updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
-            members: (data.members || []).map((member: any) => ({
+            members: (data.members || []).map((member: Omit<LifeGroupMember, 'addedAt'> & { addedAt: Timestamp }) => ({
               ...member,
               addedAt: (member.addedAt as Timestamp)?.toDate() || new Date(),
             })),
@@ -135,33 +135,31 @@ export default function LifeGroupsPage() {
     return () => unsubscribe();
   }, [canSeeMemberResources]);
 
-  // Fetch family units
+  // Attendance households are the source of truth for life group membership.
   useEffect(() => {
-    // Temporarily remove orderBy to test if index is the issue
-    const q = query(collection(db, 'lifegroupParticipants'));
+    const q = query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc'));
 
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
-        const units = snapshot.docs.map(doc => {
+        const units = snapshot.docs.flatMap(doc => {
           const data = doc.data();
-          return {
+          if (data.active === false) return [];
+          return [{
             id: doc.id,
-            ...data,
+            familyName: data.householdName || 'Unnamed Household',
             createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
             updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
-            members: (data.members || []).map((member: any) => ({
+            members: (data.members || []).map((member: FamilyMember) => ({
               ...member,
             })),
             totalCount: (data.members || []).length, // Auto-calculated
-          } as FamilyUnit;
+          } as FamilyUnit];
         });
-        // Sort manually instead of using orderBy
-        units.sort((a, b) => a.familyName.localeCompare(b.familyName));
         setFamilyUnits(units);
       },
       (err) => {
-        console.error('Error fetching family units:', err);
+        console.error('Error fetching attendance households:', err);
       }
     );
 
@@ -354,16 +352,16 @@ export default function LifeGroupsPage() {
                     }, 0)} {((group.familyUnitIds || []).reduce((total, familyUnitId) => {
                       const family = familyUnits.find(f => f.id === familyUnitId);
                       return total + (family?.totalCount || 0);
-                    }, 0)) === 1 ? 'person' : 'people'} across {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'family unit' : 'family units'}
+                    }, 0)) === 1 ? 'person' : 'people'} across {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'household' : 'households'}
                   </span>
                 </div>
               </div>
 
-              {/* Family Units Section - logged-in users (including user/member) can expand and see names; phone/call/text only for canSeeContactInfo */}
+              {/* Households - logged-in users can expand and see names. */}
               {(group.familyUnitIds || []).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-charcoal">Family Units</h4>
+                    <h4 className="text-sm font-semibold text-charcoal">Households</h4>
                     {canExpandAndSeeMembers && (
                       <button
                         onClick={() => toggleAllFamiliesForGroup(group)}
@@ -441,7 +439,7 @@ export default function LifeGroupsPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-text-light">
-                      {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'family unit' : 'family units'}
+                      {(group.familyUnitIds || []).length} {(group.familyUnitIds || []).length === 1 ? 'household' : 'households'}
                     </p>
                   )}
                 </div>

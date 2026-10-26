@@ -93,7 +93,8 @@ export interface LifeGroup {
   leaderId: string;
   leaderName: string;
   members: LifeGroupMember[];
-  familyUnitIds?: string[]; // IDs of family units in this life group
+  /** IDs of documents in `attendanceHouseholds` assigned to this life group. */
+  familyUnitIds?: string[];
   meetingDay?: string;
   meetingTime?: string;
   meetingLocation?: string;
@@ -126,6 +127,35 @@ export interface FamilyUnit {
   createdBy: string;
 }
 
+export interface LifeGroupHistoryHousehold {
+  id: string;
+  name: string;
+  members: Array<Pick<FamilyMember, 'id' | 'firstName' | 'lastName'>>;
+  missing?: boolean;
+}
+
+export interface LifeGroupHistoryGroup {
+  id: string;
+  name: string;
+  description: string | null;
+  leaderId: string;
+  leaderName: string;
+  meetingDay: string | null;
+  meetingTime: string | null;
+  meetingLocation: string | null;
+  isActive: boolean;
+  householdIds: string[];
+  households: LifeGroupHistoryHousehold[];
+}
+
+export interface LifeGroupYearSnapshot {
+  id: string;
+  year: number;
+  groups: LifeGroupHistoryGroup[];
+  capturedAt: Date;
+  capturedBy: string;
+}
+
 /** Icon identifier for home page events - maps to SVG in EventIcon component */
 export type HomePageEventIcon = 'church' | 'book' | 'people';
 
@@ -145,4 +175,4 @@ export interface EventCategory {
   events: HomePageEvent[];
   createdAt?: Date;
   updatedAt?: Date;
-} 
+}
