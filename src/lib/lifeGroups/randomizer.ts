@@ -1,0 +1,95 @@
+export type LifeGroupParticipation = 'always' | 'sometimes' | 'never';
+
+export interface RandomizerHousehold {
+  id: string;
+  name: string;
+  memberCount: number;
+  category: string;
+  participation: LifeGroupParticipation;
+}
+
+export interface RandomizedLifeGroup {
+  id: string;
+  households: RandomizerHousehold[];
+  expectedAttendance: number;
+  totalPeople: number;
+}
+
+const PARTICIPATION_WEIGHT: Record<LifeGroupParticipation, number> = {
+  always: 1,
+  sometimes: 0.5,
+  never: 0,
+};
+
+export const summarizeRandomizedLifeGroup = (
+  id: string,
+  households: RandomizerHousehold[],
+): RandomizedLifeGroup => ({
+  id,
+  households,
+  expectedAttendance: households.reduce(
+    (total, household) => total + household.memberCount * PARTICIPATION_WEIGHT[household.participation],
+    0,
+  ),
+  totalPeople: households.reduce((total, household) => total + household.memberCount, 0),
+});
+
+const shuffle = <T>(values: T[], random: () => number): T[] => {
+  const result = [...values];
+  for (let index = result.length - 1; index > 0; index -= 1) {
+    const swapIndex = Math.floor(random() * (index + 1));
+    [result[index], result[swapIndex]] = [result[swapIndex], result[index]];
+  }
+  return result;
+};
+
+const countMatching = (
+  group: RandomizedLifeGroup,
+  predicate: (household: RandomizerHousehold) => boolean,
+): number => group.households.reduce((total, household) => total + (predicate(household) ? 1 : 0), 0);
+
+export const randomizeLifeGroupHouseholds = (
+  households: RandomizerHousehold[],
+  groupIds: string[],
+  options: { random?: () => number } = {},
+): RandomizedLifeGroup[] => {
+  if (groupIds.length === 0) return [];
+
+  const random = options.random || Math.random;
+  const categoryFrequency = households.reduce((counts, household) => {
+    counts.set(household.category, (counts.get(household.category) || 0) + 1);
+    return counts;
+  }, new Map<string, number>());
+
+  const ordered = shuffle(households, random).sort((a, b) => {
+    const categoryDifference = (categoryFrequency.get(a.category) || 0) - (categoryFrequency.get(b.category) || 0);
+    if (categoryDifference !== 0) return categoryDifference;
+    const participationDifference = PARTICIPATION_WEIGHT[b.participation] - PARTICIPATION_WEIGHT[a.participation];
+    if (participationDifference !== 0) return participationDifference;
+    return b.memberCount - a.memberCount;
+  });
+
+  const groups: RandomizedLifeGroup[] = groupIds.map((id) => summarizeRandomizedLifeGroup(id, []));
+
+  ordered.forEach((household) => {
+    const candidates = shuffle(groups, random).sort((a, b) => {
+      const categoryDifference = countMatching(a, (item) => item.category === household.category)
+        - countMatching(b, (item) => item.category === household.category);
+      if (categoryDifference !== 0) return categoryDifference;
+
+      const participationDifference = countMatching(a, (item) => item.participation === household.participation)
+        - countMatching(b, (item) => item.participation === household.participation);
+      if (participationDifference !== 0) return participationDifference;
+      if (a.expectedAttendance !== b.expectedAttendance) return a.expectedAttendance - b.expectedAttendance;
+      if (a.totalPeople !== b.totalPeople) return a.totalPeople - b.totalPeople;
+      return a.households.length - b.households.length;
+    });
+
+    const target = candidates[0];
+    target.households.push(household);
+    target.totalPeople += household.memberCount;
+    target.expectedAttendance += household.memberCount * PARTICIPATION_WEIGHT[household.participation];
+  });
+
+  return groups;
+};

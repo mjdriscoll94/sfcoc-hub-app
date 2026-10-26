@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, addDoc, Timestamp, getDocs, where } from 'firebase/firestore';
 import BackButton from '@/components/BackButton';
 import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember, LifeGroupMemberFacingResource } from '@/types';
-import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDownIcon, ChevronRightIcon, ClockIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDownIcon, ChevronRightIcon, ClockIcon, SparklesIcon } from '@heroicons/react/24/outline';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import LifeGroupHistoryPanel from '@/components/LifeGroupHistoryPanel';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
@@ -496,6 +496,14 @@ export default function LifeGroupsManagement() {
           <h1 className="text-3xl font-bold text-charcoal">Life Groups Management</h1>
         </div>
         <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => router.push('/admin/life-groups/randomizer')}
+            className="inline-flex items-center rounded-lg border border-border bg-white px-4 py-2 text-charcoal transition-colors hover:border-coral hover:text-coral"
+          >
+            <SparklesIcon className="mr-2 h-5 w-5" />
+            Group Randomizer
+          </button>
           <button
             type="button"
             onClick={() => setShowHistory((current) => !current)}
