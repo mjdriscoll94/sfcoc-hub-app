@@ -19,20 +19,35 @@ import { db } from '@/lib/firebase/config';
 import {
   randomizeLifeGroupHouseholds,
   summarizeRandomizedLifeGroup,
+  type LifeGroupAgeGroup,
   type LifeGroupParticipation,
   type RandomizedLifeGroup,
   type RandomizerHousehold,
 } from '@/lib/lifeGroups/randomizer';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 
-const DEFAULT_CATEGORIES = [
-  'Young adults',
-  'Families with children',
-  'Adults',
-  'Older adults',
-  'Multigenerational',
-  'Uncategorized',
-];
+const AGE_GROUP_LABELS: Record<LifeGroupAgeGroup, string> = {
+  unspecified: 'Not set',
+  '18-29': '18–29',
+  '30-44': '30–44',
+  '45-64': '45–64',
+  '65+': '65+',
+  multigenerational: 'Multigenerational',
+};
+
+const AGE_GROUPS = Object.keys(AGE_GROUP_LABELS) as LifeGroupAgeGroup[];
+
+const getAgeGroup = (ageGroup: unknown, legacyCategory: unknown): LifeGroupAgeGroup => {
+  if (typeof ageGroup === 'string' && AGE_GROUPS.includes(ageGroup as LifeGroupAgeGroup)) {
+    return ageGroup as LifeGroupAgeGroup;
+  }
+
+  const legacy = typeof legacyCategory === 'string' ? legacyCategory.toLowerCase() : '';
+  if (legacy.includes('young')) return '18-29';
+  if (legacy.includes('older')) return '65+';
+  if (legacy.includes('multi')) return 'multigenerational';
+  return 'unspecified';
+};
 
 const PARTICIPATION_LABELS: Record<LifeGroupParticipation, string> = {
   always: 'Always active',
@@ -95,7 +110,10 @@ export default function LifeGroupRandomizerPage() {
             name: data.householdName || 'Unnamed Household',
             memberCount: members.length,
             memberNames: members.map((member: { firstName?: string; lastName?: string }) => `${member.firstName || ''} ${member.lastName || ''}`.trim()),
-            category: typeof data.lifeGroupCategory === 'string' && data.lifeGroupCategory.trim() ? data.lifeGroupCategory : 'Uncategorized',
+            ageGroup: getAgeGroup(data.lifeGroupAgeGroup, data.lifeGroupCategory),
+            hasKids: typeof data.lifeGroupHasKids === 'boolean'
+              ? data.lifeGroupHasKids
+              : data.lifeGroupCategory === 'Families with children',
             participation: ['always', 'sometimes', 'never'].includes(data.lifeGroupParticipation)
               ? data.lifeGroupParticipation as LifeGroupParticipation
               : 'sometimes',
@@ -149,18 +167,13 @@ export default function LifeGroupRandomizerPage() {
     return lifeGroups.filter((group) => selected.has(group.id));
   }, [lifeGroups, selectedGroupIds]);
 
-  const categories = useMemo(() => Array.from(new Set([
-    ...DEFAULT_CATEGORIES,
-    ...households.map((household) => household.category),
-  ])).sort(), [households]);
-
   const filteredHouseholds = useMemo(() => {
     const normalizedSearch = search.trim().toLowerCase();
     if (!normalizedSearch) return households;
     return households.filter((household) => `${household.name} ${household.memberNames.join(' ')}`.toLowerCase().includes(normalizedSearch));
   }, [households, search]);
 
-  const updateHouseholdLocally = (householdId: string, updates: Partial<Pick<HouseholdRow, 'category' | 'participation'>>) => {
+  const updateHouseholdLocally = (householdId: string, updates: Partial<Pick<HouseholdRow, 'ageGroup' | 'hasKids' | 'participation'>>) => {
     setHouseholds((current) => current.map((household) => household.id === householdId ? { ...household, ...updates } : household));
     setProposal([]);
     setUnassignedHouseholds([]);
@@ -169,7 +182,7 @@ export default function LifeGroupRandomizerPage() {
 
   const saveHouseholdProfile = async (
     householdId: string,
-    updates: Partial<Pick<HouseholdRow, 'category' | 'participation'>> = {},
+    updates: Partial<Pick<HouseholdRow, 'ageGroup' | 'hasKids' | 'participation'>> = {},
   ) => {
     const household = households.find((item) => item.id === householdId);
     if (!household) return;
@@ -177,7 +190,8 @@ export default function LifeGroupRandomizerPage() {
     setSavingIds((current) => new Set(current).add(householdId));
     try {
       await updateDoc(doc(db, 'attendanceHouseholds', householdId), {
-        lifeGroupCategory: profile.category.trim() || 'Uncategorized',
+        lifeGroupAgeGroup: profile.ageGroup,
+        lifeGroupHasKids: profile.hasKids,
         lifeGroupParticipation: profile.participation,
         updatedAt: Timestamp.now(),
       });
@@ -264,7 +278,8 @@ export default function LifeGroupRandomizerPage() {
           id: household.id,
           name: household.name,
           memberCount: household.memberCount,
-          category: household.category,
+          ageGroup: household.ageGroup,
+          hasKids: household.hasKids,
           participation: household.participation,
         })),
         before,
@@ -306,32 +321,48 @@ export default function LifeGroupRandomizerPage() {
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
             <h2 className="text-xl font-semibold text-charcoal">1. Household profiles</h2>
-            <p className="mt-1 text-sm text-text-light">Categories are flexible. The randomizer spreads each category and all three activity levels across the selected groups.</p>
+            <p className="mt-1 text-sm text-text-light">The randomizer independently balances age grouping, households with kids, and all three activity levels.</p>
           </div>
           <label className="block">
             <span className="mb-1 block text-xs font-medium text-charcoal">Search households or members</span>
             <input value={search} onChange={(event) => setSearch(event.target.value)} className="w-72 max-w-full rounded-md border border-border px-3 py-2" />
           </label>
         </div>
-        <datalist id="life-group-categories">
-          {categories.map((category) => <option key={category} value={category} />)}
-        </datalist>
         <div className="mt-5 space-y-2">
           {filteredHouseholds.map((household) => (
-            <div key={household.id} className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[minmax(220px,1fr)_220px_190px_70px] md:items-center">
+            <div key={household.id} className="grid gap-3 rounded-lg border border-border p-3 md:grid-cols-[minmax(220px,1fr)_180px_170px_190px_70px] md:items-center">
               <div>
                 <p className="font-medium text-charcoal">{household.name}</p>
                 <p className="text-xs text-text-light">{household.memberCount} {household.memberCount === 1 ? 'person' : 'people'}{household.memberNames.length ? ` · ${household.memberNames.join(', ')}` : ''}</p>
               </div>
               <label>
-                <span className="sr-only">Category for {household.name}</span>
-                <input
-                  list="life-group-categories"
-                  value={household.category}
-                  onChange={(event) => updateHouseholdLocally(household.id, { category: event.target.value })}
-                  onBlur={(event) => saveHouseholdProfile(household.id, { category: event.target.value })}
-                  className="w-full rounded-md border border-border px-3 py-2 text-sm"
-                />
+                <span className="sr-only">Age grouping for {household.name}</span>
+                <select
+                  value={household.ageGroup}
+                  onChange={(event) => {
+                    const ageGroup = event.target.value as LifeGroupAgeGroup;
+                    updateHouseholdLocally(household.id, { ageGroup });
+                    void saveHouseholdProfile(household.id, { ageGroup });
+                  }}
+                  className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
+                >
+                  {AGE_GROUPS.map((value) => <option key={value} value={value}>{AGE_GROUP_LABELS[value]}</option>)}
+                </select>
+              </label>
+              <label>
+                <span className="sr-only">Kids status for {household.name}</span>
+                <select
+                  value={household.hasKids ? 'with-kids' : 'without-kids'}
+                  onChange={(event) => {
+                    const hasKids = event.target.value === 'with-kids';
+                    updateHouseholdLocally(household.id, { hasKids });
+                    void saveHouseholdProfile(household.id, { hasKids });
+                  }}
+                  className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm"
+                >
+                  <option value="with-kids">With kids</option>
+                  <option value="without-kids">Without kids</option>
+                </select>
               </label>
               <label>
                 <span className="sr-only">Participation for {household.name}</span>
@@ -399,7 +430,7 @@ export default function LifeGroupRandomizerPage() {
                   <div className="mt-3 space-y-2">
                     {result.households.map((household) => (
                       <div key={household.id} className="flex flex-col gap-2 rounded-md bg-white p-2 text-sm sm:flex-row sm:items-center sm:justify-between">
-                        <span><span className="font-medium text-charcoal">{household.name}</span><span className="ml-2 text-text-light">{household.category} · {PARTICIPATION_LABELS[household.participation]}</span></span>
+                        <span><span className="font-medium text-charcoal">{household.name}</span><span className="ml-2 text-text-light">{AGE_GROUP_LABELS[household.ageGroup]} · {household.hasKids ? 'With kids' : 'Without kids'} · {PARTICIPATION_LABELS[household.participation]}</span></span>
                         <span className="flex items-center gap-2">
                           <label>
                             <span className="sr-only">Move {household.name}</span>
@@ -423,7 +454,7 @@ export default function LifeGroupRandomizerPage() {
               <div className="mt-3 space-y-2">
                 {unassignedHouseholds.map((household) => (
                   <div key={household.id} className="flex flex-col justify-between gap-2 rounded-md bg-white p-2 text-sm sm:flex-row sm:items-center">
-                    <span><span className="font-medium text-charcoal">{household.name}</span><span className="ml-2 text-text-light">{household.category} · {PARTICIPATION_LABELS[household.participation]}</span></span>
+                    <span><span className="font-medium text-charcoal">{household.name}</span><span className="ml-2 text-text-light">{AGE_GROUP_LABELS[household.ageGroup]} · {household.hasKids ? 'With kids' : 'Without kids'} · {PARTICIPATION_LABELS[household.participation]}</span></span>
                     <label className="flex items-center gap-2">
                       <span className="text-xs text-text-light">Assign to</span>
                       <select defaultValue="" onChange={(event) => { if (event.target.value) moveHousehold(household.id, event.target.value); }} className="rounded border border-border bg-white px-2 py-1 text-xs">

@@ -1,10 +1,12 @@
 export type LifeGroupParticipation = 'always' | 'sometimes' | 'never';
+export type LifeGroupAgeGroup = 'unspecified' | '18-29' | '30-44' | '45-64' | '65+' | 'multigenerational';
 
 export interface RandomizerHousehold {
   id: string;
   name: string;
   memberCount: number;
-  category: string;
+  ageGroup: LifeGroupAgeGroup;
+  hasKids: boolean;
   participation: LifeGroupParticipation;
 }
 
@@ -56,14 +58,14 @@ export const randomizeLifeGroupHouseholds = (
   if (groupIds.length === 0) return [];
 
   const random = options.random || Math.random;
-  const categoryFrequency = households.reduce((counts, household) => {
-    counts.set(household.category, (counts.get(household.category) || 0) + 1);
+  const ageGroupFrequency = households.reduce((counts, household) => {
+    counts.set(household.ageGroup, (counts.get(household.ageGroup) || 0) + 1);
     return counts;
   }, new Map<string, number>());
 
   const ordered = shuffle(households, random).sort((a, b) => {
-    const categoryDifference = (categoryFrequency.get(a.category) || 0) - (categoryFrequency.get(b.category) || 0);
-    if (categoryDifference !== 0) return categoryDifference;
+    const ageGroupDifference = (ageGroupFrequency.get(a.ageGroup) || 0) - (ageGroupFrequency.get(b.ageGroup) || 0);
+    if (ageGroupDifference !== 0) return ageGroupDifference;
     const participationDifference = PARTICIPATION_WEIGHT[b.participation] - PARTICIPATION_WEIGHT[a.participation];
     if (participationDifference !== 0) return participationDifference;
     return b.memberCount - a.memberCount;
@@ -73,9 +75,13 @@ export const randomizeLifeGroupHouseholds = (
 
   ordered.forEach((household) => {
     const candidates = shuffle(groups, random).sort((a, b) => {
-      const categoryDifference = countMatching(a, (item) => item.category === household.category)
-        - countMatching(b, (item) => item.category === household.category);
-      if (categoryDifference !== 0) return categoryDifference;
+      const ageGroupDifference = countMatching(a, (item) => item.ageGroup === household.ageGroup)
+        - countMatching(b, (item) => item.ageGroup === household.ageGroup);
+      if (ageGroupDifference !== 0) return ageGroupDifference;
+
+      const kidsDifference = countMatching(a, (item) => item.hasKids === household.hasKids)
+        - countMatching(b, (item) => item.hasKids === household.hasKids);
+      if (kidsDifference !== 0) return kidsDifference;
 
       const participationDifference = countMatching(a, (item) => item.participation === household.participation)
         - countMatching(b, (item) => item.participation === household.participation);

@@ -13,15 +13,18 @@ describe('randomizeLifeGroupHouseholds', () => {
       id: String(index),
       name: `Household ${index}`,
       memberCount: index % 3 + 1,
-      category: index < 6 ? 'Young adults' : 'Older adults',
+      ageGroup: index < 6 ? '18-29' : '65+',
+      hasKids: index % 3 === 0,
       participation: index % 2 === 0 ? 'always' : 'sometimes',
     }));
 
     const groups = randomizeLifeGroupHouseholds(households, ['a', 'b', 'c'], { random: deterministicRandom });
-    const youngCounts = groups.map((group) => group.households.filter((household) => household.category === 'Young adults').length);
+    const youngCounts = groups.map((group) => group.households.filter((household) => household.ageGroup === '18-29').length);
+    const withKidsCounts = groups.map((group) => group.households.filter((household) => household.hasKids).length);
     const alwaysCounts = groups.map((group) => group.households.filter((household) => household.participation === 'always').length);
 
     expect(Math.max(...youngCounts) - Math.min(...youngCounts)).toBeLessThanOrEqual(1);
+    expect(Math.max(...withKidsCounts) - Math.min(...withKidsCounts)).toBeLessThanOrEqual(1);
     expect(Math.max(...alwaysCounts) - Math.min(...alwaysCounts)).toBeLessThanOrEqual(1);
     expect(groups.flatMap((group) => group.households)).toHaveLength(12);
   });
@@ -31,7 +34,8 @@ describe('randomizeLifeGroupHouseholds', () => {
       id: `never-${index}`,
       name: `Never ${index}`,
       memberCount: 2,
-      category: 'Mixed',
+      ageGroup: '45-64',
+      hasKids: false,
       participation: 'never',
     }));
 
@@ -43,16 +47,16 @@ describe('randomizeLifeGroupHouseholds', () => {
   });
 
   it('keeps every household intact in one group', () => {
-    const household = { id: 'family', name: 'Family', memberCount: 7, category: 'Multigenerational', participation: 'always' as const };
+    const household = { id: 'family', name: 'Family', memberCount: 7, ageGroup: 'multigenerational' as const, hasKids: true, participation: 'always' as const };
     const groups = randomizeLifeGroupHouseholds([household], ['a', 'b']);
     expect(groups.filter((group) => group.households.some((item) => item.id === household.id))).toHaveLength(1);
   });
 
   it('recalculates totals after a manual edit', () => {
     const group = summarizeRandomizedLifeGroup('a', [
-      { id: 'always', name: 'Always', memberCount: 4, category: 'Mixed', participation: 'always' },
-      { id: 'sometimes', name: 'Sometimes', memberCount: 2, category: 'Mixed', participation: 'sometimes' },
-      { id: 'never', name: 'Never', memberCount: 3, category: 'Mixed', participation: 'never' },
+      { id: 'always', name: 'Always', memberCount: 4, ageGroup: '30-44', hasKids: true, participation: 'always' },
+      { id: 'sometimes', name: 'Sometimes', memberCount: 2, ageGroup: '30-44', hasKids: false, participation: 'sometimes' },
+      { id: 'never', name: 'Never', memberCount: 3, ageGroup: '65+', hasKids: false, participation: 'never' },
     ]);
 
     expect(group.totalPeople).toBe(9);
