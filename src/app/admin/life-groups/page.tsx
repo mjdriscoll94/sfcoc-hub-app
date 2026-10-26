@@ -7,7 +7,7 @@ import { db } from '@/lib/firebase/config';
 import { collection, query, orderBy, onSnapshot, deleteDoc, doc, updateDoc, addDoc, Timestamp, getDocs, where } from 'firebase/firestore';
 import BackButton from '@/components/BackButton';
 import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember, LifeGroupMemberFacingResource } from '@/types';
-import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
+import { PencilIcon, TrashIcon, PlusIcon, XMarkIcon, ArrowUpTrayIcon, ChevronDownIcon, ChevronRightIcon, ClockIcon } from '@heroicons/react/24/outline';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import LifeGroupHistoryPanel from '@/components/LifeGroupHistoryPanel';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
@@ -25,6 +25,7 @@ export default function LifeGroupsManagement() {
   const [error, setError] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   const [groupToDelete, setGroupToDelete] = useState<LifeGroup | null>(null);
   const [isDeleteConfirmationOpen, setIsDeleteConfirmationOpen] = useState(false);
   const [curriculumFile, setCurriculumFile] = useState<File | null>(null);
@@ -489,18 +490,29 @@ export default function LifeGroupsManagement() {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8 flex items-center justify-between">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center">
           <BackButton className="mr-4" />
           <h1 className="text-3xl font-bold text-charcoal">Life Groups Management</h1>
         </div>
-        <button
-          onClick={handleCreate}
-          className="inline-flex items-center px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors"
-        >
-          <PlusIcon className="h-5 w-5 mr-2" />
-          Create Life Group
-        </button>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <button
+            type="button"
+            onClick={() => setShowHistory((current) => !current)}
+            aria-expanded={showHistory}
+            className="inline-flex items-center rounded-lg border border-border bg-white px-4 py-2 text-charcoal transition-colors hover:border-coral hover:text-coral"
+          >
+            <ClockIcon className="mr-2 h-5 w-5" />
+            {showHistory ? 'Hide Assignment History' : 'Assignment History'}
+          </button>
+          <button
+            onClick={handleCreate}
+            className="inline-flex items-center px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors"
+          >
+            <PlusIcon className="h-5 w-5 mr-2" />
+            Create Life Group
+          </button>
+        </div>
       </div>
 
       {error && (
@@ -508,6 +520,14 @@ export default function LifeGroupsManagement() {
           <p className="text-red-600">{error}</p>
         </div>
       )}
+
+      {showHistory ? (
+        <LifeGroupHistoryPanel
+          lifeGroups={lifeGroups}
+          households={familyUnits}
+          userId={userProfile.uid}
+        />
+      ) : null}
 
       {/* Curriculum Management Section */}
       <div className="mb-8 bg-white rounded-lg border border-border p-6">
@@ -839,12 +859,6 @@ export default function LifeGroupsManagement() {
           )}
         </div>
       </div>
-
-      <LifeGroupHistoryPanel
-        lifeGroups={lifeGroups}
-        households={familyUnits}
-        userId={userProfile.uid}
-      />
 
       {/* Life Groups List */}
       <div className="space-y-6">
