@@ -91,4 +91,19 @@ describe('randomizeLifeGroupHouseholds', () => {
     const totals = groups.map((group) => group.totalPeople);
     expect(Math.max(...totals) - Math.min(...totals)).toBeLessThanOrEqual(2);
   });
+
+  it('does not assign exempted households', () => {
+    const households: RandomizerHousehold[] = [
+      { id: 'included', name: 'Included', memberCount: 2, ageGroup: '45-64', hasKids: false, participation: 'never' },
+      { id: 'exempted', name: 'Exempted', memberCount: 3, ageGroup: '30-44', hasKids: true, participation: 'exempted' },
+    ];
+
+    const groups = randomizeLifeGroupHouseholds(households, ['a', 'b'], {
+      initialHouseholdsByGroupId: { a: [households[1]] },
+    });
+    const assignedIds = groups.flatMap((group) => group.households.map((household) => household.id));
+
+    expect(assignedIds).toEqual(['included']);
+    expect(assignedIds).not.toContain('exempted');
+  });
 });

@@ -91,6 +91,8 @@ export interface LifeGroup {
   name: string;
   description?: string;
   leaderId: string;
+  /** Household selected to lead this group. */
+  leaderHouseholdId?: string;
   leaderName: string;
   members: LifeGroupMember[];
   /** IDs of documents in `attendanceHouseholds` assigned to this life group. */

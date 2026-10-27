@@ -217,14 +217,16 @@ export default function LifeGroupsManagement() {
     try {
       if (!userProfile) return;
 
-      if (!formData.leaderId) {
-        setError('Please select a leader');
-        return;
-      }
+      const existingNames = new Set(lifeGroups.filter((group) => group.id !== editingId).map((group) => group.name));
+      let genericGroupNumber = 1;
+      while (existingNames.has(`Life Group ${genericGroupNumber}`)) genericGroupNumber += 1;
+      const groupName = formData.name.trim() || `Life Group ${genericGroupNumber}`;
 
-      let leaderName = 'Unknown';
+      let leaderName = 'Unassigned';
+      let leaderHouseholdId = '';
       if (formData.leaderId.includes('|')) {
         const [familyUnitId, memberId] = formData.leaderId.split('|');
+        leaderHouseholdId = familyUnitId;
         const family = familyUnits.find(f => f.id === familyUnitId);
         const member = family?.members.find(m => m.id === memberId);
         if (member) {
@@ -232,13 +234,17 @@ export default function LifeGroupsManagement() {
         }
       } else if (editingId) {
         const group = lifeGroups.find(g => g.id === editingId);
-        if (group) leaderName = group.leaderName || 'Unknown';
+        if (group) {
+          leaderName = group.leaderName || 'Unknown';
+          leaderHouseholdId = group.leaderHouseholdId || '';
+        }
       }
 
       const groupData = {
-        name: formData.name,
+        name: groupName,
         description: formData.description || null,
         leaderId: formData.leaderId,
+        leaderHouseholdId,
         leaderName,
         meetingDay: formData.meetingDay || null,
         meetingTime: formData.meetingTime || null,
@@ -713,14 +719,15 @@ export default function LifeGroupsManagement() {
           </h2>
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Group Name *</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">Group Name</label>
               <input
                 type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                placeholder={`Life Group ${lifeGroups.length + 1}`}
                 className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                required
               />
+              <p className="mt-1 text-xs text-text-light">Leave blank to use the next generic Life Group name.</p>
             </div>
             <div>
               <label className="block text-sm font-medium text-charcoal mb-1">Description</label>
@@ -732,14 +739,13 @@ export default function LifeGroupsManagement() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">Leader *</label>
+              <label className="block text-sm font-medium text-charcoal mb-1">Leader</label>
               <select
                 value={formData.leaderId}
                 onChange={(e) => setFormData({ ...formData, leaderId: e.target.value })}
                 className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-[#E88B5F] bg-white text-charcoal"
-                required
               >
-                <option value="">Select a leader</option>
+                <option value="">Assign later in the Group Randomizer</option>
                 {lifeGroupLeaderOptions.map((opt) => (
                   <option key={opt.value} value={opt.value}>
                     {opt.label}

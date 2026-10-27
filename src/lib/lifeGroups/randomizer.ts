@@ -1,4 +1,4 @@
-export type LifeGroupParticipation = 'always' | 'sometimes' | 'never';
+export type LifeGroupParticipation = 'always' | 'sometimes' | 'never' | 'exempted';
 export type LifeGroupAgeGroup = 'unspecified' | '18-29' | '30-44' | '45-64' | '65+' | 'multigenerational';
 
 export interface RandomizerHousehold {
@@ -21,6 +21,7 @@ const PARTICIPATION_WEIGHT: Record<LifeGroupParticipation, number> = {
   always: 1,
   sometimes: 0.5,
   never: 0,
+  exempted: 0,
 };
 
 export const summarizeRandomizedLifeGroup = (
@@ -61,10 +62,16 @@ export const randomizeLifeGroupHouseholds = (
   if (groupIds.length === 0) return [];
 
   const random = options.random || Math.random;
+  const initialHouseholdsByGroupId = Object.fromEntries(groupIds.map((groupId) => [
+    groupId,
+    (options.initialHouseholdsByGroupId?.[groupId] || []).filter((household) => household.participation !== 'exempted'),
+  ]));
   const initiallyAssignedIds = new Set(
-    groupIds.flatMap((groupId) => options.initialHouseholdsByGroupId?.[groupId]?.map((household) => household.id) || []),
+    groupIds.flatMap((groupId) => initialHouseholdsByGroupId[groupId].map((household) => household.id)),
   );
-  const householdsToAssign = households.filter((household) => !initiallyAssignedIds.has(household.id));
+  const householdsToAssign = households.filter(
+    (household) => household.participation !== 'exempted' && !initiallyAssignedIds.has(household.id),
+  );
   const ageGroupFrequency = householdsToAssign.reduce((counts, household) => {
     counts.set(household.ageGroup, (counts.get(household.ageGroup) || 0) + 1);
     return counts;
@@ -80,7 +87,7 @@ export const randomizeLifeGroupHouseholds = (
 
   const groups: RandomizedLifeGroup[] = groupIds.map((id) => summarizeRandomizedLifeGroup(
     id,
-    [...(options.initialHouseholdsByGroupId?.[id] || [])],
+    [...initialHouseholdsByGroupId[id]],
   ));
 
   ordered.forEach((household) => {
