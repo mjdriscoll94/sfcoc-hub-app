@@ -4,12 +4,11 @@ import Link from 'next/link';
 import { Upload } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 
-type AttendanceTab = 'entry' | 'history' | 'members' | 'reports';
+type AttendanceTab = 'entry' | 'history' | 'reports';
 
 const tabs: Array<{ id: AttendanceTab; label: string; href: string }> = [
   { id: 'entry', label: 'Attendance Entry', href: '/admin/attendance' },
   { id: 'history', label: 'History', href: '/admin/attendance/history' },
-  { id: 'members', label: 'Members, Events & Households', href: '/admin/attendance/members' },
   { id: 'reports', label: 'Report History', href: '/admin/attendance/reports' },
 ];
 

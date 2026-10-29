@@ -512,7 +512,7 @@ export default function LifeGroupRandomizerPage() {
             <h2 className="text-xl font-semibold text-charcoal">2. Choose groups and leaders</h2>
             <p className="mt-1 text-sm text-text-light">Each selected leader household is pinned to its group. Until a leader is selected, groups use generic names; the leader and household-based name are saved when you apply the proposal.</p>
           </div>
-          <button type="button" onClick={() => router.push('/admin/attendance/members')} className="shrink-0 text-sm font-medium text-coral hover:underline">Manage leader households</button>
+          <button type="button" onClick={() => router.push('/admin/households')} className="shrink-0 text-sm font-medium text-coral hover:underline">Manage leader households</button>
         </div>
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {activeGroups.map((group, groupIndex) => {

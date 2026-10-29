@@ -58,7 +58,8 @@ export default function AdminDashboard() {
   const canAccessAdmin = userProfile?.isAdmin || (
     userProfile?.role && (
       ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAnnouncements ||
-      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups
+      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups ||
+      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAttendance
     )
   );
   const canManageVolunteer = userProfile?.isAdmin || (
@@ -69,6 +70,9 @@ export default function AdminDashboard() {
   );
   const canManageLifeGroups = userProfile?.isAdmin || (
     !!userProfile?.role && ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups
+  );
+  const canManageAttendance = userProfile?.isAdmin || (
+    !!userProfile?.role && ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAttendance
   );
 
   useEffect(() => {
@@ -98,6 +102,7 @@ export default function AdminDashboard() {
             icon={Users}
             items={[
               ...(userProfile?.isAdmin ? [{ href: '/admin/users', label: 'User Management', description: 'Manage user accounts and approvals', icon: Users }] : []),
+              ...(canManageAttendance ? [{ href: '/admin/households', label: 'Household Management', description: 'Manage households, members, and important events', icon: UsersRound }] : []),
               ...(canManageLifeGroups ? [{ href: '/admin/life-groups', label: 'Life Groups', description: 'Manage life groups and members', icon: Users }] : []),
               ...(userProfile?.isAdmin ? [{ href: '/admin/attendance', label: 'Attendance', description: 'Track Sunday household attendance', icon: ClipboardList }] : []),
             ]}

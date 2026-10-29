@@ -820,7 +820,7 @@ export default function LifeGroupsManagement() {
             </p>
           </div>
           <button
-            onClick={() => router.push('/admin/attendance/members')}
+            onClick={() => router.push('/admin/households')}
             className="inline-flex items-center px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
@@ -851,7 +851,7 @@ export default function LifeGroupsManagement() {
                   </button>
                   <div className="flex space-x-2">
                     <button
-                      onClick={() => router.push('/admin/attendance/members')}
+                      onClick={() => router.push('/admin/households')}
                       className="p-2 text-coral hover:bg-coral/10 rounded-md transition-colors"
                       title="Manage household"
                     >

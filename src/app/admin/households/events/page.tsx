@@ -1,0 +1,179 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { collection, getDocs } from 'firebase/firestore';
+import { format } from 'date-fns';
+import { Upload } from 'lucide-react';
+import BackButton from '@/components/BackButton';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { db } from '@/lib/firebase/config';
+import { canManageAttendance } from '@/types/roles';
+
+type ListedEventType = 'birthday' | 'anniversary' | 'passedAway';
+
+interface ImportantEvent {
+  id: string;
+  type: ListedEventType | 'baptism' | 'attendanceStart' | 'other';
+  date: string;
+  title: string;
+}
+
+interface CelebrationEvent {
+  id: string;
+  householdName: string;
+  type: ListedEventType;
+  title: string;
+  day: number;
+  month: number;
+  year?: number;
+}
+
+interface HouseholdPerson {
+  id: string;
+  firstName: string;
+  lastName: string;
+  importantEvents?: ImportantEvent[];
+}
+
+const MONTHS = Array.from({ length: 12 }, (_, month) => format(new Date(2026, month, 1), 'MMMM'));
+
+const getEventDateParts = (date: string) => {
+  const match = /^(?:(\d{4})-)?(\d{2})-(\d{2})$/.exec(date);
+  if (!match) return null;
+
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  const parsedDate = new Date(2000, month, day);
+
+  return parsedDate.getMonth() === month && parsedDate.getDate() === day
+    ? { month, day, ...(match[1] ? { year: Number(match[1]) } : {}) }
+    : null;
+};
+
+export default function BirthdayAndAnniversaryListPage() {
+  const { userProfile } = useAuth();
+  const router = useRouter();
+  const [eventsByMonth, setEventsByMonth] = useState<CelebrationEvent[][]>(() => MONTHS.map(() => []));
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    document.title = 'Member Event List | Sioux Falls Church of Christ';
+  }, []);
+
+  useEffect(() => {
+    if (userProfile && !canManageAttendance(userProfile)) {
+      router.push('/');
+    }
+  }, [router, userProfile]);
+
+  useEffect(() => {
+    if (!userProfile || !canManageAttendance(userProfile)) return;
+
+    const loadCelebrations = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+
+        const snapshot = await getDocs(collection(db, 'attendanceHouseholds'));
+        const celebrations = snapshot.docs.flatMap((household) => {
+          const data = household.data() as { householdName?: string; active?: boolean; importantEvents?: ImportantEvent[]; members?: HouseholdPerson[] };
+          if (data.active === false) return [];
+          const householdName = data.householdName || 'Unnamed Household';
+          const toCelebrations = (events: ImportantEvent[], personName?: string) => events.flatMap((event) => {
+            if (event.type !== 'birthday' && event.type !== 'anniversary' && event.type !== 'passedAway') return [];
+            const dateParts = getEventDateParts(event.date);
+            if (!dateParts) return [];
+            return [{
+              id: `${personName || 'household'}-${event.id}`,
+              householdName,
+              type: event.type,
+              title: personName || event.title || (event.type === 'birthday' ? 'Birthday' : event.type === 'anniversary' ? 'Anniversary' : 'Passed away'),
+              ...dateParts,
+            }];
+          });
+
+          return [
+            ...toCelebrations(Array.isArray(data.importantEvents) ? data.importantEvents : []),
+            ...(Array.isArray(data.members) ? data.members.flatMap((person) =>
+              toCelebrations(person.importantEvents || [], `${person.firstName} ${person.lastName}`.trim()),
+            ) : []),
+          ];
+        });
+
+        const groupedEvents = MONTHS.map((_, month) =>
+          celebrations
+            .filter((event) => event.month === month)
+            .sort((a, b) => a.day - b.day || a.householdName.localeCompare(b.householdName) || a.title.localeCompare(b.title)),
+        );
+        setEventsByMonth(groupedEvents);
+      } catch (loadError) {
+        console.error('Error loading birthday and anniversary events:', loadError);
+        setError('Failed to load birthday and anniversary events.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCelebrations();
+  }, [userProfile]);
+
+  if (!userProfile || !canManageAttendance(userProfile)) return null;
+
+  const hasEvents = eventsByMonth.some((events) => events.length > 0);
+
+  return (
+    <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mb-8 flex items-center gap-4">
+        <BackButton className="mr-4" />
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold text-charcoal">Member Event List</h1>
+          <p className="mt-2 text-sm text-text-light">Birthdays, anniversaries, and memorial records from member important events, organized by month.</p>
+        </div>
+        <Link href="/admin/households/events/import" className="inline-flex shrink-0 items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d]">
+          <Upload className="mr-1.5 h-4 w-4" />Import Birthdays
+        </Link>
+      </div>
+
+      {error ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      ) : loading ? (
+        <div className="flex min-h-[240px] items-center justify-center">
+          <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D6805F]" />
+        </div>
+      ) : !hasEvents ? (
+        <div className="rounded-xl border border-border bg-white p-8 text-center text-sm text-text-light shadow-sm">
+          No member events have been recorded yet.
+        </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2">
+          {eventsByMonth.map((events, month) => (
+            <section key={MONTHS[month]} className="overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+              <h2 className="bg-slate-50 px-5 py-3 text-lg font-semibold text-charcoal">{MONTHS[month]}</h2>
+              {events.length === 0 ? (
+                <p className="px-5 py-4 text-sm text-text-light">No celebrations recorded.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {events.map((event) => (
+                    <li key={`${event.id}-${event.householdName}`} className="flex items-center gap-4 px-5 py-3">
+                      <span className="w-8 text-right text-lg font-semibold text-charcoal">{event.day}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium text-charcoal">{event.title}</p>
+                        <p className="text-sm text-text-light">{event.householdName}{event.type === 'passedAway' && event.year ? ` · ${event.year}` : ''}</p>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${event.type === 'anniversary' ? 'bg-purple-100 text-purple-800' : event.type === 'passedAway' ? 'bg-stone-200 text-stone-800' : 'bg-slate-100 text-slate-700'}`}>
+                        {event.type === 'birthday' ? 'Birthday' : event.type === 'anniversary' ? 'Anniversary' : 'Passed away'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </section>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
