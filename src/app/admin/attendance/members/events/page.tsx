@@ -11,11 +11,11 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { canManageAttendance } from '@/types/roles';
 
-type CelebrationType = 'birthday' | 'anniversary';
+type ListedEventType = 'birthday' | 'anniversary' | 'passedAway';
 
 interface ImportantEvent {
   id: string;
-  type: CelebrationType | 'baptism' | 'attendanceStart' | 'passedAway' | 'other';
+  type: ListedEventType | 'baptism' | 'attendanceStart' | 'other';
   date: string;
   title: string;
 }
@@ -23,10 +23,11 @@ interface ImportantEvent {
 interface CelebrationEvent {
   id: string;
   householdName: string;
-  type: CelebrationType;
+  type: ListedEventType;
   title: string;
   day: number;
   month: number;
+  year?: number;
 }
 
 interface HouseholdPerson {
@@ -46,7 +47,9 @@ const getEventDateParts = (date: string) => {
   const day = Number(match[3]);
   const parsedDate = new Date(2000, month, day);
 
-  return parsedDate.getMonth() === month && parsedDate.getDate() === day ? { month, day } : null;
+  return parsedDate.getMonth() === month && parsedDate.getDate() === day
+    ? { month, day, ...(match[1] ? { year: Number(match[1]) } : {}) }
+    : null;
 };
 
 export default function BirthdayAndAnniversaryListPage() {
@@ -57,7 +60,7 @@ export default function BirthdayAndAnniversaryListPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    document.title = 'Birthday and Anniversary List | Sioux Falls Church of Christ';
+    document.title = 'Member Event List | Sioux Falls Church of Christ';
   }, []);
 
   useEffect(() => {
@@ -80,14 +83,14 @@ export default function BirthdayAndAnniversaryListPage() {
           if (data.active === false) return [];
           const householdName = data.householdName || 'Unnamed Household';
           const toCelebrations = (events: ImportantEvent[], personName?: string) => events.flatMap((event) => {
-            if (event.type !== 'birthday' && event.type !== 'anniversary') return [];
+            if (event.type !== 'birthday' && event.type !== 'anniversary' && event.type !== 'passedAway') return [];
             const dateParts = getEventDateParts(event.date);
             if (!dateParts) return [];
             return [{
               id: `${personName || 'household'}-${event.id}`,
               householdName,
               type: event.type,
-              title: personName || event.title || (event.type === 'birthday' ? 'Birthday' : 'Anniversary'),
+              title: personName || event.title || (event.type === 'birthday' ? 'Birthday' : event.type === 'anniversary' ? 'Anniversary' : 'Passed away'),
               ...dateParts,
             }];
           });
@@ -126,8 +129,8 @@ export default function BirthdayAndAnniversaryListPage() {
       <div className="mb-8 flex items-center gap-4">
         <BackButton className="mr-4" />
         <div className="flex-1">
-          <h1 className="text-3xl font-bold text-charcoal">Birthday and Anniversary List</h1>
-          <p className="mt-2 text-sm text-text-light">Birthdays and anniversaries from member important events, organized by month.</p>
+          <h1 className="text-3xl font-bold text-charcoal">Member Event List</h1>
+          <p className="mt-2 text-sm text-text-light">Birthdays, anniversaries, and memorial records from member important events, organized by month.</p>
         </div>
         <Link href="/admin/attendance/members/events/import" className="inline-flex shrink-0 items-center rounded-md bg-[#D6805F] px-4 py-2 text-sm font-medium text-white transition hover:bg-[#c56f4d]">
           <Upload className="mr-1.5 h-4 w-4" />Import Birthdays
@@ -142,7 +145,7 @@ export default function BirthdayAndAnniversaryListPage() {
         </div>
       ) : !hasEvents ? (
         <div className="rounded-xl border border-border bg-white p-8 text-center text-sm text-text-light shadow-sm">
-          No birthdays or anniversaries have been recorded yet.
+          No member events have been recorded yet.
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2">
@@ -158,10 +161,10 @@ export default function BirthdayAndAnniversaryListPage() {
                       <span className="w-8 text-right text-lg font-semibold text-charcoal">{event.day}</span>
                       <div className="min-w-0 flex-1">
                         <p className="font-medium text-charcoal">{event.title}</p>
-                        <p className="text-sm text-text-light">{event.householdName}</p>
+                        <p className="text-sm text-text-light">{event.householdName}{event.type === 'passedAway' && event.year ? ` · ${event.year}` : ''}</p>
                       </div>
-                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${event.type === 'anniversary' ? 'bg-purple-100 text-purple-800' : 'bg-slate-100 text-slate-700'}`}>
-                        {event.type === 'birthday' ? 'Birthday' : 'Anniversary'}
+                      <span className={`rounded-full px-2.5 py-1 text-xs font-medium ${event.type === 'anniversary' ? 'bg-purple-100 text-purple-800' : event.type === 'passedAway' ? 'bg-stone-200 text-stone-800' : 'bg-slate-100 text-slate-700'}`}>
+                        {event.type === 'birthday' ? 'Birthday' : event.type === 'anniversary' ? 'Anniversary' : 'Passed away'}
                       </span>
                     </li>
                   ))}

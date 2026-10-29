@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { collection, doc, getDocs, onSnapshot, orderBy, query, setDoc, Timestamp } from 'firebase/firestore';
 import { ArchiveBoxArrowDownIcon, ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { db } from '@/lib/firebase/config';
+import { excludePassedAwayMembers } from '@/lib/utils/householdMembers';
 import type {
   FamilyUnit,
   FamilyMember,
@@ -41,7 +42,7 @@ const buildSnapshotGroups = (lifeGroups: LifeGroup[], households: SnapshotHouseh
         return {
           id,
           name: household.familyName,
-          members: household.members.map((member) => ({
+          members: excludePassedAwayMembers(household.members).map((member) => ({
             id: member.id,
             firstName: member.firstName,
             lastName: member.lastName,
@@ -108,7 +109,7 @@ export default function LifeGroupHistoryPanel({ lifeGroups, households, userId }
           return {
             id: legacyDoc.id,
             familyName: data.familyName || 'Unnamed legacy household',
-            members: Array.isArray(data.members) ? data.members as FamilyMember[] : [],
+            members: excludePassedAwayMembers(Array.isArray(data.members) ? data.members as FamilyMember[] : []),
           };
         });
         snapshotHouseholds = [...households, ...legacyHouseholds.filter((household) => !knownHouseholdIds.has(household.id))];

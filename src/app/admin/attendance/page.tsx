@@ -38,6 +38,7 @@ import {
   type AttendanceContactOutcome,
 } from '@/lib/utils/attendanceContacts';
 import { canManageAttendance } from '@/types/roles';
+import { excludePassedAwayMembers } from '@/lib/utils/householdMembers';
 
 interface FirestoreAttendanceHousehold {
   householdName?: string;
@@ -152,7 +153,7 @@ export default function AttendanceAdminPage() {
               isVisitor: data.isVisitor === true,
               longTermExempt: data.longTermExempt === true,
               visitorResetAt: data.visitorResetAt?.toDate(),
-              members: Array.isArray(data.members) ? data.members : [],
+              members: excludePassedAwayMembers(Array.isArray(data.members) ? data.members : []),
             };
           })
           .filter((household) => household.active);

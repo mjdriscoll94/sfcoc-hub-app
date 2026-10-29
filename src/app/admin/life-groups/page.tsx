@@ -12,6 +12,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import LifeGroupHistoryPanel from '@/components/LifeGroupHistoryPanel';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
 import { ROLE_PERMISSIONS } from '@/types/roles';
+import { excludePassedAwayMembers } from '@/lib/utils/householdMembers';
 
 export default function LifeGroupsManagement() {
   useEffect(() => {
@@ -155,15 +156,16 @@ export default function LifeGroupsManagement() {
         const units = snapshot.docs.flatMap(doc => {
           const data = doc.data();
           if (data.active === false) return [];
+          const activeMembers = excludePassedAwayMembers((data.members || []) as FamilyMember[]);
           return [{
             id: doc.id,
             familyName: data.householdName || 'Unnamed Household',
             createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
             updatedAt: (data.updatedAt as Timestamp)?.toDate() || new Date(),
-            members: (data.members || []).map((member: FamilyMember) => ({
+            members: activeMembers.map((member: FamilyMember) => ({
               ...member,
             })),
-            totalCount: (data.members || []).length, // Auto-calculate
+            totalCount: activeMembers.length,
           } as FamilyUnit];
         });
         setFamilyUnits(units);

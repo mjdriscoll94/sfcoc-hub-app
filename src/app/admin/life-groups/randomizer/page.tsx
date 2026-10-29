@@ -16,6 +16,7 @@ import { ArrowPathIcon, CheckCircleIcon, SparklesIcon } from '@heroicons/react/2
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
+import { excludePassedAwayMembers } from '@/lib/utils/householdMembers';
 import {
   randomizeLifeGroupHouseholds,
   summarizeRandomizedLifeGroup,
@@ -109,7 +110,7 @@ export default function LifeGroupRandomizerPage() {
         const rows = snapshot.docs.flatMap((householdDoc) => {
           const data = householdDoc.data();
           if (data.active === false) return [];
-          const members = Array.isArray(data.members) ? data.members : [];
+          const members = excludePassedAwayMembers(Array.isArray(data.members) ? data.members : []);
           return [{
             id: householdDoc.id,
             name: data.householdName || 'Unnamed Household',
