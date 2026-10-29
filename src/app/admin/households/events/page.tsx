@@ -9,6 +9,7 @@ import { Upload } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
+import { excludeInactiveMembers } from '@/lib/utils/householdMembers';
 import { canManageAttendance } from '@/types/roles';
 
 type ListedEventType = 'birthday' | 'anniversary' | 'passedAway';
@@ -35,6 +36,7 @@ interface HouseholdPerson {
   firstName: string;
   lastName: string;
   importantEvents?: ImportantEvent[];
+  active?: boolean;
 }
 
 const MONTHS = Array.from({ length: 12 }, (_, month) => format(new Date(2026, month, 1), 'MMMM'));
@@ -97,7 +99,7 @@ export default function BirthdayAndAnniversaryListPage() {
 
           return [
             ...toCelebrations(Array.isArray(data.importantEvents) ? data.importantEvents : []),
-            ...(Array.isArray(data.members) ? data.members.flatMap((person) =>
+            ...(Array.isArray(data.members) ? excludeInactiveMembers(data.members).flatMap((person) =>
               toCelebrations(person.importantEvents || [], `${person.firstName} ${person.lastName}`.trim()),
             ) : []),
           ];

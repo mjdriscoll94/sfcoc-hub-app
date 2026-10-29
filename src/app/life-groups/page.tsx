@@ -7,7 +7,7 @@ import { LifeGroup, LifeGroupMember, FamilyUnit, FamilyMember, LifeGroupMemberFa
 import { useAuth } from '@/lib/auth/AuthContext';
 import { canViewLifeGroupMemberResources } from '@/lib/auth/lifeGroupAccess';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
-import { excludePassedAwayMembers } from '@/lib/utils/householdMembers';
+import { getActiveHouseholdMembers } from '@/lib/utils/householdMembers';
 
 export default function LifeGroupsPage() {
   useEffect(() => {
@@ -146,7 +146,9 @@ export default function LifeGroupsPage() {
         const units = snapshot.docs.flatMap(doc => {
           const data = doc.data();
           if (data.active === false) return [];
-          const activeMembers = excludePassedAwayMembers((data.members || []) as FamilyMember[]);
+          const allMembers = (data.members || []) as FamilyMember[];
+          const activeMembers = getActiveHouseholdMembers(allMembers);
+          if (allMembers.length > 0 && activeMembers.length === 0) return [];
           return [{
             id: doc.id,
             familyName: data.householdName || 'Unnamed Household',

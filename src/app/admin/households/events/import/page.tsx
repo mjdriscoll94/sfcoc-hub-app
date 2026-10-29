@@ -8,6 +8,7 @@ import BackButton from '@/components/BackButton';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { normalizeBirthdayMemberName, parseBirthdayImport, type ParsedBirthdayImportLine } from '@/lib/utils/birthdayImport';
+import { excludeInactiveMembers } from '@/lib/utils/householdMembers';
 import { canManageAttendance } from '@/types/roles';
 
 interface ImportantEvent {
@@ -23,6 +24,7 @@ interface HouseholdPerson {
   firstName: string;
   lastName: string;
   importantEvents: ImportantEvent[];
+  active?: boolean;
 }
 
 interface StoredHousehold {
@@ -104,7 +106,7 @@ export default function BirthdayImportPage() {
       });
 
       const peopleByName = new Map<string, LocatedPerson[]>();
-      households.forEach((household) => household.members.forEach((person) => {
+      households.forEach((household) => excludeInactiveMembers(household.members).forEach((person) => {
         const name = normalizeBirthdayMemberName(`${person.firstName} ${person.lastName}`);
         const matches = peopleByName.get(name) || [];
         matches.push({ household, person });

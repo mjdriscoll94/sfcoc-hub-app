@@ -12,7 +12,7 @@ import ConfirmationModal from '@/components/ConfirmationModal';
 import LifeGroupHistoryPanel from '@/components/LifeGroupHistoryPanel';
 import { uploadLifeGroupResource } from '@/lib/cloudinary/upload';
 import { ROLE_PERMISSIONS } from '@/types/roles';
-import { excludePassedAwayMembers } from '@/lib/utils/householdMembers';
+import { getActiveHouseholdMembers } from '@/lib/utils/householdMembers';
 
 export default function LifeGroupsManagement() {
   useEffect(() => {
@@ -156,7 +156,9 @@ export default function LifeGroupsManagement() {
         const units = snapshot.docs.flatMap(doc => {
           const data = doc.data();
           if (data.active === false) return [];
-          const activeMembers = excludePassedAwayMembers((data.members || []) as FamilyMember[]);
+          const allMembers = (data.members || []) as FamilyMember[];
+          const activeMembers = getActiveHouseholdMembers(allMembers);
+          if (allMembers.length > 0 && activeMembers.length === 0) return [];
           return [{
             id: doc.id,
             familyName: data.householdName || 'Unnamed Household',

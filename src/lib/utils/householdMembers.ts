@@ -4,6 +4,7 @@ interface MemberEventLike {
 
 interface HouseholdMemberLike {
   importantEvents?: unknown;
+  active?: unknown;
 }
 
 export const hasPassedAwayEvent = (member: unknown): boolean => {
@@ -15,4 +16,16 @@ export const hasPassedAwayEvent = (member: unknown): boolean => {
 
 export const excludePassedAwayMembers = <T>(members: T[]): T[] => (
   members.filter((member) => !hasPassedAwayEvent(member))
+);
+
+export const isInactiveMember = (member: unknown): boolean => (
+  !!member && typeof member === 'object' && (member as HouseholdMemberLike).active === false
+);
+
+export const excludeInactiveMembers = <T>(members: T[]): T[] => (
+  members.filter((member) => !isInactiveMember(member))
+);
+
+export const getActiveHouseholdMembers = <T>(members: T[]): T[] => (
+  members.filter((member) => !isInactiveMember(member) && !hasPassedAwayEvent(member))
 );

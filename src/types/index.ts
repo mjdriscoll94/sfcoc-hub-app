@@ -116,6 +116,8 @@ export interface FamilyMember {
   relationship?: string; // e.g., "Parent", "Child", "Spouse"
   phoneNumber?: string;
   isLifeGroupLeader?: boolean;
+  active?: boolean;
+  inactiveReason?: string;
 }
 
 export interface FamilyUnit {

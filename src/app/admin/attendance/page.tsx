@@ -38,7 +38,7 @@ import {
   type AttendanceContactOutcome,
 } from '@/lib/utils/attendanceContacts';
 import { canManageAttendance } from '@/types/roles';
-import { excludePassedAwayMembers } from '@/lib/utils/householdMembers';
+import { getActiveHouseholdMembers } from '@/lib/utils/householdMembers';
 
 interface FirestoreAttendanceHousehold {
   householdName?: string;
@@ -144,6 +144,8 @@ export default function AttendanceAdminPage() {
         const loadedHouseholds = householdsSnapshot.docs
           .map((snapshot) => {
             const data = snapshot.data() as FirestoreAttendanceHousehold;
+            const allMembers = Array.isArray(data.members) ? data.members : [];
+            const activeMembers = getActiveHouseholdMembers(allMembers);
             return {
               id: snapshot.id,
               householdName: data.householdName || 'Unnamed Household',
@@ -153,10 +155,11 @@ export default function AttendanceAdminPage() {
               isVisitor: data.isVisitor === true,
               longTermExempt: data.longTermExempt === true,
               visitorResetAt: data.visitorResetAt?.toDate(),
-              members: excludePassedAwayMembers(Array.isArray(data.members) ? data.members : []),
+              members: activeMembers,
+              hasOnlyInactiveMembers: allMembers.length > 0 && activeMembers.length === 0,
             };
           })
-          .filter((household) => household.active);
+          .filter((household) => household.active && !household.hasOnlyInactiveMembers);
 
         const loadedRecords = recordsSnapshot.docs.map((snapshot) => {
           const data = snapshot.data() as FirestoreAttendanceRecord;
