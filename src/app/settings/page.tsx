@@ -297,6 +297,19 @@ export default function SettingsPage() {
           </div>
         )}
 
+        <div className="mb-8 rounded-lg border border-sage/20 bg-card p-6">
+          <h2 className="text-lg font-bold text-text">Site tour</h2>
+          <p className="mt-2 text-base text-text/70">
+            Review where to find announcements, the calendar, church resources, and the Prayer Board.
+          </p>
+          <Link
+            href="/?tour=1"
+            className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light"
+          >
+            Restart the site tour
+          </Link>
+        </div>
+
         <div className="bg-card border border-sage/20 rounded-lg p-6">
           <div className="space-y-6">
             {/* Email Subscriptions */}
@@ -462,4 +475,4 @@ export default function SettingsPage() {
       </div>
     </div>
   );
-} 
+}

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import {
   ArrowRight,
   BookOpen,
@@ -70,6 +71,8 @@ export function MemberDashboard() {
   const { items: prayerItems, loading: prayersLoading } = usePrayerPraise();
   const startTour = useOnboardingTour();
   const { setTourActive } = useTourActive();
+  const router = useRouter();
+  const tourRequestHandled = useRef(false);
   const [welcomeDismissed, setWelcomeDismissed] = useState(false);
   const showWelcome = userProfile?.hasSeenOnboardingTour !== true && !welcomeDismissed;
   const firstName = userProfile?.displayName?.trim().split(/\s+/)[0];
@@ -88,6 +91,16 @@ export function MemberDashboard() {
     setWelcomeDismissed(true);
     await markOnboardingTourSeen();
   }
+
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get('tour') !== '1' || tourRequestHandled.current || isOnboardingTourActive()) return;
+    tourRequestHandled.current = true;
+    setTourActive(true);
+    startTour(() => {
+      setTourActive(false);
+      router.replace('/');
+    });
+  }, [router, setTourActive, startTour]);
 
   return (
     <div className="min-h-screen bg-bg">

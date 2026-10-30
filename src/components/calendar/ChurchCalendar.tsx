@@ -262,6 +262,12 @@ export function ChurchCalendar({
     : 'Click a day to add an event. Switch view to see events in detail.';
 
   useEffect(() => {
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      setViewMode('month');
+    }
+  }, []);
+
+  useEffect(() => {
     const unsub = onSnapshot(
       collection(db, 'calendarCategories'),
       (snap) => {

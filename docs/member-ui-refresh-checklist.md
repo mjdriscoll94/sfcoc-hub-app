@@ -7,9 +7,9 @@ This checklist is the source of truth for the usability refresh. Existing featur
 ## Guardrails
 
 - [x] Create the feature branch from the latest `main`.
-- [ ] Keep all existing user-facing routes and actions reachable.
-- [ ] Preserve role permissions, approval rules, Firebase schemas, notifications, and integrations.
-- [ ] Avoid production data mutations during UI testing.
+- [x] Keep all existing user-facing routes and actions reachable.
+- [x] Preserve role permissions, approval rules, Firebase schemas, notifications, and integrations.
+- [x] Avoid production data mutations during UI testing.
 - [ ] Do not merge without explicit approval.
 
 ## Phase 1: Shared foundations
@@ -67,20 +67,20 @@ This checklist is the source of truth for the usability refresh. Existing featur
 
 ## Phase 5: Priority member pages
 
-- [ ] Preserve announcement category filters and expand/collapse behavior.
-- [ ] Deep-link dashboard announcement selections to the expanded item.
-- [ ] Replace the icon-only notification control with explanatory text.
-- [ ] Explain notification scope before requesting browser permission.
-- [ ] Default the calendar to month view on phones and year view on larger screens.
-- [ ] Preserve calendar year, month, and week views, filters, downloads, and role-based editing.
+- [x] Preserve announcement category filters and expand/collapse behavior.
+- [x] Deep-link dashboard announcement selections to the expanded item.
+- [x] Replace the icon-only notification control with explanatory text.
+- [x] Explain notification scope before requesting browser permission.
+- [x] Default the calendar to month view on phones and year view on larger screens.
+- [x] Preserve calendar year, month, and week views, filters, downloads, and role-based editing.
 - [x] Combine Bulletin and Lesson Notes into one member-facing area with two clear tabs.
 - [x] Add focused search and year filtering for Bulletin and Lesson Notes.
 - [x] Preserve every PDF and download action.
 - [x] Retain document dates while removing redundant upload dates from the visible member list.
-- [ ] Preserve all Prayer Board filters, expansion, submission, support, and approval behavior.
-- [ ] Preserve all Life Group participant resources, leader resources, households, and role-controlled contact details.
-- [ ] Keep Instant Church Directory as the primary member directory.
-- [ ] Preserve the internal directory for its authorized roles.
+- [x] Preserve all Prayer Board filters, expansion, submission, support, and approval behavior.
+- [x] Preserve all Life Group participant resources, leader resources, households, and role-controlled contact details.
+- [x] Keep Instant Church Directory as the primary member directory.
+- [x] Preserve the internal directory for its authorized roles.
 
 ## Phase 6: Remaining member experience
 
@@ -91,23 +91,23 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [ ] Standardize Settings sections and notification controls.
 - [x] Preserve the onboarding tour but make it optional.
 - [x] Add Take a quick tour and Not now choices.
-- [ ] Keep Restart tour in Settings.
+- [x] Keep Restart tour in Settings.
 
 ## Phase 7: Manage Church workspace
 
-- [ ] Replace the Admin label with Manage Church.
-- [ ] Show pending approvals and follow-up items before tool navigation.
-- [ ] Show only tools each role is authorized to use.
-- [ ] Add direct task navigation without a Dashboard-to-category-to-tool detour.
-- [ ] People: Users, Teachers, Directory, Households, Life Groups.
-- [ ] Communication: Announcements, Email, Email Lists, Prayer Requests.
-- [ ] Scheduling: Calendar, Events, Service Roles, Volunteer Opportunities.
-- [ ] Attendance: Entry, History, Reports, Imports, Follow-up.
-- [ ] Content: Bulletin, Lesson Notes.
-- [ ] System: Settings.
-- [ ] Use a labeled sidebar on larger screens and a flat Manage menu on phones.
-- [ ] Add consistent breadcrumbs and a return to Manage Church.
-- [ ] Preserve approval queues and every existing management action.
+- [x] Replace the Admin label with Manage Church.
+- [x] Show pending approvals and follow-up items before tool navigation.
+- [x] Show only tools each role is authorized to use.
+- [x] Add direct task navigation without a Dashboard-to-category-to-tool detour.
+- [x] People: Users, Teachers, Directory, Households, Life Groups.
+- [x] Communication: Announcements, Email, Email Lists, Prayer Requests.
+- [x] Scheduling: Calendar, Events, Service Roles, Volunteer Opportunities.
+- [x] Attendance: Entry, History, Reports, Imports, Follow-up.
+- [x] Content: Bulletin, Lesson Notes.
+- [x] System: Settings.
+- [x] Use a labeled sidebar on larger screens and a flat Manage menu on phones.
+- [x] Add consistent breadcrumbs and a return to Manage Church.
+- [x] Preserve approval queues and every existing management action.
 
 ## Phase 8: Forms and interaction consistency
 
@@ -138,7 +138,7 @@ This checklist is the source of truth for the usability refresh. Existing featur
 
 ## Review checkpoints
 
-- [ ] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.
+- [x] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.
 - [ ] Checkpoint 2: priority member pages and Manage Church workspace.
 - [ ] Final end-to-end UI and regression review.
 - [ ] Obtain explicit approval before merge.
