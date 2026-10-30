@@ -32,10 +32,16 @@ export default function RootLayout({
             <TourWrapper>
               <RouteGuard>
                 <div className="relative">
+                  <a
+                    href="#main-content"
+                    className="fixed left-4 top-2 z-[100] -translate-y-20 rounded-lg bg-charcoal px-4 py-3 font-semibold text-white focus:translate-y-0"
+                  >
+                    Skip to main content
+                  </a>
                   <div className="fixed top-0 left-0 right-0 z-50">
                     <Navigation />
                   </div>
-                  <main className="relative top-16">
+                  <main id="main-content" className="min-h-screen pt-16 pb-20 lg:pb-0">
                     {children}
                   </main>
                 </div>

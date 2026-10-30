@@ -1,738 +1,401 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
-import { Fragment } from 'react';
-import { Dialog, Transition, Disclosure, Menu } from '@headlessui/react';
-import { Bars3Icon, XMarkIcon, ChevronUpIcon, PlayCircleIcon } from '@heroicons/react/24/outline';
+import { usePathname } from 'next/navigation';
+import { Dialog } from '@headlessui/react';
+import {
+  BookOpen,
+  CalendarDays,
+  ChevronDown,
+  ClipboardCheck,
+  ExternalLink,
+  Files,
+  Gift,
+  HandHeart,
+  Headphones,
+  Heart,
+  Home,
+  LogOut,
+  Megaphone,
+  Menu,
+  PlayCircle,
+  Settings,
+  ShieldCheck,
+  UsersRound,
+  X,
+} from 'lucide-react';
+import { useAuth } from '@/lib/auth/AuthContext';
 import { canManageAttendance, ROLE_PERMISSIONS } from '@/types/roles';
 
-type SubItem = {
-  name: string;
-  href?: string;
-  icon?: React.ReactNode;
-  action?: 'podcast-modal';
-  /** Optional id for the element (e.g. for tour attachTo) */
-  id?: string;
-};
-
-type NavItem = {
-  name: string;
-  href?: string;
-  icon: React.ReactNode;
-  dropdown?: boolean;
-  items?: SubItem[];
-  /** Optional id for the nav element (e.g. for tour attachTo: "#nav-resources") */
-  id?: string;
-};
-
+const DIRECTORY_URL =
+  'https://members.instantchurchdirectory.com/families/7aa8b3f0-5f58-4ef4-a314-9ab636f24cf4';
 const SPOTIFY_PODCAST_URL = 'https://open.spotify.com/show/6BUbTQmZOpUZ9KvpOLPtwy';
 const APPLE_PODCASTS_URL = 'https://podcasts.apple.com/us/podcast/beyond-sunday/id1838805862';
 
-const Navigation = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
-  const [isSigningOut, setIsSigningOut] = useState(false);
-  const [isPodcastModalOpen, setIsPodcastModalOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const dropdownButtonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
-  const router = useRouter();
+type NavLink = {
+  href: string;
+  label: string;
+  icon: typeof Home;
+  external?: boolean;
+  id?: string;
+};
 
+const primaryMemberLinks: NavLink[] = [
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { href: '/resources', label: 'Bulletin & Notes', icon: Files, id: 'nav-resources' },
+  { href: '/prayer-board', label: 'Prayer Board', icon: Heart, id: 'nav-prayer-board' },
+  { href: '/life-groups', label: 'Life Groups', icon: UsersRound },
+];
+
+const mobilePrimaryLinks: NavLink[] = [
+  { href: '/', label: 'Home', icon: Home },
+  { href: '/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/calendar', label: 'Calendar', icon: CalendarDays },
+  { href: '/resources', label: 'Resources', icon: Files, id: 'nav-resources-mobile' },
+];
+
+function isActivePath(pathname: string, href: string): boolean {
+  if (href === '/') return pathname === '/';
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+function MemberLink({ item, onClick, compact = false }: { item: NavLink; onClick?: () => void; compact?: boolean }) {
   const pathname = usePathname();
-  const { user, userProfile, signOut } = useAuth();
-
-  // Validate router on mount
-  useEffect(() => {
-    if (!router) {
-      console.error('Router instance is not available');
-    } else {
-      console.log('Router instance is available');
-    }
-  }, [router]);
-
-  // Debug state changes
-  useEffect(() => {
-    console.log('=== State Debug ===');
-    console.log('isOpen:', isOpen);
-    console.log('openDropdown:', openDropdown);
-    console.log('pathname:', pathname);
-  }, [isOpen, openDropdown, pathname]);
-
-  // Close mobile menu when tour (or other code) navigates away (e.g. to prayer board)
-  useEffect(() => {
-    const handleCloseMobileMenu = () => setIsOpen(false);
-    window.addEventListener('sfcoc-close-mobile-menu', handleCloseMobileMenu);
-    return () => window.removeEventListener('sfcoc-close-mobile-menu', handleCloseMobileMenu);
-  }, []);
-
-  // Handle clicks outside dropdowns
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      // Check if click is outside all dropdowns
-      if (openDropdown) {
-        const dropdownButton = dropdownButtonRefs.current[openDropdown];
-        const dropdownContent = document.querySelector(`[data-dropdown="${openDropdown}"]`);
-        
-        // If click is not on the button or inside the dropdown content
-        if (
-          (!dropdownButton || !dropdownButton.contains(event.target as Node)) &&
-          (!dropdownContent || !dropdownContent.contains(event.target as Node))
-        ) {
-          setOpenDropdown(null);
-        }
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [openDropdown]);
-
-  // Debug navigation attempts
-  const handleNavigation = async (href: string, itemName: string) => {
-    console.log('=== Navigation Debug ===');
-    console.log('1. handleNavigation called');
-    console.log('- Item:', itemName);
-    console.log('- Current pathname:', pathname);
-    console.log('- Target href:', href);
-    console.log('- Menu open:', isOpen);
-    console.log('- Current dropdown:', openDropdown);
-    
-    try {
-      // Close menus first
-      console.log('2. Closing menus');
-      setIsOpen(false);
-      setOpenDropdown(null);
-      
-      console.log('3. Starting navigation');
-      await router.push(href);
-      console.log('4. Navigation completed');
-    } catch (error) {
-      console.error('Navigation error:', error);
-    }
-  };
-
-  const handleDropdownClick = (dropdownName: string) => {
-    console.log('=== Dropdown Click ===');
-    console.log('Clicked dropdown:', dropdownName);
-    console.log('Current openDropdown:', openDropdown);
-    console.log('Will set to:', openDropdown === dropdownName ? 'null' : dropdownName);
-    setOpenDropdown(openDropdown === dropdownName ? null : dropdownName);
-  };
-
-  const publicNavItems: NavItem[] = [
-    { 
-      name: 'Home',
-      href: '/',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25" />
-        </svg>
-      )
-    },
-    {
-      name: 'Resources',
-      id: 'nav-resources',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-        </svg>
-      ),
-      dropdown: true,
-      items: [
-        {
-          name: 'Lesson Notes PDFs',
-          href: '/resources/lesson-notes',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-            </svg>
-          )
-        },
-        {
-          name: 'Bulletin',
-          href: '/resources/bulletin',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
-            </svg>
-          )
-        },
-        {
-          name: 'Podcast',
-          action: 'podcast-modal',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M19.114 5.636a9 9 0 010 12.728M16.463 8.288a5.25 5.25 0 010 7.424M6.75 8.25l4.72-4.72a.75.75 0 011.28.53v15.88a.75.75 0 01-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.01 9.01 0 012.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75z" />
-            </svg>
-          )
-        }
-      ]
-    },
-    {
-      name: 'Give',
-      href: '/give',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M21 11.25v8.25a1.5 1.5 0 01-1.5 1.5H5.25a1.5 1.5 0 01-1.5-1.5v-8.25M12 4.875A2.625 2.625 0 109.375 7.5H12m0-2.625V7.5m0-2.625A2.625 2.625 0 1114.625 7.5H12m0 0V21m-8.625-9.75h18c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125h-18c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-        </svg>
-      )
-    }
-  ];
-
-  const protectedNavItems: NavItem[] = [
-    {
-      name: 'Connect',
-      id: 'nav-connect',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-        </svg>
-      ),
-      dropdown: true,
-      items: [
-        {
-          name: 'Prayer Board',
-          id: 'nav-prayer-board',
-          href: '/prayer-board',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-            </svg>
-          )
-        },
-        {
-          name: 'Directory',
-          href: 'https://members.instantchurchdirectory.com/families/7aa8b3f0-5f58-4ef4-a314-9ab636f24cf4',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-            </svg>
-          )
-        },
-        {
-          name: 'Announcements',
-          href: '/announcements',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M10.34 15.84c-.688-.06-1.386-.09-2.09-.09H7.5a4.5 4.5 0 110-9h.75c.704 0 1.402-.03 2.09-.09m0 9.18c.253.962.584 1.892.985 2.783.247.55.06 1.21-.463 1.511l-.657.38c-.551.318-1.26.117-1.527-.461a20.845 20.845 0 01-1.44-4.282m3.102.069a18.03 18.03 0 01-.59-4.59c0-1.586.205-3.124.59-4.59m0 9.18a23.848 23.848 0 018.835 2.535M10.34 6.66a23.847 23.847 0 008.835-2.535m0 0A23.74 23.74 0 0018.795 3m.38 1.125a23.91 23.91 0 011.014 5.395m-1.014 8.855c-.118.38-.245.754-.38 1.125m.38-1.125a23.91 23.91 0 001.014-5.395m0-3.46c.495.413.811 1.035.811 1.73 0 .695-.316 1.317-.811 1.73m0-3.46a24.347 24.347 0 010 3.46" />
-            </svg>
-          )
-        },
-        {
-          name: 'Volunteer',
-          href: '/volunteer',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6 0 3.375 3.375 0 016 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-            </svg>
-          )
-        },
-        {
-          name: 'Calendar',
-          href: '/calendar',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
-            </svg>
-          )
-        },
-        {
-          name: 'Life Groups',
-          href: '/life-groups',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
-            </svg>
-          )
-        }
-      ]
-    },
-    {
-      name: 'Services',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      dropdown: true,
-      items: [
-        {
-          name: 'Service Roles',
-          href: '/service-roles',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-            </svg>
-          )
-        },
-        ...(canManageAttendance(userProfile) ? [{
-          name: 'Attendance',
-          href: '/admin/attendance',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75 11.25 15 15 9.75m4.5 2.25a7.5 7.5 0 11-15 0 7.5 7.5 0 0115 0z" />
-            </svg>
-          )
-        }] : [])
-      ]
-    }
-  ];
-
-  const canAccessAdmin = userProfile?.isAdmin || (
-    userProfile?.role && (
-      ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements ||
-      ROLE_PERMISSIONS[userProfile.role]?.canManageLifeGroups
-    )
-  );
-
-  const adminNavItems: NavItem[] = canAccessAdmin ? [
-    {
-      name: 'Admin',
-      icon: (
-        <svg className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
-        </svg>
-      ),
-      dropdown: true,
-      items: [
-        {
-          name: 'Dashboard',
-          href: '/admin',
-          icon: (
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.207A1 1 0 013 6.5V4z" />
-            </svg>
-          )
-        },
-        ...(userProfile?.isAdmin ? [
-          {
-            name: 'Teacher Management',
-            href: '/admin/teachers',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-              </svg>
-            )
-          },
-          {
-            name: 'Users',
-            href: '/admin/users',
-            icon: (
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6 0 3.375 3.375 0 016 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
-              </svg>
-            )
-          }
-        ] : [])
-      ]
-    }
-  ] : [];
-
-  const activeNavItems = [...publicNavItems, ...(user ? [...protectedNavItems, ...adminNavItems] : [])];
+  const Icon = item.icon;
+  const active = isActivePath(pathname, item.href);
 
   return (
-    <nav className="bg-[#E88B5F] relative z-40" id="navigation">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex">
-            {/* Mobile menu button - id for tour (e.g. attachTo #nav-menu, when.show click to open) */}
-            <div className="flex items-center md:hidden">
+    <Link
+      id={item.id}
+      href={item.href}
+      onClick={onClick}
+      aria-current={active ? 'page' : undefined}
+      className={compact
+        ? `flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-base font-medium focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary ${
+            active ? 'bg-coral/15 text-charcoal' : 'text-charcoal hover:bg-gray-100'
+          }`
+        : `inline-flex min-h-16 items-center gap-2 border-b-3 px-1 text-sm font-semibold focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-white ${
+            active ? 'border-charcoal text-charcoal' : 'border-transparent text-charcoal hover:border-charcoal/40'
+          }`}
+    >
+      <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />
+      <span>{item.label}</span>
+    </Link>
+  );
+}
+
+function ExternalMenuLink({ item, onClick }: { item: NavLink; onClick: () => void }) {
+  const Icon = item.icon;
+  return (
+    <a
+      href={item.href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={onClick}
+      className="flex min-h-11 items-center gap-3 rounded-lg px-3 py-2 text-base font-medium text-charcoal hover:bg-gray-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary"
+    >
+      <Icon aria-hidden="true" className="h-5 w-5 shrink-0" />
+      <span className="flex-1">{item.label}</span>
+      <ExternalLink aria-hidden="true" className="h-4 w-4 text-text-light" />
+    </a>
+  );
+}
+
+export default function Navigation() {
+  const pathname = usePathname();
+  const { user, userProfile, signOut } = useAuth();
+  const [moreOpen, setMoreOpen] = useState(false);
+  const [resourcesOpen, setResourcesOpen] = useState(false);
+  const [podcastOpen, setPodcastOpen] = useState(false);
+  const [signingOut, setSigningOut] = useState(false);
+  const resourcesRef = useRef<HTMLDivElement>(null);
+
+  const canAccessManageChurch = Boolean(
+    userProfile?.isAdmin ||
+      (userProfile?.role &&
+        (ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements ||
+          ROLE_PERMISSIONS[userProfile.role]?.canManageLifeGroups))
+  );
+
+  useEffect(() => {
+    setMoreOpen(false);
+    setResourcesOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    const closeMobileMenu = () => setMoreOpen(false);
+    window.addEventListener('sfcoc-close-mobile-menu', closeMobileMenu);
+    return () => window.removeEventListener('sfcoc-close-mobile-menu', closeMobileMenu);
+  }, []);
+
+  useEffect(() => {
+    const closeResources = (event: MouseEvent) => {
+      if (resourcesRef.current && !resourcesRef.current.contains(event.target as Node)) {
+        setResourcesOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', closeResources);
+    return () => document.removeEventListener('mousedown', closeResources);
+  }, []);
+
+  async function handleSignOut() {
+    setSigningOut(true);
+    try {
+      await signOut();
+    } finally {
+      setSigningOut(false);
+    }
+  }
+
+  const closeMore = () => setMoreOpen(false);
+  const memberInformation: NavLink[] = [
+    { href: '/prayer-board', label: 'Prayer Board', icon: Heart, id: 'nav-prayer-board-menu' },
+    { href: '/life-groups', label: 'Life Groups', icon: UsersRound },
+    { href: DIRECTORY_URL, label: 'Member Directory', icon: BookOpen, external: true },
+  ];
+  const participate: NavLink[] = [
+    { href: '/volunteer', label: 'Volunteer Opportunities', icon: HandHeart },
+    { href: '/service-roles', label: 'Service Roles', icon: ClipboardCheck },
+  ];
+  const churchResources: NavLink[] = [
+    { href: '/sermons', label: 'Sermons', icon: PlayCircle },
+    { href: '/give', label: 'Giving', icon: Gift },
+  ];
+
+  const menuSection = (label: string, items: NavLink[]) => (
+    <section aria-labelledby={`menu-${label.toLowerCase().replaceAll(' ', '-')}`} className="space-y-1">
+      <h2
+        id={`menu-${label.toLowerCase().replaceAll(' ', '-')}`}
+        className="px-3 pt-3 text-sm font-bold text-text-light"
+      >
+        {label}
+      </h2>
+      {items.map((item) =>
+        item.external ? (
+          <ExternalMenuLink key={item.label} item={item} onClick={closeMore} />
+        ) : (
+          <MemberLink key={item.href} item={item} onClick={closeMore} compact />
+        )
+      )}
+    </section>
+  );
+
+  return (
+    <>
+      <nav className="relative z-40 border-b border-charcoal/15 bg-coral" aria-label="Primary navigation" id="navigation">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
+          <Link
+            href="/"
+            className="flex min-h-11 items-center gap-3 rounded-md font-bold text-charcoal focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white"
+          >
+            <Image src="/images/logo_colored.svg" alt="" width={36} height={36} className="h-9 w-9" />
+            <span className="hidden text-sm leading-tight sm:block">
+              Sioux Falls<br />Church of Christ
+            </span>
+            <span className="text-base sm:hidden">Church Hub</span>
+          </Link>
+
+          {user ? (
+            <>
+              <div className="hidden items-stretch gap-4 lg:flex">
+                {primaryMemberLinks.map((item) => <MemberLink key={item.href} item={item} />)}
+                <button
+                  id="nav-connect"
+                  type="button"
+                  onClick={() => setMoreOpen(true)}
+                  className="inline-flex min-h-16 items-center gap-2 border-b-3 border-transparent px-1 text-sm font-semibold text-charcoal hover:border-charcoal/40 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-[-3px] focus-visible:outline-white"
+                >
+                  <Menu aria-hidden="true" className="h-5 w-5" />
+                  More
+                </button>
+              </div>
               <button
                 id="nav-menu"
-                onClick={() => setIsOpen(!isOpen)}
-                className="inline-flex items-center justify-center p-2 rounded-md text-white hover:text-black focus:outline-none"
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-white/20 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white lg:hidden"
+                aria-label="Open more destinations"
               >
-                <span className="sr-only">Open main menu</span>
-                {isOpen ? (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                ) : (
-                  <svg className="block h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 6h16M4 12h16M4 18h16" />
-                  </svg>
-                )}
+                <Menu aria-hidden="true" className="h-6 w-6" />
               </button>
-            </div>
-
-            {/* Desktop navigation */}
-            <div className="hidden md:ml-6 md:flex md:space-x-8" ref={dropdownRef}>
-              {activeNavItems.map((item) => (
-                item.dropdown ? (
-                  <div key={item.name} className="relative inline-flex items-center">
+            </>
+          ) : (
+            <div className="flex items-center gap-2 sm:gap-5">
+              <Link className="hidden min-h-11 items-center px-2 font-semibold text-charcoal sm:inline-flex" href="/">Home</Link>
+              <div className="relative hidden sm:block" ref={resourcesRef}>
+                <button
+                  id="nav-resources"
+                  type="button"
+                  onClick={() => setResourcesOpen((open) => !open)}
+                  aria-expanded={resourcesOpen}
+                  className="inline-flex min-h-11 items-center gap-1 rounded-md px-2 font-semibold text-charcoal hover:bg-white/20 focus-visible:outline focus-visible:outline-3 focus-visible:outline-white"
+                >
+                  Resources
+                  <ChevronDown aria-hidden="true" className={`h-4 w-4 ${resourcesOpen ? 'rotate-180' : ''}`} />
+                </button>
+                {resourcesOpen ? (
+                  <div className="absolute right-0 top-full mt-2 w-64 rounded-xl border border-border bg-white p-2 shadow-lg">
+                    <MemberLink item={{ href: '/resources/bulletin', label: 'Bulletins', icon: Files }} compact />
+                    <MemberLink item={{ href: '/resources/lesson-notes', label: 'Lesson Notes', icon: BookOpen }} compact />
+                    <MemberLink item={{ href: '/sermons', label: 'Sermons', icon: PlayCircle }} compact />
                     <button
-                      id={item.id}
-                      ref={el => {
-                        dropdownButtonRefs.current[item.name] = el;
-                      }}
-                      onClick={() => handleDropdownClick(item.name)}
-                      className={`${
-                        item.items?.some(subItem => pathname === subItem.href)
-                          ? 'text-white border-black'
-                          : 'text-white hover:text-white/80 border-transparent'
-                      } inline-flex items-center h-16 px-1 border-b-2 text-sm font-medium`}
+                      type="button"
+                      onClick={() => { setPodcastOpen(true); setResourcesOpen(false); }}
+                      className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base font-medium text-charcoal hover:bg-gray-100"
                     >
-                      <span className="mr-2">{item.icon}</span>
-                      {item.name}
-                      <svg
-                        className={`ml-2 h-5 w-5 transform ${openDropdown === item.name ? 'rotate-180' : ''}`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
-                      </svg>
+                      <Headphones aria-hidden="true" className="h-5 w-5" />
+                      Podcast
                     </button>
-                    {openDropdown === item.name && (
-                      <div 
-                        data-dropdown={item.name}
-                        className="absolute z-50 top-full pt-2 left-0 w-56"
-                      >
-                        <div className="rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5">
-                          <div className="py-1">
-                            {item.items?.map((subItem) => {
-                              if (subItem.action === 'podcast-modal') {
-                                return (
-                                  <button
-                                    key={subItem.name}
-                                    onClick={() => {
-                                      setIsPodcastModalOpen(true);
-                                      handleDropdownClick(item.name);
-                                    }}
-                                    className="text-black hover:bg-[#E88B5F]/10 flex items-center px-4 py-2 text-sm w-full text-left"
-                                  >
-                                    {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                                    {subItem.name}
-                                  </button>
-                                );
-                              }
-                              const isExternal = subItem.href?.startsWith('http');
-                              return isExternal ? (
-                                <a
-                                  key={subItem.name}
-                                  id={subItem.id}
-                                  href={subItem.href}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className={`${
-                                    pathname === subItem.href
-                                      ? 'text-black bg-[#E88B5F]/10 font-semibold'
-                                      : 'text-black hover:bg-[#E88B5F]/10'
-                                  } flex items-center px-4 py-2 text-sm`}
-                                  onClick={() => handleDropdownClick(item.name)}
-                                >
-                                  {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                                  {subItem.name}
-                                </a>
-                              ) : (
-                                <Link
-                                  key={subItem.name}
-                                  id={subItem.id}
-                                  href={subItem.href!}
-                                  className={`${
-                                    pathname === subItem.href
-                                      ? 'text-black bg-[#E88B5F]/10 font-semibold'
-                                      : 'text-black hover:bg-[#E88B5F]/10'
-                                  } flex items-center px-4 py-2 text-sm`}
-                                  onClick={() => handleDropdownClick(item.name)}
-                                >
-                                  {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                                  {subItem.name}
-                                </Link>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
-                ) : (
-                  <Link
-                    key={item.name}
-                    href={item.href || '#'}
-                    className={`${
-                      pathname === item.href
-                        ? 'text-white border-black'
-                        : 'text-white hover:text-white/80 border-transparent'
-                    } inline-flex items-center h-16 px-1 border-b-2 text-sm font-medium`}
-                  >
-                    <span className="mr-2">{item.icon}</span>
-                    {item.name}
-                  </Link>
-                )
-              ))}
-            </div>
-          </div>
-
-          {/* Right side - User menu */}
-          <div className="flex items-center">
-            {user ? (
-              <Menu as="div" className="relative">
-                {({ open }) => (
-                  <>
-                    <Menu.Button id="nav-profile" className="max-w-xs bg-white flex items-center text-sm rounded-full focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-[#E88B5F] focus:ring-black">
-                      <span className="sr-only">Open user menu</span>
-                      <div className="h-8 w-8 rounded-full bg-white flex items-center justify-center text-black font-semibold">
-                        {userProfile?.displayName?.[0] || user.email?.[0] || '?'}
-                      </div>
-                    </Menu.Button>
-                    <Transition
-                      show={open}
-                      as={Fragment}
-                      enter="transition ease-out duration-100"
-                      enterFrom="transform opacity-0 scale-95"
-                      enterTo="transform opacity-100 scale-100"
-                      leave="transition ease-in duration-75"
-                      leaveFrom="transform opacity-100 scale-100"
-                      leaveTo="transform opacity-0 scale-95"
-                    >
-                      <Menu.Items className="absolute z-50 top-full right-0 pt-2 w-48">
-                        <div className="rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 divide-y divide-gray-200">
-                          <div className="py-1">
-                            <div className="px-4 py-2 text-sm text-black font-semibold">
-                              {userProfile?.displayName || user.email}
-                            </div>
-                          </div>
-                          <div className="py-1">
-                            <Menu.Item>
-                              {({ active }) => (
-                                <Link
-                                  href="/settings"
-                                  className={`block w-full text-left px-4 py-2 text-sm text-black ${
-                                    active ? 'bg-[#E88B5F]/10' : ''
-                                  }`}
-                                >
-                                  Settings
-                                </Link>
-                              )}
-                            </Menu.Item>
-                            <Menu.Item>
-                              {({ active }) => (
-                                <button
-                                  className={`block w-full text-left px-4 py-2 text-sm text-black ${
-                                    active ? 'bg-[#E88B5F]/10' : ''
-                                  } ${isSigningOut ? 'opacity-50' : ''}`}
-                                  onClick={async () => {
-                                    if (isSigningOut) return;
-                                    
-                                    setIsSigningOut(true);
-                                    try {
-                                      console.log('Navigation: Sign out button clicked');
-                                      await signOut();
-                                    } catch (error) {
-                                      console.error('Navigation: Error during sign out:', error);
-                                      setIsSigningOut(false);
-                                    }
-                                  }}
-                                  disabled={isSigningOut}
-                                >
-                                  {isSigningOut ? 'Signing out...' : 'Sign out'}
-                                </button>
-                              )}
-                            </Menu.Item>
-                          </div>
-                        </div>
-                      </Menu.Items>
-                    </Transition>
-                  </>
-                )}
-              </Menu>
-            ) : (
+                ) : null}
+              </div>
+              <Link className="hidden min-h-11 items-center px-2 font-semibold text-charcoal sm:inline-flex" href="/give">Give</Link>
               <Link
                 href="/auth/signin"
-                className="text-white hover:text-white/80 text-sm font-medium"
+                className="inline-flex min-h-11 items-center rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-white"
               >
                 Sign in
               </Link>
-            )}
+              <button
+                type="button"
+                onClick={() => setMoreOpen(true)}
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-white/20 focus-visible:outline focus-visible:outline-3 focus-visible:outline-white sm:hidden"
+                aria-label="Open navigation menu"
+              >
+                <Menu aria-hidden="true" className="h-6 w-6" />
+              </button>
+            </div>
+          )}
+        </div>
+      </nav>
+
+      {user ? (
+        <nav className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-white/95 px-1 pb-[env(safe-area-inset-bottom)] shadow-[0_-4px_16px_rgba(47,62,70,0.12)] backdrop-blur lg:hidden" aria-label="Member navigation">
+          <div className="mx-auto grid max-w-lg grid-cols-5">
+            {mobilePrimaryLinks.map((item) => {
+              const Icon = item.icon;
+              const active = isActivePath(pathname, item.href);
+              return (
+                <Link
+                  key={item.href}
+                  id={item.id}
+                  href={item.href}
+                  aria-current={active ? 'page' : undefined}
+                  className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-semibold focus-visible:outline focus-visible:outline-3 focus-visible:outline-inset focus-visible:outline-primary ${active ? 'text-coral-dark' : 'text-charcoal'}`}
+                >
+                  <Icon aria-hidden="true" className="h-5 w-5" />
+                  <span className="max-w-full truncate">{item.label}</span>
+                </Link>
+              );
+            })}
+            <button
+              type="button"
+              onClick={() => setMoreOpen(true)}
+              className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-semibold text-charcoal focus-visible:outline focus-visible:outline-3 focus-visible:outline-inset focus-visible:outline-primary"
+            >
+              <Menu aria-hidden="true" className="h-5 w-5" />
+              <span>More</span>
+            </button>
           </div>
-        </div>
-      </div>
+        </nav>
+      ) : null}
 
-      {/* Mobile menu - scrollable when content exceeds viewport */}
-      <div className={`${isOpen ? 'block' : 'hidden'} md:hidden bg-[#E88B5F] max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain`}>
-        <div className="pt-2 pb-3 space-y-1">
-          {activeNavItems.map((item) => (
-            item.dropdown ? (
-              <Disclosure as="div" key={item.name}>
-                {({ open }) => (
-                  <>
-                    <Disclosure.Button
-                      id={item.id}
-                      className={`${
-                        item.items?.some(subItem => pathname === subItem.href)
-                          ? 'text-white bg-black/10 font-semibold'
-                          : 'text-white hover:bg-black/5'
-                      } w-full flex items-center px-4 py-2 text-sm font-medium`}
-                    >
-                      <span className="mr-2">{item.icon}</span>
-                      <span className="flex-1 text-left">{item.name}</span>
-                      <ChevronUpIcon
-                        className={`${
-                          open ? 'transform rotate-180' : ''
-                        } w-5 h-5 text-white`}
-                      />
-                    </Disclosure.Button>
-                    <Disclosure.Panel className="bg-[#E88B5F]/90">
-                      {item.items?.map((subItem) => {
-                        if (subItem.action === 'podcast-modal') {
-                          return (
-                            <button
-                              key={subItem.name}
-                              onClick={() => {
-                                setIsPodcastModalOpen(true);
-                                setIsOpen(false);
-                              }}
-                              className="text-white hover:bg-black/5 flex items-center pl-12 pr-4 py-2 text-sm w-full text-left"
-                            >
-                              {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                              {subItem.name}
-                            </button>
-                          );
-                        }
-                        const isExternal = subItem.href?.startsWith('http');
-                        return isExternal ? (
-                          <a
-                            key={subItem.name}
-                            id={subItem.id}
-                            href={subItem.href}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`${
-                              pathname === subItem.href
-                                ? 'text-white bg-black/10 font-semibold'
-                                : 'text-white hover:bg-black/5'
-                            } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
-                            onClick={() => {
-                              console.log('Mobile link clicked:', subItem.name);
-                              setIsOpen(false);
-                            }}
-                          >
-                            {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                            {subItem.name}
-                          </a>
-                        ) : (
-                          <Link
-                            key={subItem.name}
-                            id={subItem.id}
-                            href={subItem.href!}
-                            className={`${
-                              pathname === subItem.href
-                                ? 'text-white bg-black/10 font-semibold'
-                                : 'text-white hover:bg-black/5'
-                            } flex items-center pl-12 pr-4 py-2 text-sm w-full text-left block`}
-                            onClick={() => {
-                              console.log('Mobile link clicked:', subItem.name);
-                              setIsOpen(false);
-                            }}
-                          >
-                            {subItem.icon && <span className="mr-2">{subItem.icon}</span>}
-                            {subItem.name}
-                          </Link>
-                        );
-                      })}
-                    </Disclosure.Panel>
-                  </>
-                )}
-              </Disclosure>
-            ) : (
-              <Link
-                key={item.name}
-                href={item.href || '#'}
-                className={`${
-                  pathname === item.href
-                    ? 'text-white bg-black/10 font-semibold'
-                    : 'text-white hover:bg-black/5'
-                } flex items-center px-4 py-2 text-sm font-medium w-full text-left block`}
-                onClick={() => {
-                  console.log('Mobile nav item clicked:', item.name);
-                  setIsOpen(false);
-                }}
+      <Dialog open={moreOpen} onClose={setMoreOpen} className="relative z-[70]">
+        <div className="fixed inset-0 bg-charcoal/50" aria-hidden="true" />
+        <div className="fixed inset-0 flex justify-end">
+          <Dialog.Panel className="h-full w-full max-w-sm overflow-y-auto bg-white p-4 shadow-xl">
+            <div className="flex min-h-12 items-center justify-between border-b border-border pb-3">
+              <div>
+                <Dialog.Title className="text-xl font-bold text-charcoal">{user ? 'More' : 'Menu'}</Dialog.Title>
+                {userProfile?.displayName ? <p className="text-sm text-text-light">Signed in as {userProfile.displayName}</p> : null}
+              </div>
+              <button
+                type="button"
+                onClick={closeMore}
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg hover:bg-gray-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-primary"
+                aria-label="Close menu"
               >
-                <span className="mr-2">{item.icon}</span>
-                {item.name}
-              </Link>
-            )
-          ))}
-        </div>
-      </div>
+                <X aria-hidden="true" className="h-6 w-6" />
+              </button>
+            </div>
 
-      {/* Podcast Platform Modal */}
-      <Transition appear show={isPodcastModalOpen} as={Fragment}>
-        <Dialog as="div" className="relative z-50" onClose={() => setIsPodcastModalOpen(false)}>
-          <Transition.Child
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0"
-            enterTo="opacity-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100"
-            leaveTo="opacity-0"
-          >
-            <div className="fixed inset-0 bg-black/30" />
-          </Transition.Child>
-          <div className="fixed inset-0 overflow-y-auto">
-            <div className="flex min-h-full items-center justify-center p-4">
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 shadow-xl transition-all">
-                  <Dialog.Title as="h3" className="text-lg font-semibold text-charcoal mb-2">
-                    Beyond Sunday Podcast
-                  </Dialog.Title>
-                  <Dialog.Description className="text-sm text-text-light mb-6">
-                    Choose where you&apos;d like to listen:
-                  </Dialog.Description>
-                  <div className="space-y-3">
-                    <a
-                      href={SPOTIFY_PODCAST_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center w-full px-4 py-3 rounded-lg bg-[#1DB954] text-white font-medium hover:bg-[#1ed760] transition-colors"
-                      onClick={() => setIsPodcastModalOpen(false)}
-                    >
-                      <svg className="w-6 h-6 mr-3" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 0C5.4 0 0 5.4 0 12s5.4 12 12 12 12-5.4 12-12S18.66 0 12 0zm5.521 17.34c-.24.359-.66.48-1.021.24-2.82-1.74-6.36-2.101-10.561-1.141-.418.122-.779-.179-.899-.539-.12-.421.18-.78.54-.9 4.56-1.021 8.52-.6 11.64 1.32.42.18.479.659.301 1.02zm1.44-3.3c-.301.42-.841.6-1.262.3-3.239-1.98-8.159-2.58-11.939-1.38-.479.12-1.02-.12-1.14-.6-.12-.48.12-1.021.6-1.141C9.6 9.9 15 10.561 18.72 12.84c.361.181.54.78.241 1.2zm.12-3.36C15.24 8.4 8.82 8.16 5.16 9.301c-.6.179-1.2-.181-1.38-.721-.18-.601.18-1.2.72-1.381 4.26-1.26 11.28-1.02 15.721 1.621.539.3.719 1.02.419 1.56-.299.421-1.02.599-1.559.3z"/>
-                      </svg>
-                      Open in Spotify
-                    </a>
-                    <a
-                      href={APPLE_PODCASTS_URL}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center w-full px-4 py-3 rounded-lg bg-[#9254DE] text-white font-medium hover:bg-[#7c3aed] transition-colors"
-                      onClick={() => setIsPodcastModalOpen(false)}
-                    >
-                      <PlayCircleIcon className="w-6 h-6 mr-3" />
-                      Open in Apple Podcasts
-                    </a>
-                  </div>
+            {user ? (
+              <div className="space-y-3 py-2">
+                {menuSection('Member Information', memberInformation)}
+                {menuSection('Participate', participate)}
+                {menuSection('Church Resources', churchResources)}
+                <section aria-labelledby="menu-account" className="space-y-1">
+                  <h2 id="menu-account" className="px-3 pt-3 text-sm font-bold text-text-light">Account</h2>
+                  <MemberLink item={{ href: '/settings', label: 'Settings', icon: Settings }} onClick={closeMore} compact />
                   <button
                     type="button"
-                    onClick={() => setIsPodcastModalOpen(false)}
-                    className="mt-4 w-full px-4 py-2 text-sm text-text-light hover:text-charcoal border border-border rounded-lg hover:bg-gray-50 transition-colors"
+                    disabled={signingOut}
+                    onClick={handleSignOut}
+                    className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base font-medium text-charcoal hover:bg-gray-100 disabled:opacity-60"
                   >
-                    Cancel
+                    <LogOut aria-hidden="true" className="h-5 w-5" />
+                    {signingOut ? 'Signing out…' : 'Sign out'}
                   </button>
-                </Dialog.Panel>
-              </Transition.Child>
-            </div>
-          </div>
-        </Dialog>
-      </Transition>
-    </nav>
-  );
-};
+                </section>
+                {canAccessManageChurch || canManageAttendance(userProfile) ? (
+                  <section aria-labelledby="menu-staff" className="space-y-1">
+                    <h2 id="menu-staff" className="px-3 pt-3 text-sm font-bold text-text-light">Staff</h2>
+                    {canAccessManageChurch ? <MemberLink item={{ href: '/admin', label: 'Manage Church', icon: ShieldCheck }} onClick={closeMore} compact /> : null}
+                    {canManageAttendance(userProfile) ? <MemberLink item={{ href: '/admin/attendance', label: 'Attendance', icon: ClipboardCheck }} onClick={closeMore} compact /> : null}
+                  </section>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-1 py-4">
+                <MemberLink item={{ href: '/', label: 'Home', icon: Home }} onClick={closeMore} compact />
+                <MemberLink item={{ href: '/resources/bulletin', label: 'Bulletins', icon: Files }} onClick={closeMore} compact />
+                <MemberLink item={{ href: '/resources/lesson-notes', label: 'Lesson Notes', icon: BookOpen }} onClick={closeMore} compact />
+                <MemberLink item={{ href: '/sermons', label: 'Sermons', icon: PlayCircle }} onClick={closeMore} compact />
+                <button
+                  type="button"
+                  onClick={() => { setMoreOpen(false); setPodcastOpen(true); }}
+                  className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base font-medium text-charcoal hover:bg-gray-100"
+                >
+                  <Headphones aria-hidden="true" className="h-5 w-5" />
+                  Podcast
+                </button>
+                <MemberLink item={{ href: '/give', label: 'Give', icon: Gift }} onClick={closeMore} compact />
+              </div>
+            )}
+          </Dialog.Panel>
+        </div>
+      </Dialog>
 
-export default Navigation; 
+      <Dialog open={podcastOpen} onClose={setPodcastOpen} className="relative z-[80]">
+        <div className="fixed inset-0 bg-charcoal/50" aria-hidden="true" />
+        <div className="fixed inset-0 flex items-center justify-center p-4">
+          <Dialog.Panel className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <Dialog.Title className="text-2xl font-bold text-charcoal">Beyond Sunday Podcast</Dialog.Title>
+                <Dialog.Description className="mt-2 text-base text-text-light">
+                  Choose where you would like to listen. Each option opens in a new window.
+                </Dialog.Description>
+              </div>
+              <button type="button" onClick={() => setPodcastOpen(false)} className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100" aria-label="Close podcast options">
+                <X aria-hidden="true" className="mx-auto h-6 w-6" />
+              </button>
+            </div>
+            <div className="mt-6 grid gap-3">
+              <a href={SPOTIFY_PODCAST_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-between rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light">
+                Listen on Spotify <ExternalLink aria-hidden="true" className="h-4 w-4" />
+              </a>
+              <a href={APPLE_PODCASTS_URL} target="_blank" rel="noopener noreferrer" className="inline-flex min-h-12 items-center justify-between rounded-lg border-2 border-charcoal px-4 font-semibold text-charcoal hover:bg-gray-100">
+                Listen on Apple Podcasts <ExternalLink aria-hidden="true" className="h-4 w-4" />
+              </a>
+            </div>
+          </Dialog.Panel>
+        </div>
+      </Dialog>
+    </>
+  );
+}

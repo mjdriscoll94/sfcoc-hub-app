@@ -60,14 +60,15 @@ export default function SignInPage() {
               height={80}
               className="mb-6"
             />
-            <h2 className="text-center text-3xl font-bold text-text uppercase tracking-wide">
-              Sign in to your account
-            </h2>
+            <h1 className="text-center text-3xl font-bold text-text">Member sign in</h1>
+            <p className="mt-2 text-center text-base text-text-light">
+              Sign in to view announcements, the church calendar, Prayer Board, and other member information.
+            </p>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email-address" className="sr-only">
+              <label htmlFor="email-address" className="mb-2 block font-semibold text-charcoal">
                 Email address
               </label>
               <input
@@ -78,12 +79,12 @@ export default function SignInPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-sage/20 placeholder-text/50 text-text bg-card rounded-t-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Email address"
+                className="relative block min-h-12 w-full rounded-lg border border-border bg-bg px-3 text-base text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
+                placeholder="you@example.com"
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className="mb-2 block font-semibold text-charcoal">
                 Password
               </label>
               <input
@@ -94,8 +95,7 @@ export default function SignInPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-sage/20 placeholder-text/50 text-text bg-card rounded-b-md focus:outline-none focus:ring-primary focus:border-primary focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className="relative block min-h-12 w-full rounded-lg border border-border bg-bg px-3 text-base text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
           </div>
@@ -116,7 +116,7 @@ export default function SignInPage() {
             <button
               type="submit"
               disabled={isLoading}
-              className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-on-primary bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide ${
+              className={`group relative flex min-h-12 w-full justify-center rounded-lg border border-transparent bg-charcoal px-4 py-3 text-base font-bold text-white hover:bg-charcoal-light focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
@@ -137,7 +137,7 @@ export default function SignInPage() {
               href="/auth/signup"
               className="font-medium text-primary hover:opacity-80"
             >
-              Don&apos;t have an account? Sign up
+              Need an account? Request member access
             </Link>
           </div>
         </form>
@@ -145,4 +145,4 @@ export default function SignInPage() {
       </div>
     </div>
   );
-} 
+}

@@ -108,6 +108,26 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+  scroll-padding-top: 5rem;
+}
+
+body {
+  font-size: 1rem;
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
 /* Remove all theme transition effects */
 * {
   transition-property: none;
