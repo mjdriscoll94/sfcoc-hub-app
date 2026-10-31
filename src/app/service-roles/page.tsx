@@ -10,6 +10,7 @@ import { format, nextSunday, addWeeks } from 'date-fns';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 import Link from 'next/link';
 import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 interface WeekData {
   date: Date;
@@ -447,7 +448,7 @@ export default function ServiceRolesPage() {
                     setAddParticipantEmail('');
                     setAddParticipantRoles([]);
                   }}
-                  className="px-4 py-2 border border-border text-charcoal text-sm font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
+                  className="min-h-11 px-4 py-2 border border-border text-charcoal text-sm font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
                 >
                   Cancel
                 </button>
@@ -468,10 +469,8 @@ export default function ServiceRolesPage() {
           </div>
         )}
 
-        {loading && !weeks.length ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral"></div>
-          </div>
+        {loading ? (
+          <LoadingCardList count={4} label="Loading service assignments…" />
         ) : (
           <div className="space-y-6">
             {weeks.map((week, weekIndex) => (
@@ -486,9 +485,9 @@ export default function ServiceRolesPage() {
                     ) : (
                       <ChevronRight className="w-5 h-5 text-text-muted" />
                     )}
-                    <h3 className="text-lg font-medium text-charcoal">
+                    <h2 className="text-lg font-medium text-charcoal">
                       {format(week.date, 'MMMM d, yyyy')}
-                    </h3>
+                    </h2>
                   </div>
                   {week.isEditing && (
                     <span className="text-sm text-coral">Unsaved changes</span>

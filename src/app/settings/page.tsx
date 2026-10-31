@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
 import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 const SUBSCRIPTION_LABELS = {
   announcements: 'Announcement emails',
@@ -186,7 +187,11 @@ export default function SettingsPage() {
   if (!userProfile) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-charcoal">Loading...</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-text">Settings</h1>
+          <p className="mt-2 text-base text-text/70">Manage your account, password, tour, and notification preferences.</p>
+        </div>
+        <LoadingCardList count={3} label="Loading settings…" />
       </div>
     );
   }

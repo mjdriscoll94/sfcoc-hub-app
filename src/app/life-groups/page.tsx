@@ -8,6 +8,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { canViewLifeGroupMemberResources } from '@/lib/auth/lifeGroupAccess';
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline';
 import { getActiveHouseholdMembers } from '@/lib/utils/householdMembers';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 export default function LifeGroupsPage() {
   useEffect(() => {
@@ -205,9 +206,11 @@ export default function LifeGroupsPage() {
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="flex justify-center items-center min-h-[400px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-charcoal">Life Groups</h1>
+          <p className="mt-2 text-text-light">Connect with others in small groups for fellowship, study, and support.</p>
         </div>
+        <LoadingCardList count={6} label="Loading Life Groups…" />
       </div>
     );
   }
@@ -310,7 +313,7 @@ export default function LifeGroupsPage() {
               key={group.id}
               className="bg-white rounded-lg border border-border p-6 shadow-sm hover:shadow-md transition-shadow"
             >
-              <h3 className="text-xl font-semibold text-charcoal mb-2">{group.name}</h3>
+              <h2 className="text-xl font-semibold text-charcoal mb-2">{group.name}</h2>
               {group.description && (
                 <p className="text-text-light mb-4">{group.description}</p>
               )}
@@ -365,11 +368,11 @@ export default function LifeGroupsPage() {
               {(group.familyUnitIds || []).length > 0 && (
                 <div className="mt-4 pt-4 border-t border-border">
                   <div className="flex items-center justify-between mb-3">
-                    <h4 className="text-sm font-semibold text-charcoal">Households</h4>
+                    <h3 className="text-sm font-semibold text-charcoal">Households</h3>
                     {canExpandAndSeeMembers && (
                       <button
                         onClick={() => toggleAllFamiliesForGroup(group)}
-                        className="text-sm text-coral hover:text-[#D6714A] font-medium transition-colors"
+                        className="inline-flex min-h-11 items-center text-sm text-coral hover:text-[#D6714A] font-medium transition-colors"
                       >
                         {(group.familyUnitIds || []).every(id => expandedFamilies.has(id)) ? 'Collapse All' : 'See All'}
                       </button>
@@ -388,7 +391,7 @@ export default function LifeGroupsPage() {
                             <div className="flex items-center justify-between">
                               <button
                                 onClick={() => toggleFamilyExpand(familyUnitId)}
-                                className="flex items-center space-x-2 flex-1 text-left"
+                                className="flex min-h-11 flex-1 items-center space-x-2 text-left"
                               >
                                 {expandedFamilies.has(familyUnitId) ? (
                                   <ChevronDownIcon className="h-4 w-4 text-charcoal" />

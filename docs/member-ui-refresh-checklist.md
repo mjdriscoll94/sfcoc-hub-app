@@ -154,6 +154,15 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Restore white labels on primary, secondary, accent, and other dark semantic surfaces by exposing the complete app color system to Tailwind v4.
 - [x] Recheck the authenticated Settings screen after the contrast fix; the basic role reads “Member,” and the primary action renders white text on the dark orange surface. The phone label is backed by the same verified responsive navigation component and no longer uses truncation.
 
+## Final solidity pass
+
+- [x] Audit public and authenticated routes for one clear page heading, horizontal overflow, duplicate IDs, unnamed buttons, unlabeled visible fields, and unsafe new-window links.
+- [x] Increase calendar export, category, and year-view date targets while keeping the compact calendar responsive.
+- [x] Give each year-view calendar date a unique spoken label with its full date and event count.
+- [x] Correct Life Groups and Service Roles heading order without changing their content or behavior.
+- [x] Replace remaining plain or visual-only loading states on Settings, Life Groups, Calendar, and Service Roles with labeled, layout-preserving skeletons.
+- [x] Run the final changed-file lint, automated tests, production build, and live regression check. Changed files pass lint, all 36 tests pass, the production build succeeds, and the restarted localhost preview serves normally after build verification.
+
 ## Review checkpoints
 
 - [x] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.
