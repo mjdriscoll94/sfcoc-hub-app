@@ -61,7 +61,7 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Show the next three calendar events with a View full calendar action.
 - [x] Show the latest Bulletin and Lesson Notes.
 - [x] Show only a neutral Prayer Board activity count, not prayer details.
-- [ ] Show the member's Life Group and next meeting when it can be derived reliably.
+- [ ] Show the member's Life Group and next meeting when it can be derived reliably. The current data model does not expose a dependable member-to-group mapping, so the interface intentionally uses the neutral fallback instead of guessing.
 - [x] Fall back to a neutral Life Groups card when membership cannot be derived.
 - [x] Add secondary shortcuts for Directory, Volunteer, Service Roles, Giving, and Sermons.
 
@@ -141,5 +141,5 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.
 - [x] Checkpoint 2: priority member pages and Manage Church workspace.
 - [x] Checkpoint 3: remaining member pages and form consistency.
-- [ ] Final end-to-end UI and regression review.
+- [x] Final end-to-end UI and regression review. The final audit found no deleted files or routes; changed files pass lint, all 36 tests pass, the production build succeeds, and representative public and protected routes pass browser smoke testing. Repository-wide lint/type-check findings and the Firebase cleanup console error remain documented pre-existing baseline issues outside this refresh.
 - [ ] Obtain explicit approval before merge.
