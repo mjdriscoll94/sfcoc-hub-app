@@ -23,6 +23,7 @@ import { useBulletins } from '@/hooks/useBulletins';
 import { useLessonNotes } from '@/hooks/useLessonNotes';
 import { usePrayerPraise } from '@/hooks/usePrayerPraise';
 import { isOnboardingTourActive, useOnboardingTour, useTourActive } from '@/components/tour';
+import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
 const DIRECTORY_URL =
   'https://members.instantchurchdirectory.com/families/7aa8b3f0-5f58-4ef4-a314-9ab636f24cf4';
@@ -61,6 +62,22 @@ function DashboardSection({
 
 function formatShortDate(date: Date): string {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+}
+
+function DashboardRowsSkeleton({ label, rows = 3 }: { label: string; rows?: number }) {
+  return (
+    <div role="status" aria-live="polite" aria-busy="true">
+      <span className="sr-only">{label}</span>
+      <div aria-hidden="true" className="space-y-3">
+        {Array.from({ length: rows }, (_, index) => (
+          <div key={index} className="rounded-xl bg-bg p-3">
+            <LoadingSkeleton className="h-5 w-2/3 rounded-md" />
+            <LoadingSkeleton className="mt-2 h-4 w-1/2 rounded-md" />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 export function MemberDashboard() {
@@ -133,7 +150,7 @@ export function MemberDashboard() {
         <div className="grid gap-6 lg:grid-cols-2">
           <DashboardSection title="Announcements" icon={<Megaphone aria-hidden="true" className="h-6 w-6" />} href="/announcements" linkLabel="View all">
             {dashboard.loading ? (
-              <p className="text-text-light" role="status">Loading announcements…</p>
+              <DashboardRowsSkeleton label="Loading announcements…" />
             ) : dashboard.announcements.length === 0 ? (
               <p className="text-text-light">No announcements have been posted.</p>
             ) : (
@@ -154,14 +171,14 @@ export function MemberDashboard() {
 
           <DashboardSection title="Upcoming events" icon={<CalendarDays aria-hidden="true" className="h-6 w-6" />} href="/calendar" linkLabel="View full calendar">
             {dashboard.loading ? (
-              <p className="text-text-light" role="status">Loading upcoming events…</p>
+              <DashboardRowsSkeleton label="Loading upcoming events…" />
             ) : dashboard.events.length === 0 ? (
               <p className="text-text-light">No upcoming events are currently listed.</p>
             ) : (
               <ul className="space-y-3">
                 {dashboard.events.map((event) => (
                   <li key={event.id} className="flex gap-4 rounded-xl bg-bg p-3">
-                    <time className="w-14 shrink-0 text-center font-bold text-coral-dark" dateTime={event.startDate.toISOString()}>
+                    <time className="w-14 shrink-0 text-center font-bold text-coral-dark tabular-nums" dateTime={event.startDate.toISOString()}>
                       <span className="block text-sm">{event.startDate.toLocaleDateString('en-US', { month: 'short' })}</span>
                       <span className="block text-2xl leading-none">{event.startDate.getDate()}</span>
                     </time>
@@ -180,7 +197,7 @@ export function MemberDashboard() {
 
           <DashboardSection title="Bulletin & lesson notes" icon={<FileText aria-hidden="true" className="h-6 w-6" />} href="/resources" linkLabel="View resources">
             {bulletinsLoading || notesLoading ? (
-              <p className="text-text-light" role="status">Loading the latest resources…</p>
+              <DashboardRowsSkeleton label="Loading the latest resources…" rows={2} />
             ) : (
               <div className="grid gap-3">
                 {bulletins[0] ? (
@@ -201,10 +218,17 @@ export function MemberDashboard() {
 
           <DashboardSection title="Prayer Board" icon={<Heart aria-hidden="true" className="h-6 w-6" />} href="/prayer-board" linkLabel="View Prayer Board">
             {prayersLoading ? (
-              <p className="text-text-light" role="status">Checking Prayer Board activity…</p>
+              <div role="status" aria-live="polite" aria-busy="true">
+                <span className="sr-only">Checking Prayer Board activity…</span>
+                <div aria-hidden="true" className="rounded-xl bg-bg p-4">
+                  <LoadingSkeleton className="h-9 w-16 rounded-md" />
+                  <LoadingSkeleton className="mt-3 h-4 w-56 max-w-full rounded-md" />
+                  <LoadingSkeleton className="mt-4 h-4 w-48 max-w-full rounded-md" />
+                </div>
+              </div>
             ) : (
               <div className="rounded-xl bg-bg p-4">
-                <p className="text-3xl font-bold text-charcoal">{prayerItems.length}</p>
+                <p className="text-3xl font-bold text-charcoal tabular-nums" data-numeric>{prayerItems.length}</p>
                 <p className="mt-1 text-text-light">active prayer and praise {prayerItems.length === 1 ? 'post' : 'posts'}</p>
                 <p className="mt-3 text-sm text-text-light">Details stay on the protected Prayer Board.</p>
               </div>

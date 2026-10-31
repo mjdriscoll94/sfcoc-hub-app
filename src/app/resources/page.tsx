@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { Download, FileText, Search } from 'lucide-react';
 import { useBulletins, type Bulletin } from '@/hooks/useBulletins';
 import { useLessonNotes, type LessonNote } from '@/hooks/useLessonNotes';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 type ResourceTab = 'bulletins' | 'lesson-notes';
 type ResourceDocument = Pick<Bulletin | LessonNote, 'id' | 'title' | 'date' | 'fileUrl'>;
@@ -27,7 +28,7 @@ function ResourceList({ documents, label }: { documents: ResourceDocument[]; lab
             <span className="rounded-lg bg-coral/15 p-2 text-coral-dark"><FileText aria-hidden="true" className="h-5 w-5" /></span>
             <div>
               <h2 className="text-lg font-bold text-charcoal">{document.title}</h2>
-              <p className="mt-1 text-sm text-text-light">
+              <p className="mt-1 text-sm text-text-light tabular-nums">
                 {document.date.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
               </p>
             </div>
@@ -106,7 +107,7 @@ export default function ResourcesPage() {
           </button>
         </div>
 
-        <div className="mt-6 grid gap-4 rounded-xl border border-border bg-white p-4 sm:grid-cols-[1fr_180px]">
+        <div className="mt-6 grid gap-4 rounded-xl border border-border bg-white p-4 shadow-sm sm:grid-cols-[1fr_180px]">
           <label className="block">
             <span className="mb-2 block font-semibold text-charcoal">Search {activeTab === 'bulletins' ? 'bulletins' : 'lesson notes'}</span>
             <span className="relative block">
@@ -131,7 +132,7 @@ export default function ResourcesPage() {
 
         <div className="mt-6">
           {loading ? (
-            <p className="rounded-xl bg-white p-6 text-text-light" role="status">Loading church resources…</p>
+            <LoadingCardList label="Loading church resources…" count={3} compact />
           ) : error ? (
             <div className="rounded-xl border border-error/30 bg-error-bg p-6">
               <h2 className="text-lg font-bold text-charcoal">We could not load these resources.</h2>

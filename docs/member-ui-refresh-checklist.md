@@ -136,6 +136,17 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Confirm protected access boundaries remain intact; Life Groups was added to the shared signed-out route guard.
 - [x] Confirm no database migration or new stored fields were introduced.
 
+## Post-review polish pass
+
+- [x] Replace abrupt loading text and spinners on high-traffic member and public pages with accessible layout-preserving skeletons.
+- [x] Use a consistent control, card, and feature radius hierarchy without changing existing actions.
+- [x] Balance major headings and align dates, counts, and times with tabular numerals.
+- [x] Keep interaction feedback brief, interruptible, and respectful of reduced-motion preferences.
+- [x] Extend safe-area handling to the mobile page content and full-height navigation panel.
+- [x] Increase undersized calendar and Prayer Board controls to comfortable touch targets.
+- [x] Recheck phone, tablet, desktop, keyboard, reduced-motion, and 200% zoom behavior. Representative homepage, authentication, sermon, resource, and navigation states remain readable without clipped controls.
+- [x] Run final lint, tests, type checking, and production build for the polish pass. Changed files pass lint, all 36 tests pass, and the production build succeeds; repository-wide type checking continues to report only the documented pre-existing baseline issues.
+
 ## Review checkpoints
 
 - [x] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.

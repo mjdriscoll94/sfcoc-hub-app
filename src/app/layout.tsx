@@ -41,7 +41,7 @@ export default function RootLayout({
                   <div className="fixed top-0 left-0 right-0 z-50">
                     <Navigation />
                   </div>
-                  <main id="main-content" className="min-h-screen pt-16 pb-20 lg:pb-0">
+                  <main id="main-content" className="min-h-screen pb-[calc(5rem+env(safe-area-inset-bottom))] pt-16 lg:pb-0">
                     {children}
                   </main>
                 </div>

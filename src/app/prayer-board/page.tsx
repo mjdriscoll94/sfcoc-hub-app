@@ -6,6 +6,7 @@ import PrayerRequestForm from '@/components/PrayerRequestForm';
 import { addPrayerPraise } from '@/lib/firebase/utils';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTourActive } from '@/components/tour';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 type FilterType = 'all' | 'prayer' | 'praise';
 
@@ -98,14 +99,15 @@ export default function PrayerBoard() {
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 text-center">
         <h1 className="text-3xl font-bold text-text">Prayer &amp; Praise</h1>
+        <p className="mx-auto mt-2 max-w-2xl text-text-light">Share a request, celebrate an answer, and support your church family.</p>
       </div>
 
       {/* Filter Toggle Group and Add Button */}
-      <div className="flex justify-center items-center gap-4 mb-8" id="prayer-board-toolbar">
-        <div className="inline-flex rounded-lg p-1 bg-sage/10" id="prayer-board-filters">
+      <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row" id="prayer-board-toolbar">
+        <div className="inline-flex rounded-lg bg-sage/10 p-1" id="prayer-board-filters">
           <button
             onClick={() => setActiveFilter('all')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
               activeFilter === 'all'
                 ? 'text-white shadow-sm'
                 : 'text-text'
@@ -118,7 +120,7 @@ export default function PrayerBoard() {
           </button>
           <button
             onClick={() => setActiveFilter('prayer')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
               activeFilter === 'prayer'
                 ? 'text-white shadow-sm'
                 : 'text-text'
@@ -131,7 +133,7 @@ export default function PrayerBoard() {
           </button>
           <button
             onClick={() => setActiveFilter('praise')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
               activeFilter === 'praise'
                 ? 'text-white shadow-sm'
                 : 'text-text'
@@ -144,11 +146,11 @@ export default function PrayerBoard() {
           </button>
         </div>
         
-        <div className="inline-flex rounded-lg p-1" id="prayer-board-add-wrap">
+        <div className="inline-flex" id="prayer-board-add-wrap">
           <button
             id="prayer-board-add"
             onClick={() => setIsFormOpen(true)}
-            className="px-4 py-2 flex items-center justify-center rounded-md text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors uppercase tracking-wide"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold text-white transition-colors hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{
               backgroundColor: '#E88B5F'
             }}
@@ -168,15 +170,14 @@ export default function PrayerBoard() {
                 d="M12 6v12m6-6H6"
               />
             </svg>
+            <span>Add request</span>
           </button>
         </div>
       </div>
 
       {/* Loading State */}
       {loading && (
-        <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <LoadingCardList label="Loading prayer and praise posts…" count={3} />
       )}
 
       {/* Index Building State */}
@@ -197,7 +198,7 @@ export default function PrayerBoard() {
 
       {/* Error State */}
       {error && !isIndexBuilding && (
-        <div className="text-center p-4 text-error">
+        <div role="alert" className="rounded-xl border border-error/30 bg-error-bg p-6 text-center text-error">
           <p>{error}</p>
         </div>
       )}
@@ -209,7 +210,7 @@ export default function PrayerBoard() {
             <div
               key={request.id}
               id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-request' : undefined}
-              className="bg-card rounded-lg shadow border border-sage/20"
+              className="rounded-xl border border-border bg-card shadow-sm"
             >
               <div 
                 className="p-6 cursor-pointer"
@@ -227,7 +228,7 @@ export default function PrayerBoard() {
                       }}>
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
-                      <span className="text-sm text-text/80">
+                      <span className="text-sm text-text/80 tabular-nums">
                         {request.dateCreated instanceof Date 
                           ? request.dateCreated.toLocaleDateString()
                           : new Date(request.dateCreated).toLocaleDateString()}
@@ -279,7 +280,7 @@ export default function PrayerBoard() {
                       e.stopPropagation();
                       incrementPrayerCount(request.id);
                     }}
-                    className={`flex items-center space-x-2 hover:opacity-80 group`}
+                    className="group flex min-h-11 items-center space-x-2 rounded-lg px-2 hover:bg-bg hover:opacity-80"
                     style={{
                       color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
                     }}
@@ -290,7 +291,7 @@ export default function PrayerBoard() {
                           }}>
                       {request.type === 'prayer' ? 'I prayed' : 'I gave thanks'}
                     </span>
-                    <span className={`text-white px-2 py-0.5 rounded-full text-sm transition-colors`}
+                    <span className="rounded-full px-2 py-0.5 text-sm text-white tabular-nums transition-colors"
                           style={{
                             backgroundColor: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
                           }}>
@@ -332,7 +333,7 @@ export default function PrayerBoard() {
         >
           {/* Modal Content - card style to match site */}
           <div
-            className="w-full max-w-lg relative rounded-lg border shadow-lg bg-white"
+            className="relative w-full max-w-lg rounded-2xl border bg-white shadow-lg"
             style={{
               borderColor: 'var(--border)',
               boxShadow: 'var(--shadow-lg)',
@@ -342,7 +343,7 @@ export default function PrayerBoard() {
           >
             {/* Modal Header - coral gradient like nav/sections */}
             <div
-              className="flex justify-between items-center px-6 py-4 rounded-t-lg"
+              className="flex items-center justify-between rounded-t-2xl px-6 py-4"
               style={{
                 background: 'linear-gradient(135deg, var(--coral-light) 0%, var(--coral) 100%)',
               }}
@@ -353,7 +354,7 @@ export default function PrayerBoard() {
               <button
                 type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="text-on-primary/90 hover:text-charcoal focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal rounded p-1"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-on-primary/90 hover:bg-white/20 hover:text-charcoal focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
                 aria-label="Close"
               >
                 <span className="text-2xl leading-none">✕</span>
@@ -361,7 +362,7 @@ export default function PrayerBoard() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 bg-white border-t border-border rounded-b-lg" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="rounded-b-2xl border-t border-border bg-white p-6" style={{ backgroundColor: '#FFFFFF' }}>
               <PrayerRequestForm onSubmit={handleSubmit} />
             </div>
           </div>

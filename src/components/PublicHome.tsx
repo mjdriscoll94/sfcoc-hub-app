@@ -14,6 +14,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import EventIcon from '@/components/EventIcon';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 import { useHomePageEvents } from '@/hooks/useHomePageEvents';
 
 const DIRECTIONS_URL =
@@ -148,7 +149,12 @@ export function PublicHome() {
           <p className="mt-3 text-lg text-text-light">Explore the weekly opportunities available to the church family.</p>
 
           {loading ? (
-            <p className="mt-8 rounded-xl bg-bg p-6 text-text-light" role="status">Loading gathering information…</p>
+            <LoadingCardList
+              label="Loading gathering information…"
+              count={3}
+              compact
+              className="mt-8"
+            />
           ) : error ? (
             <p className="mt-8 rounded-xl border border-error/30 bg-error-bg p-6 text-charcoal">We could not load gathering information right now. Please try again later.</p>
           ) : categories.length === 0 ? (
@@ -177,7 +183,7 @@ export function PublicHome() {
                             <div className="shrink-0 rounded-full bg-coral/15 p-2"><EventIcon icon={event.icon} /></div>
                             <div>
                               <h4 className="text-lg font-bold text-charcoal">{event.name}</h4>
-                              <p className="mt-1 font-semibold text-coral-dark">{event.time}</p>
+                              <p className="mt-1 font-semibold text-coral-dark tabular-nums" data-numeric>{event.time}</p>
                               <p className="font-medium text-sage-dark">{event.day}</p>
                               <p className="mt-2 text-base text-text-light">{event.description}</p>
                             </div>

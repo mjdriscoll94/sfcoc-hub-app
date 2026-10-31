@@ -518,7 +518,7 @@ export function ChurchCalendar({
                     if (mode === 'month') setFocusDate(() => new Date(today.getFullYear(), today.getMonth(), 1));
                     if (mode === 'week') setFocusDate(() => new Date());
                   }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md capitalize ${viewMode === mode ? 'admin-calendar-btn-coral' : 'text-[var(--charcoal)] hover:bg-[var(--bg-secondary)]'}`}
+                  className={`min-h-11 rounded-md px-3 py-2 text-sm font-medium capitalize ${viewMode === mode ? 'admin-calendar-btn-coral' : 'text-[var(--charcoal)] hover:bg-[var(--bg-secondary)]'}`}
                 >
                   {mode} view
                 </button>
@@ -528,7 +528,7 @@ export function ChurchCalendar({
               <button
                 type="button"
                 onClick={goPrev}
-                className="p-1.5 text-charcoal hover:bg-bg-secondary rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Previous"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -541,7 +541,7 @@ export function ChurchCalendar({
               <button
                 type="button"
                 onClick={goNext}
-                className="p-1.5 text-charcoal hover:bg-bg-secondary rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Next"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1079,7 +1079,7 @@ function DayModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded p-1 text-text-light hover:bg-bg-secondary hover:text-charcoal"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-text-light hover:bg-bg-secondary hover:text-charcoal"
               aria-label="Close"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -2058,7 +2058,7 @@ function EditCategoriesModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label="Close"
           >
             <X className="h-5 w-5" />

@@ -2,9 +2,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
-import { AlertTriangle, ChevronDown, ExternalLink, LoaderCircle, PlayCircle, Search, X } from 'lucide-react';
+import { AlertTriangle, ChevronDown, ExternalLink, PlayCircle, Search, X } from 'lucide-react';
 import { useSermons } from '@/hooks/useSermons';
 import type { YouTubeVideo } from '@/lib/youtube/api';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 type GroupedSermons = Record<string, { monthLabel: string; videos: YouTubeVideo[] }>;
 
@@ -132,10 +133,7 @@ export default function SermonsPage() {
       </section>
 
       {loading ? (
-        <div role="status" className="flex min-h-52 items-center justify-center gap-3 text-text-light">
-          <LoaderCircle aria-hidden="true" className="h-7 w-7 animate-spin text-primary" />
-          <span>Loading sermons…</span>
-        </div>
+        <LoadingCardList label="Loading sermons…" count={4} className="mx-auto max-w-4xl" />
       ) : null}
 
       {error ? (
@@ -177,7 +175,7 @@ export default function SermonsPage() {
                 </div>
                 <div className="rounded-xl border border-border bg-card p-5">
                   <h2 className="text-xl font-semibold text-text">{selectedVideo.title}</h2>
-                  <p className="mt-2 text-sm text-text-light">
+                  <p className="mt-2 text-sm text-text-light tabular-nums">
                     {formatDate(selectedVideo.publishedAt)} <span aria-hidden="true">•</span> {formatViewCount(selectedVideo.viewCount)}
                   </p>
                   <p className="mt-4 whitespace-pre-wrap text-text/80">{selectedVideo.description}</p>
@@ -241,7 +239,7 @@ export default function SermonsPage() {
                                   <Image src={video.thumbnailUrl} alt="" width={128} height={72} className="h-[72px] w-32 shrink-0 rounded object-cover" unoptimized />
                                   <span className="min-w-0 flex-1">
                                     <span className="line-clamp-2 block text-sm font-semibold text-text">{video.title}</span>
-                                    <span className="mt-1 block text-sm text-text-light">{formatDate(video.publishedAt)}</span>
+                                    <span className="mt-1 block text-sm text-text-light tabular-nums">{formatDate(video.publishedAt)}</span>
                                   </span>
                                 </span>
                               </button>

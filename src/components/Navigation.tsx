@@ -301,7 +301,7 @@ export default function Navigation() {
       <Dialog open={moreOpen} onClose={setMoreOpen} className="relative z-[70]">
         <div className="fixed inset-0 bg-charcoal/50" aria-hidden="true" />
         <div className="fixed inset-0 flex justify-end">
-          <Dialog.Panel className="h-full w-full max-w-sm overflow-y-auto bg-white p-4 shadow-xl">
+          <Dialog.Panel className="safe-area-panel h-full w-full max-w-sm overflow-y-auto bg-white px-4 shadow-xl">
             <div className="flex min-h-12 items-center justify-between border-b border-border pb-3">
               <div>
                 <Dialog.Title className="text-xl font-bold text-charcoal">{user ? 'More' : 'Menu'}</Dialog.Title>
