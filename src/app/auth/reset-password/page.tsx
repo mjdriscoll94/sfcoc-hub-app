@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 function readActionParams(): { mode: string | null; oobCode: string | null } {
   if (typeof window === 'undefined') {
@@ -176,10 +177,11 @@ function ResetPasswordInner() {
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
-            <p className="text-sm text-text-light">Both fields are required. Use at least 6 characters.</p>
+            <RequiredFieldsNote />
+            <p className="text-sm text-text-light">Use at least 6 characters.</p>
             <div>
               <label htmlFor="new-password" className="block text-sm font-medium text-charcoal mb-1">
-                New password
+                New password<RequiredFieldIndicator />
               </label>
               <input
                 id="new-password"
@@ -194,7 +196,7 @@ function ResetPasswordInner() {
             </div>
             <div>
               <label htmlFor="confirm-password" className="block text-sm font-medium text-charcoal mb-1">
-                Confirm password
+                Confirm password<RequiredFieldIndicator />
               </label>
               <input
                 id="confirm-password"

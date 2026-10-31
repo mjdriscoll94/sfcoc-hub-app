@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { addDoc, collection, Timestamp } from 'firebase/firestore';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface VolunteerOpportunityFormProps {
   onClose: () => void;
@@ -116,7 +117,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
             <p className="text-sm text-info">
               Your volunteer opportunity will be reviewed by an administrator before being published.
             </p>
-            <p className="mt-1 text-sm text-info">Fields marked required must be completed.</p>
+            <RequiredFieldsNote className="mt-1 text-sm text-info" />
           </div>
 
           {error && (
@@ -128,7 +129,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-charcoal mb-2">
-                Title <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
+                Title<RequiredFieldIndicator />
               </label>
               <input
                 type="text"
@@ -145,7 +146,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
 
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-charcoal mb-2">
-                Description <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
+                Description<RequiredFieldIndicator />
               </label>
               <textarea
                 id="description"
@@ -165,7 +166,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
 
             <div>
               <label htmlFor="dateTime" className="block text-sm font-medium text-charcoal mb-2">
-                Event date and time <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
+                Event date and time<RequiredFieldIndicator />
               </label>
               <input
                 type="datetime-local"
@@ -181,7 +182,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
 
             <div>
               <label htmlFor="location" className="block text-sm font-medium text-charcoal mb-2">
-                Location <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
+                Location<RequiredFieldIndicator />
               </label>
               <input
                 type="text"
@@ -198,7 +199,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
 
             <div>
               <label htmlFor="maxVolunteers" className="block text-sm font-medium text-charcoal mb-2">
-                Number of volunteers needed <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
+                Number of volunteers needed<RequiredFieldIndicator />
               </label>
               <input
                 type="number"
@@ -215,7 +216,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
 
             <div>
               <label htmlFor="contactEmail" className="block text-sm font-medium text-charcoal mb-2">
-                Contact email <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
+                Contact email<RequiredFieldIndicator />
               </label>
               <input
                 type="email"

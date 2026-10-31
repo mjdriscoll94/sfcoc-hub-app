@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface PrayerRequestFormProps {
   onSubmit: (data: {
@@ -92,7 +93,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
         </div>
       )}
 
-      <p className="text-sm text-text-light">Title and description are required.</p>
+      <RequiredFieldsNote />
 
       <div>
         <label htmlFor="prayer-request-type" className="block text-sm font-medium text-text">Type</label>
@@ -109,7 +110,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       </div>
 
       <div>
-        <label htmlFor="prayer-request-title" className="block text-sm font-medium text-text">Title <span aria-hidden="true">*</span><span className="sr-only"> (required)</span></label>
+        <label htmlFor="prayer-request-title" className="block text-sm font-medium text-text">Title<RequiredFieldIndicator /></label>
         <input
           id="prayer-request-title"
           type="text"
@@ -125,7 +126,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       </div>
 
       <div>
-        <label htmlFor="prayer-request-description" className="block text-sm font-medium text-text">Description <span aria-hidden="true">*</span><span className="sr-only"> (required)</span></label>
+        <label htmlFor="prayer-request-description" className="block text-sm font-medium text-text">Description<RequiredFieldIndicator /></label>
         <textarea
           id="prayer-request-description"
           required

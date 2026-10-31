@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface FirebaseError extends Error {
   code?: string;
@@ -66,11 +67,11 @@ export default function SignInPage() {
             </p>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
-          <p className="text-sm text-text-light">Email address and password are required.</p>
+          <RequiredFieldsNote />
           <div className="space-y-4">
             <div>
               <label htmlFor="email-address" className="mb-2 block font-semibold text-charcoal">
-                Email address
+                Email address<RequiredFieldIndicator />
               </label>
               <input
                 id="email-address"
@@ -86,7 +87,7 @@ export default function SignInPage() {
             </div>
             <div>
               <label htmlFor="password" className="mb-2 block font-semibold text-charcoal">
-                Password
+                Password<RequiredFieldIndicator />
               </label>
               <input
                 id="password"

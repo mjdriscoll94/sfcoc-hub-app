@@ -5,6 +5,7 @@ import { collection, addDoc, updateDoc, doc, query, where, getDocs } from 'fireb
 import { db } from '@/lib/firebase/config';
 import { Teacher } from '@/types';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface TeacherFormProps {
   teacher?: Teacher | null;
@@ -105,10 +106,11 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <RequiredFieldsNote />
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
           <label htmlFor="firstName" className="block text-sm font-medium text-text mb-1">
-            First Name *
+            First Name<RequiredFieldIndicator />
           </label>
           <input
             type="text"
@@ -124,7 +126,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
 
         <div>
           <label htmlFor="lastName" className="block text-sm font-medium text-text mb-1">
-            Last Name *
+            Last Name<RequiredFieldIndicator />
           </label>
           <input
             type="text"
@@ -141,7 +143,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
 
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-text mb-1">
-          Email Address *
+          Email Address<RequiredFieldIndicator />
         </label>
         <input
           type="email"
@@ -209,7 +211,7 @@ export default function TeacherForm({ teacher, onSave, onCancel, isEditing = fal
               onChange={handleChange}
               className="h-4 w-4 text-[#E88B5F] border-border rounded focus:ring-2 focus:ring-[#E88B5F]"
             />
-            <span className="ml-2 text-sm text-text">Prefers Teacher's Helper role</span>
+            <span className="ml-2 text-sm text-text">Prefers Teacher&apos;s Helper role</span>
           </label>
         </div>
       </div>

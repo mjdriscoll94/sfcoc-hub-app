@@ -9,6 +9,7 @@ import { CheckCircle, XCircle, Clock, ChevronDown, ChevronRight, UserPlus } from
 import { format, nextSunday, addWeeks } from 'date-fns';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 import Link from 'next/link';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface WeekData {
   date: Date;
@@ -385,8 +386,9 @@ export default function ServiceRolesPage() {
           <div className="bg-white rounded-lg border border-border p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-charcoal mb-4">Add person to assignment list</h2>
             <form onSubmit={handleAddParticipant} className="space-y-4">
+              <RequiredFieldsNote />
               <div>
-                <label htmlFor="add-name" className="block text-sm font-medium text-charcoal mb-1">Name</label>
+                <label htmlFor="add-name" className="block text-sm font-medium text-charcoal mb-1">Name<RequiredFieldIndicator /></label>
                 <input
                   id="add-name"
                   type="text"
@@ -398,7 +400,7 @@ export default function ServiceRolesPage() {
                 />
               </div>
               <div>
-                <label htmlFor="add-email" className="block text-sm font-medium text-charcoal mb-1">Email</label>
+                <label htmlFor="add-email" className="block text-sm font-medium text-charcoal mb-1">Email<RequiredFieldIndicator /></label>
                 <input
                   id="add-email"
                   type="email"

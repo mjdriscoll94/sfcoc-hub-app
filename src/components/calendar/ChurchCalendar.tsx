@@ -21,6 +21,7 @@ import {
   arrayUnion,
 } from 'firebase/firestore';
 import Link from 'next/link';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 import {
   CalendarEvent,
   CalendarCategory,
@@ -1459,11 +1460,12 @@ function AddEventForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <RequiredFieldsNote />
       {error && (
         <p className="text-sm text-error bg-error-bg rounded px-2 py-1">{error}</p>
       )}
       <div>
-        <label htmlFor="ev-title" className="block text-sm font-medium text-charcoal mb-1">Title *</label>
+        <label htmlFor="ev-title" className="block text-sm font-medium text-charcoal mb-1">Title<RequiredFieldIndicator /></label>
         <input
           id="ev-title"
           name="title"

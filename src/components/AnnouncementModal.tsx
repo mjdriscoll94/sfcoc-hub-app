@@ -5,6 +5,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { collection, addDoc, getDocs, query, where } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { sendAnnouncementEmail, type EmailSubscriber } from '@/lib/email/emailService';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface AnnouncementModalProps {
   isOpen: boolean;
@@ -86,9 +87,10 @@ export default function AnnouncementModal({ isOpen, onClose }: AnnouncementModal
         <h2 className="text-2xl font-bold text-white mb-6">New Announcement</h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <RequiredFieldsNote className="text-sm text-white/70" />
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-white mb-1">
-              Title
+              Title<RequiredFieldIndicator className="text-white/70" />
             </label>
             <input
               type="text"
@@ -119,7 +121,7 @@ export default function AnnouncementModal({ isOpen, onClose }: AnnouncementModal
 
           <div>
             <label htmlFor="content" className="block text-sm font-medium text-white mb-1">
-              Content
+              Content<RequiredFieldIndicator className="text-white/70" />
             </label>
             <textarea
               id="content"
@@ -157,4 +159,4 @@ export default function AnnouncementModal({ isOpen, onClose }: AnnouncementModal
       </div>
     </div>
   );
-} 
+}

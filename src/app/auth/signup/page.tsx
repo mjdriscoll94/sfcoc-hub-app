@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 export default function SignUpPage() {
   useEffect(() => {
@@ -64,11 +65,11 @@ export default function SignUpPage() {
             </p>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
-          <p className="text-sm text-text-light">All fields are required.</p>
+          <RequiredFieldsNote />
           <div className="space-y-4">
             <div>
               <label htmlFor="display-name" className="mb-2 block font-semibold text-charcoal">
-                Full name
+                Full name<RequiredFieldIndicator />
               </label>
               <input
                 id="display-name"
@@ -83,7 +84,7 @@ export default function SignUpPage() {
             </div>
             <div>
               <label htmlFor="email-address" className="mb-2 block font-semibold text-charcoal">
-                Email address
+                Email address<RequiredFieldIndicator />
               </label>
               <input
                 id="email-address"
@@ -99,7 +100,7 @@ export default function SignUpPage() {
             </div>
             <div>
               <label htmlFor="password" className="mb-2 block font-semibold text-charcoal">
-                Password
+                Password<RequiredFieldIndicator />
               </label>
               <input
                 id="password"

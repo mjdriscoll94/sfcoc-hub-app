@@ -142,13 +142,13 @@ export default function PrayerRequestApprovalQueue() {
                     />
                     {item.type === 'prayer' && (
                       <select
-                        aria-label="Prayer request priority"
+                        aria-label="Prayer request priority (required)"
                         value={editingItem.priority || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, priority: e.target.value ? e.target.value as 'Urgent' | 'Batched' : undefined })}
                         className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal"
                         required
                       >
-                        <option value="">Select Priority</option>
+                        <option value="">Select priority (required)</option>
                         <option value="Urgent">Urgent</option>
                         <option value="Batched">Batched</option>
                       </select>

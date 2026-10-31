@@ -112,7 +112,7 @@ This checklist is the source of truth for the usability refresh. Existing featur
 ## Phase 8: Forms and interaction consistency
 
 - [x] Place visible labels above fields.
-- [ ] Mark and explain required fields consistently.
+- [x] Mark and explain required fields consistently with visible “(required)” labels, a plain-language form note, and native required semantics where the submit rules already required a value.
 - [x] Provide plain-language help and inline validation.
 - [x] Use consistent submit, loading, success, and failure states.
 - [x] Require confirmation only for destructive or difficult-to-reverse actions.

@@ -12,6 +12,7 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 const SUBSCRIPTION_LABELS = {
   announcements: 'Announcement emails',
@@ -233,9 +234,10 @@ export default function SettingsPage() {
               instead.
             </p>
             <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+              <RequiredFieldsNote />
               <div>
                 <label htmlFor="current-password" className="block text-sm font-medium text-text mb-1">
-                  Current password
+                  Current password<RequiredFieldIndicator />
                 </label>
                 <input
                   id="current-password"
@@ -249,7 +251,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label htmlFor="new-password-settings" className="block text-sm font-medium text-text mb-1">
-                  New password
+                  New password<RequiredFieldIndicator />
                 </label>
                 <input
                   id="new-password-settings"
@@ -264,7 +266,7 @@ export default function SettingsPage() {
               </div>
               <div>
                 <label htmlFor="confirm-new-password" className="block text-sm font-medium text-text mb-1">
-                  Confirm new password
+                  Confirm new password<RequiredFieldIndicator />
                 </label>
                 <input
                   id="confirm-new-password"

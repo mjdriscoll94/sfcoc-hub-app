@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -75,9 +76,10 @@ export default function ForgotPasswordPage() {
             </div>
           ) : (
             <form className="space-y-6" onSubmit={handleSubmit}>
+              <RequiredFieldsNote />
               <div>
                 <label htmlFor="forgot-email" className="block text-sm font-medium text-charcoal mb-1">
-                  Email
+                  Email<RequiredFieldIndicator />
                 </label>
                 <input
                   id="forgot-email"
