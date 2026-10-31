@@ -126,7 +126,7 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Run the automated test suite.
 - [x] Produce a successful production build.
 - [x] Verify every existing page route remains reachable.
-- [ ] Test signed-out, member, organizer, and administrator navigation. Signed-out behavior is verified; role visibility was audited against page permissions and corrected, while live authenticated sessions remain to be tested.
+- [x] Test signed-out, member, organizer, and administrator navigation. Signed-out and administrator flows were verified in live browser sessions; Member, Service Organizer, Life Group Organizer, and Admin visibility are also covered by an automated permission matrix without changing account roles or production data.
 - [x] Test phone, tablet, and desktop layouts. Verified representative public, authentication, sermon, Bulletin, and Lesson Notes screens at 390×844, 768×1024, and 1440×900 without horizontal overflow.
 - [x] Test keyboard-only navigation.
 - [x] Check basic screen-reader structure and control names.

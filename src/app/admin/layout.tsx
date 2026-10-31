@@ -21,7 +21,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { ROLE_PERMISSIONS } from '@/types/roles';
+import { getRoleCapabilities } from '@/types/roles';
 
 type ManageLink = {
   href: string;
@@ -106,14 +106,15 @@ function ManageNavigation({ sections, pathname }: { sections: ManageSection[]; p
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { userProfile } = useAuth();
-  const permissions = userProfile?.role ? ROLE_PERMISSIONS[userProfile.role] : null;
-  const isAdmin = Boolean(userProfile?.isAdmin);
-  const canManageAnnouncements = isAdmin || Boolean(permissions?.canManageAnnouncements);
-  const canManageLifeGroups = isAdmin || Boolean(permissions?.canManageLifeGroups);
-  const canManageAttendance = isAdmin || Boolean(permissions?.canManageAttendance);
-  const canManageVolunteer = isAdmin || Boolean(permissions?.canManageVolunteerOpportunities);
-  const canAssignServiceRoles = isAdmin || Boolean(permissions?.canAssignServiceRoles);
-  const canSendEmail = isAdmin || canManageAnnouncements || canManageLifeGroups;
+  const {
+    isAdmin,
+    canManageAnnouncements,
+    canManageLifeGroups,
+    canManageAttendance,
+    canManageVolunteerOpportunities: canManageVolunteer,
+    canAssignServiceRoles,
+    canSendEmail,
+  } = getRoleCapabilities(userProfile);
 
   const sections: ManageSection[] = [
     {

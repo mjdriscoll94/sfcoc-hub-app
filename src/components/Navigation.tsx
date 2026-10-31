@@ -27,7 +27,7 @@ import {
   X,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { canManageAttendance, ROLE_PERMISSIONS } from '@/types/roles';
+import { getRoleCapabilities } from '@/types/roles';
 
 const DIRECTORY_URL =
   'https://members.instantchurchdirectory.com/families/7aa8b3f0-5f58-4ef4-a314-9ab636f24cf4';
@@ -113,13 +113,7 @@ export default function Navigation() {
   const [podcastOpen, setPodcastOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const resourcesRef = useRef<HTMLDivElement>(null);
-
-  const canAccessManageChurch = Boolean(
-    userProfile?.isAdmin ||
-      (userProfile?.role &&
-        (ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements ||
-          ROLE_PERMISSIONS[userProfile.role]?.canManageLifeGroups))
-  );
+  const { canAccessManageChurch, canManageAttendance } = getRoleCapabilities(userProfile);
 
   useEffect(() => {
     setMoreOpen(false);
@@ -341,11 +335,11 @@ export default function Navigation() {
                     {signingOut ? 'Signing out…' : 'Sign out'}
                   </button>
                 </section>
-                {canAccessManageChurch || canManageAttendance(userProfile) ? (
+                {canAccessManageChurch || canManageAttendance ? (
                   <section aria-labelledby="menu-staff" className="space-y-1">
                     <h2 id="menu-staff" className="px-3 pt-3 text-sm font-bold text-text-light">Staff</h2>
                     {canAccessManageChurch ? <MemberLink item={{ href: '/admin', label: 'Manage Church', icon: ShieldCheck }} onClick={closeMore} compact /> : null}
-                    {canManageAttendance(userProfile) ? <MemberLink item={{ href: '/admin/attendance', label: 'Attendance', icon: ClipboardCheck }} onClick={closeMore} compact /> : null}
+                    {canManageAttendance ? <MemberLink item={{ href: '/admin/attendance', label: 'Attendance', icon: ClipboardCheck }} onClick={closeMore} compact /> : null}
                   </section>
                 ) : null}
               </div>

@@ -14,7 +14,7 @@ import {
   UsersRound,
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { ROLE_PERMISSIONS } from '@/types/roles';
+import { getRoleCapabilities } from '@/types/roles';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
@@ -29,15 +29,15 @@ type QuickAction = {
 export default function ManageChurchOverview() {
   const { userProfile } = useAuth();
   const router = useRouter();
-  const permissions = userProfile?.role ? ROLE_PERMISSIONS[userProfile.role] : null;
-  const isAdmin = Boolean(userProfile?.isAdmin);
-  const canManageAnnouncements = isAdmin || Boolean(permissions?.canManageAnnouncements);
-  const canManageVolunteer = isAdmin || Boolean(permissions?.canManageVolunteerOpportunities);
-  const canManageLifeGroups = isAdmin || Boolean(permissions?.canManageLifeGroups);
-  const canManageAttendance = isAdmin || Boolean(permissions?.canManageAttendance);
-  const canAssignServiceRoles = isAdmin || Boolean(permissions?.canAssignServiceRoles);
-  const canSendEmail = isAdmin || canManageAnnouncements || canManageLifeGroups;
-  const canAccessManageChurch = isAdmin || canManageAnnouncements || canManageLifeGroups || canManageAttendance;
+  const {
+    isAdmin,
+    canManageAnnouncements,
+    canManageVolunteerOpportunities: canManageVolunteer,
+    canManageAttendance,
+    canAssignServiceRoles,
+    canSendEmail,
+    canAccessManageChurch,
+  } = getRoleCapabilities(userProfile);
 
   useEffect(() => {
     document.title = 'Manage Church | Sioux Falls Church of Christ';
