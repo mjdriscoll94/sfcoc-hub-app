@@ -147,6 +147,13 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Recheck phone, tablet, desktop, keyboard, reduced-motion, and 200% zoom behavior. Representative homepage, authentication, sermon, resource, and navigation states remain readable without clipped controls.
 - [x] Run final lint, tests, type checking, and production build for the polish pass. Changed files pass lint, all 36 tests pass, and the production build succeeds; repository-wide type checking continues to report only the documented pre-existing baseline issues.
 
+## Member visual follow-up
+
+- [x] Present the basic signed-in role as “Member” in member-facing Settings.
+- [x] Replace the truncated mobile “Announcements” label with the clear short label “Updates,” while retaining “Announcements” as its accessible name and destination.
+- [x] Restore white labels on primary, secondary, accent, and other dark semantic surfaces by exposing the complete app color system to Tailwind v4.
+- [x] Recheck the authenticated Settings screen after the contrast fix; the basic role reads “Member,” and the primary action renders white text on the dark orange surface. The phone label is backed by the same verified responsive navigation component and no longer uses truncation.
+
 ## Review checkpoints
 
 - [x] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.

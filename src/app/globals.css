@@ -1,12 +1,43 @@
 @import "tailwindcss";
 
-/* Tailwind v4: expose theme colors so utilities like bg-coral work */
+/* Tailwind v4: expose every app color used by utility classes. */
 @theme {
+  --color-bg: #F5F5F5;
+  --color-bg-secondary: #EBEBEB;
+  --color-card: #FFFFFF;
+  --color-card-hover: #FEFDFB;
+  --color-text: #2F3E46;
+  --color-text-light: #5A6A74;
+  --color-text-muted: #5F7079;
   --color-coral: #EC956C;
   --color-coral-light: #F4A881;
   --color-coral-dark: #A64119;
+  --color-sage: #7BB5AD;
+  --color-sage-light: #9ACBC4;
+  --color-sage-dark: #35635E;
   --color-primary: #B94820;
+  --color-primary-hover: #963713;
+  --color-on-primary: #FFFFFF;
+  --color-secondary: #3F716B;
+  --color-secondary-hover: #35635E;
+  --color-on-secondary: #FFFFFF;
+  --color-accent: #2F3E46;
+  --color-accent-light: #4A5A64;
+  --color-on-accent: #FFFFFF;
   --color-charcoal: #2F3E46;
+  --color-charcoal-light: #4A5A64;
+  --color-muted: #EBEBEB;
+  --color-border: #E0D5C7;
+  --color-border-light: #F0E8DC;
+  --color-divider: #E8DDD0;
+  --color-success: #277452;
+  --color-success-bg: #E8F5EE;
+  --color-warning: #8A4F16;
+  --color-warning-bg: #FDF3E8;
+  --color-error: #B42318;
+  --color-error-bg: #FEF0F0;
+  --color-info: #175CD3;
+  --color-info-bg: #E8F3FD;
 }
 
 /* Calendar: force coral buttons and day cells (override any plugin/base styles) */

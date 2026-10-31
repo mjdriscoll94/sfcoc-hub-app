@@ -37,6 +37,7 @@ const APPLE_PODCASTS_URL = 'https://podcasts.apple.com/us/podcast/beyond-sunday/
 type NavLink = {
   href: string;
   label: string;
+  mobileLabel?: string;
   icon: typeof Home;
   external?: boolean;
   id?: string;
@@ -53,7 +54,7 @@ const primaryMemberLinks: NavLink[] = [
 
 const mobilePrimaryLinks: NavLink[] = [
   { href: '/', label: 'Home', icon: Home },
-  { href: '/announcements', label: 'Announcements', icon: Megaphone },
+  { href: '/announcements', label: 'Announcements', mobileLabel: 'Updates', icon: Megaphone },
   { href: '/calendar', label: 'Calendar', icon: CalendarDays },
   { href: '/resources', label: 'Resources', icon: Files, id: 'nav-resources-mobile' },
 ];
@@ -278,11 +279,12 @@ export default function Navigation() {
                   key={item.href}
                   id={item.id}
                   href={item.href}
+                  aria-label={item.mobileLabel ? item.label : undefined}
                   aria-current={active ? 'page' : undefined}
                   className={`flex min-h-16 flex-col items-center justify-center gap-1 rounded-md px-1 text-[11px] font-semibold focus-visible:outline focus-visible:outline-3 focus-visible:outline-inset focus-visible:outline-primary ${active ? 'text-coral-dark' : 'text-charcoal'}`}
                 >
                   <Icon aria-hidden="true" className="h-5 w-5" />
-                  <span className="max-w-full truncate">{item.label}</span>
+                  <span>{item.mobileLabel ?? item.label}</span>
                 </Link>
               );
             })}

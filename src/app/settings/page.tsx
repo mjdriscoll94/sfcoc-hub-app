@@ -209,7 +209,9 @@ export default function SettingsPage() {
               userProfile.role === 'lifeGroupOrganizer' ? 'bg-[#7A9B82] text-white' :
               'bg-muted text-text/60'
             }`}>
-              {userProfile.role ? ROLE_DISPLAY_NAMES[userProfile.role] ?? userProfile.role : 'User'}
+              {userProfile.role === 'user' || !userProfile.role
+                ? 'Member'
+                : ROLE_DISPLAY_NAMES[userProfile.role] ?? userProfile.role}
             </div>
             <p className="text-sm text-text/70">
               {userProfile.role === 'admin' ? 'Full access to all features and administrative controls' :
@@ -290,7 +292,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={pwSaving}
-                className="min-h-11 rounded-md bg-primary px-4 py-2 font-semibold text-on-primary hover:opacity-90 disabled:opacity-50"
+                className="min-h-11 rounded-md bg-primary px-4 py-2 font-semibold text-white hover:opacity-90 disabled:opacity-50"
               >
                 {pwSaving ? 'Updating…' : 'Update password'}
               </button>
