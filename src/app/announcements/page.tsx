@@ -40,7 +40,9 @@ export default function AnnouncementsPage() {
 
     setExpandedAnnouncements((current) => {
       if (current.has(announcementId)) return current;
-      return new Set([...current, announcementId]);
+      const next = new Set(current);
+      next.add(announcementId);
+      return next;
     });
     window.requestAnimationFrame(() => {
       document.getElementById(announcementId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });

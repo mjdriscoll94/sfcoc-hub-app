@@ -84,11 +84,11 @@ This checklist is the source of truth for the usability refresh. Existing featur
 
 ## Phase 6: Remaining member experience
 
-- [ ] Review Volunteer Opportunities for clear actions, forms, and status feedback.
-- [ ] Review Service Roles and history for clear assignments and response actions.
-- [ ] Review Sermons search, filters, media actions, and empty/error states.
+- [x] Review Volunteer Opportunities for clear actions, forms, and status feedback.
+- [x] Review Service Roles and history for clear assignments and response actions.
+- [x] Review Sermons search, filters, media actions, and empty/error states.
 - [x] Review Giving for embed loading, failure, and fallback behavior.
-- [ ] Standardize Settings sections and notification controls.
+- [x] Standardize Settings sections and notification controls.
 - [x] Preserve the onboarding tour but make it optional.
 - [x] Add Take a quick tour and Not now choices.
 - [x] Keep Restart tour in Settings.
@@ -139,6 +139,7 @@ This checklist is the source of truth for the usability refresh. Existing featur
 ## Review checkpoints
 
 - [x] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.
-- [ ] Checkpoint 2: priority member pages and Manage Church workspace.
+- [x] Checkpoint 2: priority member pages and Manage Church workspace.
+- [ ] Checkpoint 3: remaining member pages and form consistency.
 - [ ] Final end-to-end UI and regression review.
 - [ ] Obtain explicit approval before merge.

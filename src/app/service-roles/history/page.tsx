@@ -88,12 +88,12 @@ export default function ServiceHistoryPage() {
   const getStatusIcon = (status?: string) => {
     switch (status) {
       case 'accepted':
-        return <CheckCircle className="h-5 w-5 text-success" />;
+        return <CheckCircle aria-hidden="true" className="h-5 w-5 text-success" />;
       case 'declined':
-        return <XCircle className="h-5 w-5 text-error" />;
+        return <XCircle aria-hidden="true" className="h-5 w-5 text-error" />;
       case 'awaiting_confirmation':
       case 'pending':
-        return <Clock className="h-5 w-5 text-warning" />;
+        return <Clock aria-hidden="true" className="h-5 w-5 text-warning" />;
       default:
         return null;
     }
@@ -126,8 +126,9 @@ export default function ServiceHistoryPage() {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div role="status" className="min-h-screen flex items-center justify-center gap-3 text-text-light">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-coral"></div>
+        <span>Loading past assignments…</span>
       </div>
     );
   }
@@ -144,20 +145,20 @@ export default function ServiceHistoryPage() {
           <div>
             <Link
               href="/service-roles"
-              className="inline-flex items-center text-coral hover:text-coral-dark mb-4 font-medium transition-colors"
+              className="mb-4 inline-flex min-h-11 items-center font-medium text-coral transition-colors hover:text-coral-dark"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back to Service Roles
             </Link>
-            <h1 className="text-3xl font-bold text-charcoal">Service History</h1>
+            <h1 className="text-3xl font-bold text-charcoal">Past Service Assignments</h1>
             <p className="mt-2 text-text-light">
-              View past Sunday service role assignments
+              Review completed assignments and whether each person accepted or declined.
             </p>
           </div>
         </div>
 
         {error && (
-          <div className="bg-error-bg border border-error rounded-md p-4 text-error">
+          <div role="alert" className="bg-error-bg border border-error rounded-md p-4 text-error">
             {error}
           </div>
         )}
@@ -167,13 +168,14 @@ export default function ServiceHistoryPage() {
           <h2 className="text-lg font-semibold text-charcoal mb-4">Filters</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-2">
+              <label htmlFor="history-status" className="block text-sm font-medium text-charcoal mb-2">
                 Status
               </label>
               <select
+                id="history-status"
                 value={filterStatus}
                 onChange={(e) => setFilterStatus(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral bg-card text-charcoal"
+                className="min-h-11 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral bg-card text-charcoal"
               >
                 <option value="all">All Statuses</option>
                 <option value="accepted">Accepted</option>
@@ -183,13 +185,14 @@ export default function ServiceHistoryPage() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-2">
+              <label htmlFor="history-role" className="block text-sm font-medium text-charcoal mb-2">
                 Role
               </label>
               <select
+                id="history-role"
                 value={filterRole}
                 onChange={(e) => setFilterRole(e.target.value)}
-                className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral bg-card text-charcoal"
+                className="min-h-11 w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-coral bg-card text-charcoal"
               >
                 <option value="all">All Roles</option>
                 {uniqueRoles.map(role => (
@@ -198,6 +201,9 @@ export default function ServiceHistoryPage() {
               </select>
             </div>
           </div>
+          <p className="mt-4 text-sm text-text-light" role="status">
+            Showing {filteredAssignments.length} assignment{filteredAssignments.length === 1 ? '' : 's'}.
+          </p>
         </div>
 
         {/* History Table */}

@@ -86,7 +86,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
   };
 
   return (
-    <div className="fixed inset-0 z-[9999] overflow-y-auto">
+    <div className="fixed inset-0 z-[9999] overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="volunteer-form-title">
       {/* Backdrop overlay */}
       <div 
         className="fixed inset-0 bg-black bg-opacity-60 transition-opacity" 
@@ -99,11 +99,12 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
         <div className="relative bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
-            <h2 className="text-2xl font-bold text-charcoal">Submit Volunteer Opportunity</h2>
+            <h2 id="volunteer-form-title" className="text-2xl font-bold text-charcoal">Submit a volunteer opportunity</h2>
             <button
+              type="button"
               onClick={onClose}
-              className="text-text-muted hover:text-charcoal transition-colors"
-              aria-label="Close"
+              className="inline-flex h-11 w-11 items-center justify-center rounded-lg text-text-muted transition-colors hover:bg-gray-100 hover:text-charcoal focus:outline-none focus:ring-2 focus:ring-primary"
+              aria-label="Close volunteer opportunity form"
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -115,6 +116,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
             <p className="text-sm text-info">
               Your volunteer opportunity will be reviewed by an administrator before being published.
             </p>
+            <p className="mt-1 text-sm text-info">Fields marked required must be completed.</p>
           </div>
 
           {error && (
@@ -126,7 +128,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-charcoal mb-2">
-                Title *
+                Title <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
               </label>
               <input
                 type="text"
@@ -136,14 +138,14 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 onChange={handleChange}
                 required
                 maxLength={100}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
+                className="min-h-11 w-full rounded-lg border border-border bg-white px-4 py-2 text-base text-charcoal focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="e.g., Church Cleanup Day"
               />
             </div>
 
             <div>
               <label htmlFor="description" className="block text-sm font-medium text-charcoal mb-2">
-                Description *
+                Description <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
               </label>
               <textarea
                 id="description"
@@ -163,7 +165,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
 
             <div>
               <label htmlFor="dateTime" className="block text-sm font-medium text-charcoal mb-2">
-                Event Date & Time *
+                Event date and time <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
               </label>
               <input
                 type="datetime-local"
@@ -173,13 +175,13 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 onChange={handleChange}
                 required
                 min={new Date().toISOString().slice(0, 16)}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
+                className="min-h-11 w-full rounded-lg border border-border bg-white px-4 py-2 text-base text-charcoal focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
             <div>
               <label htmlFor="location" className="block text-sm font-medium text-charcoal mb-2">
-                Location *
+                Location <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
               </label>
               <input
                 type="text"
@@ -189,14 +191,14 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 onChange={handleChange}
                 required
                 maxLength={200}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
+                className="min-h-11 w-full rounded-lg border border-border bg-white px-4 py-2 text-base text-charcoal focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="e.g., Church Building"
               />
             </div>
 
             <div>
               <label htmlFor="maxVolunteers" className="block text-sm font-medium text-charcoal mb-2">
-                Number of Volunteers Needed *
+                Number of volunteers needed <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
               </label>
               <input
                 type="number"
@@ -207,13 +209,13 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 required
                 min={1}
                 max={100}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
+                className="min-h-11 w-full rounded-lg border border-border bg-white px-4 py-2 text-base text-charcoal focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
             <div>
               <label htmlFor="contactEmail" className="block text-sm font-medium text-charcoal mb-2">
-                Contact Email *
+                Contact email <span aria-hidden="true">*</span><span className="sr-only"> (required)</span>
               </label>
               <input
                 type="email"
@@ -222,13 +224,13 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 value={formData.contactEmail}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
+                className="min-h-11 w-full rounded-lg border border-border bg-white px-4 py-2 text-base text-charcoal focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
               />
             </div>
 
             <div>
               <label htmlFor="contactPhone" className="block text-sm font-medium text-charcoal mb-2">
-                Contact Phone (Optional)
+                Contact phone <span className="font-normal text-text-muted">(optional)</span>
               </label>
               <input
                 type="tel"
@@ -236,16 +238,16 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
                 name="contactPhone"
                 value={formData.contactPhone}
                 onChange={handleChange}
-                className="w-full px-4 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white text-charcoal"
+                className="min-h-11 w-full rounded-lg border border-border bg-white px-4 py-2 text-base text-charcoal focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                 placeholder="(555) 123-4567"
               />
             </div>
 
-            <div className="flex space-x-4 pt-4">
+            <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row">
               <button
                 type="button"
                 onClick={onClose}
-                className="flex-1 px-4 py-2 border-2 border-border rounded-lg text-charcoal hover:bg-bg-secondary transition-colors"
+                className="min-h-11 flex-1 rounded-lg border-2 border-border px-4 py-2 font-semibold text-charcoal transition-colors hover:bg-bg-secondary"
                 disabled={loading}
               >
                 Cancel
@@ -253,7 +255,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
               <button
                 type="submit"
                 disabled={loading}
-                className="flex-1 px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-semibold"
+                className="min-h-11 flex-1 rounded-lg bg-[#E88B5F] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#D6714A] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Submitting...' : 'Submit for Approval'}
               </button>
