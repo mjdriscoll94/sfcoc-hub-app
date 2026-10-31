@@ -11,6 +11,7 @@ const protectedPaths = [
   '/volunteer',
   '/admin',
   '/calendar',
+  '/life-groups',
   '/settings',
   '/directory'
 ];
@@ -64,4 +65,4 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
   }
 
   return <>{children}</>;
-} 
+}

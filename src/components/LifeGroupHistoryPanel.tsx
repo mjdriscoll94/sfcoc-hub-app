@@ -164,7 +164,7 @@ export default function LifeGroupHistoryPanel({ lifeGroups, households, userId }
             type="button"
             onClick={saveSnapshot}
             disabled={saving || lifeGroups.length === 0}
-            className="inline-flex items-center rounded-md bg-[#E88B5F] px-4 py-2 font-medium text-white transition-colors hover:bg-[#D6714A] disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center rounded-md bg-primary px-4 py-2 font-medium text-on-primary transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             <ArchiveBoxArrowDownIcon className="mr-2 h-5 w-5" />
             {saving ? 'Saving…' : existingYears.has(snapshotYear) ? `Replace ${snapshotYear}` : `Save ${snapshotYear}`}

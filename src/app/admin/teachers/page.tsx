@@ -13,6 +13,14 @@ const SUNDAY_CLASSES: AgeGroup[] = ['Cradle Roll', 'Toddlers', 'Elementary A', '
 const WEDNESDAY_CLASSES: AgeGroup[] = ['Toddlers', 'Elementary A', 'Elementary B', 'Middle School', 'High School'];
 const DECORATOR_CLASSES: AgeGroup[] = ['Decorators'];
 
+function toDate(value: unknown): Date {
+  if (value instanceof Date) return value;
+  if (value && typeof value === 'object' && 'toDate' in value && typeof value.toDate === 'function') {
+    return value.toDate();
+  }
+  return new Date();
+}
+
 export default function TeacherManagement() {
   useEffect(() => {
     document.title = 'Teacher Management | Sioux Falls Church of Christ';
@@ -70,8 +78,8 @@ export default function TeacherManagement() {
             id: doc.id,
             assignments: scheduleData.assignments.map(assignment => ({
               ...assignment,
-              assignedAt: assignment.assignedAt instanceof Date ? assignment.assignedAt : (assignment.assignedAt as any).toDate(),
-              updatedAt: assignment.updatedAt instanceof Date ? assignment.updatedAt : (assignment.updatedAt as any).toDate()
+              assignedAt: toDate(assignment.assignedAt),
+              updatedAt: toDate(assignment.updatedAt)
             }))
           };
         });
@@ -493,7 +501,7 @@ export default function TeacherManagement() {
                               <button
                                 onClick={handleSaveAssignment}
                                 disabled={!selectedTeacherId}
-                                className="flex-1 px-2 py-1 text-xs bg-[#E88B5F] text-white rounded hover:bg-[#D6714A] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                                className="flex-1 px-2 py-1 text-xs bg-primary text-on-primary rounded hover:bg-primary-hover disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                               >
                                 Add
                               </button>
@@ -537,7 +545,7 @@ export default function TeacherManagement() {
     return (
       <div className="text-center p-8">
         <h1 className="text-2xl font-bold text-charcoal mb-4">Teacher Management</h1>
-        <p className="text-gray-600">You don't have permission to access this page.</p>
+        <p className="text-gray-600">You don&apos;t have permission to access this page.</p>
       </div>
     );
   }
@@ -545,10 +553,10 @@ export default function TeacherManagement() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-text mb-2 uppercase tracking-wide">
-          Teacher's Calendar
+        <h1 className="mb-2 text-3xl font-bold text-text">
+          Teacher&apos;s Calendar
         </h1>
-        <p className="text-text/70 uppercase tracking-wide">
+        <p className="text-text/70">
           Manage quarterly teaching assignments for Sunday classes, Wednesday classes, and decorators.
         </p>
       </div>
@@ -556,7 +564,7 @@ export default function TeacherManagement() {
       {/* Teacher Management Section - Always Visible */}
       <div className="mb-8 bg-white rounded-lg shadow-sm p-6">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-semibold text-text uppercase tracking-wide">Teacher Management</h2>
+          <h2 className="text-xl font-semibold text-text">Teacher Management</h2>
           <button
             onClick={() => setShowTeacherForm(true)}
             className="px-4 py-2 bg-primary text-on-primary rounded-md hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary focus-ring uppercase tracking-wide"
@@ -619,7 +627,7 @@ export default function TeacherManagement() {
                     <div className="flex justify-center space-x-2">
                       <button
                         onClick={() => handleEditTeacher(teacher)}
-                        className="px-3 py-1 text-sm bg-[#E88B5F] text-white rounded hover:bg-[#D6714A] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] uppercase tracking-wide transition-colors"
+                        className="px-3 py-1 text-sm bg-primary text-on-primary rounded hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide transition-colors"
                       >
                         Edit
                       </button>
@@ -711,7 +719,7 @@ export default function TeacherManagement() {
                     <div className="px-6 pb-6">
                       <div className="mb-4 pt-2">
                         <div className="text-sm text-gray-600 space-y-1">
-                          <p><span className="font-medium">*</span> Teacher's Helper</p>
+                          <p><span className="font-medium">*</span> Teacher&apos;s Helper</p>
                           <p><span className="font-medium">2nd</span> Second choice</p>
                         </div>
                       </div>

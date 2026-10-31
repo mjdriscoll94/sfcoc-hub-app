@@ -255,7 +255,7 @@ export default function VolunteerOpportunityForm({ onClose, onSuccess }: Volunte
               <button
                 type="submit"
                 disabled={loading}
-                className="min-h-11 flex-1 rounded-lg bg-[#E88B5F] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#D6714A] disabled:cursor-not-allowed disabled:opacity-50"
+                className="min-h-11 flex-1 rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary transition-colors hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading ? 'Submitting...' : 'Submit for Approval'}
               </button>

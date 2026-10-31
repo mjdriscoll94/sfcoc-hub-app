@@ -472,7 +472,7 @@ export default function EventsManagement() {
               <button
                 onClick={handleSaveCategory}
                 disabled={!categoryForm.title.trim()}
-                className="px-4 py-2 bg-coral text-white rounded-md hover:bg-coral-dark disabled:opacity-50"
+                className="px-4 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-hover disabled:opacity-50"
               >
                 {editingCategoryId ? 'Update' : 'Create'}
               </button>
@@ -553,7 +553,7 @@ export default function EventsManagement() {
             <button
               onClick={handleSaveEvent}
               disabled={!eventForm.name.trim()}
-              className="px-4 py-2 bg-coral text-white rounded-md hover:bg-coral-dark disabled:opacity-50"
+              className="px-4 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-hover disabled:opacity-50"
             >
               {editingEventKey ? 'Update' : 'Add event'}
             </button>
@@ -569,7 +569,7 @@ export default function EventsManagement() {
             <p className="text-text-light text-sm mb-4">Click &quot;Load default events&quot; to use the current home page events, or add a category to start from scratch.</p>
             <button
               onClick={handleCreateCategory}
-              className="inline-flex items-center px-4 py-2 bg-coral text-white rounded-lg hover:bg-coral-dark"
+              className="inline-flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-hover"
             >
               <PlusIcon className="h-5 w-5 mr-2" />
               Add category

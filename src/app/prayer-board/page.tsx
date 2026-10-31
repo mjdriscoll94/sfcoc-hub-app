@@ -97,7 +97,7 @@ export default function PrayerBoard() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Prayer & Praise</h1>
+        <h1 className="text-3xl font-bold text-text">Prayer &amp; Praise</h1>
       </div>
 
       {/* Filter Toggle Group and Add Button */}
@@ -185,7 +185,7 @@ export default function PrayerBoard() {
           <div className="animate-pulse mb-4">
             <div className="h-8 w-8 mx-auto rounded-full bg-info/20"></div>
           </div>
-          <h3 className="text-lg font-medium text-info mb-2 uppercase tracking-wide">
+          <h3 className="mb-2 text-lg font-medium text-info">
             Optimizing Database
           </h3>
           <p className="text-info/80">
@@ -347,7 +347,7 @@ export default function PrayerBoard() {
                 background: 'linear-gradient(135deg, var(--coral-light) 0%, var(--coral) 100%)',
               }}
             >
-              <h3 className="text-lg font-semibold uppercase tracking-wide text-on-primary">
+              <h3 className="text-lg font-semibold text-on-primary">
                 New Prayer Request or Praise
               </h3>
               <button
@@ -369,4 +369,4 @@ export default function PrayerBoard() {
       )}
     </div>
   );
-} 
+}

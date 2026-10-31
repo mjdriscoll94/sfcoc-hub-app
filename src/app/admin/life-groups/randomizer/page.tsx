@@ -559,7 +559,7 @@ export default function LifeGroupRandomizerPage() {
         </div>
         {leaderHouseholdOptions.length === 0 ? <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">No households are marked as Life Group leaders. Use “Manage leader households” to mark them first.</p> : null}
         <p className="mt-4 text-sm text-text-light">Always, sometimes, and never-active households are assigned and balanced. {households.filter((household) => household.participation === 'exempted').length} exempted households will remain unassigned.</p>
-        <button type="button" onClick={generateProposal} className="mt-5 inline-flex items-center rounded-lg bg-[#E88B5F] px-4 py-2 font-medium text-white hover:bg-[#D6714A]">
+        <button type="button" onClick={generateProposal} className="mt-5 inline-flex items-center rounded-lg bg-primary px-4 py-2 font-medium text-on-primary hover:bg-primary-hover">
           <SparklesIcon className="mr-2 h-5 w-5" /> Generate balanced proposal
         </button>
       </section>
@@ -570,7 +570,7 @@ export default function LifeGroupRandomizerPage() {
             <div><h2 className="text-xl font-semibold text-charcoal">3. Review proposal</h2><p className="mt-1 text-sm text-text-light">Generate again for a different randomized arrangement.</p></div>
             <div className="flex flex-wrap gap-2">
               <button type="button" onClick={generateProposal} className="inline-flex items-center rounded-lg border border-border px-4 py-2 text-charcoal hover:border-coral hover:text-coral"><ArrowPathIcon className="mr-2 h-5 w-5" />Randomize again</button>
-              <button type="button" onClick={applyProposal} disabled={applying} className="rounded-lg bg-[#E88B5F] px-4 py-2 font-medium text-white hover:bg-[#D6714A] disabled:opacity-50">{applying ? 'Applying…' : 'Apply assignments'}</button>
+              <button type="button" onClick={applyProposal} disabled={applying} className="rounded-lg bg-primary px-4 py-2 font-medium text-on-primary hover:bg-primary-hover disabled:opacity-50">{applying ? 'Applying…' : 'Apply assignments'}</button>
             </div>
           </div>
           <div className="mt-5 grid gap-4 lg:grid-cols-2">

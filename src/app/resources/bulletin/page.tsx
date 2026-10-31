@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react';
 import { useBulletins } from '@/hooks/useBulletins';
-import { FileText, Download, Calendar, Clock } from 'lucide-react';
+import { FileText, Download, Calendar, LoaderCircle } from 'lucide-react';
 
 export default function BulletinPage() {
   useEffect(() => {
@@ -13,17 +13,18 @@ export default function BulletinPage() {
 
   return (
     <div className="container mx-auto px-4 py-8">
-      <h1 className="text-3xl font-bold mb-6 text-coral text-center sm:text-left">Bulletin</h1>
+      <h1 className="text-3xl font-bold mb-6 text-charcoal text-center sm:text-left">Bulletin</h1>
 
       {loading && (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
+        <div role="status" className="flex justify-center items-center gap-3 py-12 text-text-light">
+          <LoaderCircle aria-hidden="true" className="h-7 w-7 animate-spin text-primary" />
+          <span>Loading bulletins…</span>
         </div>
       )}
 
       {error && (
-        <div className="bg-red-50 p-4 rounded-lg mb-6">
-          <p className="text-red-600">{error}</p>
+        <div role="alert" className="mb-6 rounded-lg border border-error/20 bg-error/10 p-4">
+          <p className="text-error">{error}</p>
         </div>
       )}
 
@@ -56,10 +57,6 @@ export default function BulletinPage() {
                         <Calendar className="h-4 w-4 mr-1" />
                         <span>{bulletin.date.toLocaleDateString()}</span>
                       </div>
-                      <div className="flex items-center">
-                        <Clock className="h-4 w-4 mr-1" />
-                        <span>Uploaded {bulletin.uploadedAt.toLocaleDateString()}</span>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -67,10 +64,10 @@ export default function BulletinPage() {
                   href={bulletin.fileUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center space-x-1 px-3 py-1.5 text-sm font-medium text-white bg-[#D6805F] rounded-md hover:bg-[#c0734f] transition-colors duration-200"
+                  className="flex min-h-11 items-center space-x-1 rounded-md bg-primary px-3 py-2 text-sm font-medium text-on-primary transition-colors duration-200 hover:bg-primary-hover"
                 >
-                  <Download className="h-4 w-4" />
-                  <span>Download</span>
+                  <Download aria-hidden="true" className="h-4 w-4" />
+                  <span>Open bulletin<span className="sr-only">: {bulletin.title} (opens in a new window)</span></span>
                 </a>
               </div>
             </div>

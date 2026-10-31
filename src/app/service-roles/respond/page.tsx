@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useCallback, useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { doc, getDoc } from 'firebase/firestore';
@@ -9,14 +9,19 @@ import { format } from 'date-fns';
 import { CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 
+interface AssignmentDetails {
+  role: string;
+  date: Date;
+  status: string;
+}
+
 export default function RespondToAssignmentPage() {
   useEffect(() => {
     document.title = 'Respond to Assignment | Sioux Falls Church of Christ';
   }, []);
 
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const { user, loading: authLoading } = useAuth();
+  const { loading: authLoading } = useAuth();
   
   const assignmentId = searchParams.get('id');
   const action = searchParams.get('action');
@@ -24,7 +29,54 @@ export default function RespondToAssignmentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
-  const [assignmentDetails, setAssignmentDetails] = useState<any>(null);
+  const [assignmentDetails, setAssignmentDetails] = useState<AssignmentDetails | null>(null);
+
+  const handleResponse = useCallback(async () => {
+    if (!assignmentId || !action) return;
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const assignmentRef = doc(db, 'serviceAssignments', assignmentId);
+      const assignmentDoc = await getDoc(assignmentRef);
+
+      if (!assignmentDoc.exists()) {
+        setError('Assignment not found');
+        setLoading(false);
+        return;
+      }
+
+      const assignment = assignmentDoc.data();
+      setAssignmentDetails({
+        role: String(assignment.role ?? ''),
+        date: assignment.date?.toDate?.() || new Date(),
+        status: String(assignment.status ?? ''),
+      });
+
+      if (assignment.status === 'accepted' || assignment.status === 'declined') {
+        setError(`This assignment has already been ${assignment.status}`);
+        setLoading(false);
+        return;
+      }
+
+      const response = await fetch('/api/service-roles/respond', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ assignmentId, action }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || 'Failed to update assignment');
+
+      setSuccess(true);
+    } catch (err) {
+      console.error('Error responding to assignment:', err);
+      setError(err instanceof Error ? err.message : 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  }, [action, assignmentId]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -41,64 +93,9 @@ export default function RespondToAssignmentPage() {
       return;
     }
 
-    // Allow responding with or without login (participants use email link and may not have an account)
+    // Participants can respond from their emailed link without signing in.
     handleResponse();
-  }, [user, authLoading, assignmentId, action]);
-
-  const handleResponse = async () => {
-    if (!assignmentId || !action) return;
-
-    try {
-      setLoading(true);
-      setError(null);
-
-      // First get assignment details
-      const assignmentRef = doc(db, 'serviceAssignments', assignmentId);
-      const assignmentDoc = await getDoc(assignmentRef);
-
-      if (!assignmentDoc.exists()) {
-        setError('Assignment not found');
-        setLoading(false);
-        return;
-      }
-
-      const assignment = assignmentDoc.data();
-      setAssignmentDetails({
-        role: assignment.role,
-        date: assignment.date?.toDate?.() || new Date(),
-        status: assignment.status
-      });
-
-      // Check if already responded
-      if (assignment.status === 'accepted' || assignment.status === 'declined') {
-        setError(`This assignment has already been ${assignment.status}`);
-        setLoading(false);
-        return;
-      }
-
-      // Assignees are always from service role participants; anyone with the link can respond (no login required)
-      const response = await fetch('/api/service-roles/respond', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ assignmentId, action }),
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to update assignment');
-      }
-
-      setSuccess(true);
-    } catch (err) {
-      console.error('Error responding to assignment:', err);
-      setError(err instanceof Error ? err.message : 'An error occurred');
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [action, assignmentId, authLoading, handleResponse]);
 
   if (authLoading || loading) {
     return (
@@ -151,7 +148,7 @@ export default function RespondToAssignmentPage() {
             <div className="space-y-3">
               <Link
                 href="/service-roles"
-                className="block w-full px-6 py-3 bg-coral text-white font-semibold rounded-lg hover:bg-coral-dark transition-colors text-center"
+                className="block w-full px-6 py-3 bg-primary text-on-primary font-semibold rounded-lg hover:bg-primary-hover transition-colors text-center"
               >
                 View All Assignments
               </Link>
@@ -203,7 +200,7 @@ export default function RespondToAssignmentPage() {
             <div className="space-y-3">
               <Link
                 href="/service-roles"
-                className="block w-full px-6 py-3 bg-coral text-white font-semibold rounded-lg hover:bg-coral-dark transition-colors text-center"
+                className="block w-full px-6 py-3 bg-primary text-on-primary font-semibold rounded-lg hover:bg-primary-hover transition-colors text-center"
               >
                 View Service Roles
               </Link>

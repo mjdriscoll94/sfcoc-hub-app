@@ -291,7 +291,7 @@ export default function VolunteerPage() {
                               <button
                                 onClick={() => handleSignUp(opportunity.id)}
                                 disabled={Boolean(isSignedUp) || isUpdating || spotsLeft <= 0}
-                                className="inline-flex min-h-11 items-center rounded-lg bg-[#E88B5F] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#D6714A] focus:outline-none focus:ring-2 focus:ring-[#E88B5F] focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                               >
                                 {isUpdating && !isSignedUp ? <LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" /> : null}
                                 {spotsLeft <= 0 ? 'Opportunity is full' : isSignedUp ? 'You are signed up' : 'Sign up to help'}
@@ -310,7 +310,7 @@ export default function VolunteerPage() {
                           ) : (
                             <Link 
                               href="/auth/signin" 
-                              className="inline-flex min-h-11 items-center rounded-lg bg-[#E88B5F] px-4 py-2 font-semibold text-white transition-colors hover:bg-[#D6714A] focus:outline-none focus:ring-2 focus:ring-[#E88B5F] focus:ring-offset-2"
+                              className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                             >
                               Sign in to volunteer
                             </Link>

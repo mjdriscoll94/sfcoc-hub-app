@@ -579,6 +579,7 @@ export function ChurchCalendar({
                     <div className="flex gap-1">
                       <input
                         type="text"
+                        aria-label="Calendar subscription URL"
                         readOnly
                         value={feedUrl}
                         className="flex-1 min-w-0 rounded border border-border bg-bg px-2 py-1.5 text-xs text-charcoal"
@@ -1873,6 +1874,7 @@ function CategoryEditRow({
           <label className="block text-xs font-medium text-text-light mb-0.5">Name</label>
           <input
             type="text"
+            aria-label="Category name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={busy}
@@ -1888,6 +1890,7 @@ function CategoryEditRow({
               aria-hidden
             />
             <select
+              aria-label="Category color"
               value={color}
               onChange={(e) => setColor(e.target.value)}
               disabled={busy}

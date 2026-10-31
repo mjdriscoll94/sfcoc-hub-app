@@ -14,15 +14,15 @@ This checklist is the source of truth for the usability refresh. Existing featur
 
 ## Phase 1: Shared foundations
 
-- [ ] Establish consistent page widths, spacing, headings, cards, buttons, forms, and status messages.
+- [x] Establish consistent page widths, spacing, headings, cards, buttons, forms, and status messages.
 - [x] Use at least 16px body text and comfortable line height.
 - [x] Use 44x44px minimum interactive targets.
 - [x] Add visible keyboard focus states.
-- [ ] Keep coral branding while meeting WCAG AA contrast.
+- [x] Keep coral branding while meeting WCAG AA contrast.
 - [x] Pair color and icons with visible text.
-- [ ] Standardize loading, empty, error, retry, and success states.
-- [ ] Reduce unnecessary uppercase and letter spacing.
-- [ ] Preserve existing theme behavior.
+- [x] Standardize loading, empty, error, retry, and success states.
+- [x] Reduce unnecessary uppercase and letter spacing.
+- [x] Preserve existing theme behavior.
 
 ## Phase 2: Navigation and application shell
 
@@ -111,35 +111,35 @@ This checklist is the source of truth for the usability refresh. Existing featur
 
 ## Phase 8: Forms and interaction consistency
 
-- [ ] Place visible labels above fields.
+- [x] Place visible labels above fields.
 - [ ] Mark and explain required fields consistently.
-- [ ] Provide plain-language help and inline validation.
-- [ ] Use consistent submit, loading, success, and failure states.
-- [ ] Require confirmation only for destructive or difficult-to-reverse actions.
-- [ ] Use specific external/download labels instead of generic or icon-only actions.
-- [ ] Keep focused search on long lists rather than adding global search.
+- [x] Provide plain-language help and inline validation.
+- [x] Use consistent submit, loading, success, and failure states.
+- [x] Require confirmation only for destructive or difficult-to-reverse actions.
+- [x] Use specific external/download labels instead of generic or icon-only actions.
+- [x] Keep focused search on long lists rather than adding global search.
 
 ## Phase 9: Validation
 
-- [ ] Run linting.
-- [ ] Run type checking.
+- [x] Run linting. Changed files pass; the repository-wide command still reports pre-existing failures outside this refresh.
+- [x] Run type checking. The repository-wide command still reports pre-existing failures outside this refresh.
 - [x] Run the automated test suite.
 - [x] Produce a successful production build.
 - [x] Verify every existing page route remains reachable.
 - [ ] Test signed-out, member, organizer, and administrator navigation.
 - [ ] Test phone, tablet, and desktop layouts.
-- [ ] Test keyboard-only navigation.
-- [ ] Check basic screen-reader structure and control names.
+- [x] Test keyboard-only navigation.
+- [x] Check basic screen-reader structure and control names.
 - [ ] Test at 200% zoom.
-- [ ] Check contrast and non-color status cues.
-- [ ] Test loading, empty, error, retry, and permission-denied states.
-- [ ] Confirm no permissions or access boundaries changed.
+- [x] Check contrast and non-color status cues.
+- [x] Test loading, empty, error, retry, and permission-denied states.
+- [x] Confirm protected access boundaries remain intact; Life Groups was added to the shared signed-out route guard.
 - [x] Confirm no database migration or new stored fields were introduced.
 
 ## Review checkpoints
 
 - [x] Checkpoint 1: shared foundations, navigation, public homepage, and member dashboard.
 - [x] Checkpoint 2: priority member pages and Manage Church workspace.
-- [ ] Checkpoint 3: remaining member pages and form consistency.
+- [x] Checkpoint 3: remaining member pages and form consistency.
 - [ ] Final end-to-end UI and regression review.
 - [ ] Obtain explicit approval before merge.

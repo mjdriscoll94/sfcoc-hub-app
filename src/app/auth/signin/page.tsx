@@ -66,6 +66,7 @@ export default function SignInPage() {
             </p>
           </div>
           <form className="space-y-6" onSubmit={handleSubmit}>
+          <p className="text-sm text-text-light">Email address and password are required.</p>
           <div className="space-y-4">
             <div>
               <label htmlFor="email-address" className="mb-2 block font-semibold text-charcoal">
@@ -101,7 +102,7 @@ export default function SignInPage() {
           </div>
 
           {error && (
-            <div className="rounded-md bg-error/10 p-4 border border-error/20">
+            <div role="alert" className="rounded-md bg-error/10 p-4 border border-error/20">
               <div className="flex">
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-error">

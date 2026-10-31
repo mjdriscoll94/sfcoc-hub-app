@@ -52,9 +52,9 @@ export default function ForgotPasswordPage() {
               height={80}
               className="mb-6"
             />
-            <h2 className="text-center text-2xl font-bold text-text uppercase tracking-wide">
+            <h1 className="text-center text-2xl font-bold text-text">
               Reset your password
-            </h2>
+            </h1>
             <p className="text-center text-sm text-text-light mt-2">
               Enter the email you use for your account. If we find it, we&apos;ll send a link to choose a new password.
             </p>
@@ -93,13 +93,13 @@ export default function ForgotPasswordPage() {
               </div>
 
               {error && (
-                <div className="rounded-md bg-error/10 p-3 border border-error/20 text-sm text-error">{error}</div>
+                <div role="alert" className="rounded-md bg-error/10 p-3 border border-error/20 text-sm text-error">{error}</div>
               )}
 
               <button
                 type="submit"
                 disabled={status === 'loading'}
-                className="w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-on-primary bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide disabled:opacity-50"
+                className="flex min-h-11 w-full justify-center rounded-md border border-transparent bg-primary px-4 py-2 font-semibold text-on-primary hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
               >
                 {status === 'loading' ? 'Sending…' : 'Send reset link'}
               </button>

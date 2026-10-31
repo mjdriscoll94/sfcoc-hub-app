@@ -432,7 +432,7 @@ export default function ServiceRolesPage() {
                 <button
                   type="submit"
                   disabled={addParticipantSaving}
-                  className="px-4 py-2 bg-[#E88B5F] text-white text-sm font-semibold rounded-lg hover:bg-[#D6714A] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F]"
+                  className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 >
                   {addParticipantSaving ? 'Adding…' : 'Add person'}
                 </button>
@@ -520,6 +520,7 @@ export default function ServiceRolesPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal">
                                 {canAssignRoles && week.isEditing ? (
                                   <select
+                                    aria-label={`Person assigned to ${role}`}
                                     value={week.pendingAssignments[role] || ''}
                                     onChange={(e) => handleAssignmentChange(weekIndex, role, e.target.value || null)}
                                     className="mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base text-charcoal border-border bg-card focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"

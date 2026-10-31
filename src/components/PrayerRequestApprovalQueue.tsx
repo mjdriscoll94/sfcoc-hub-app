@@ -129,17 +129,20 @@ export default function PrayerRequestApprovalQueue() {
                   <div className="space-y-3">
                     <input
                       type="text"
+                      aria-label="Prayer request title"
                       value={editingItem.title}
                       onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
                       className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal"
                     />
                     <textarea
+                      aria-label="Prayer request description"
                       value={editingItem.description}
                       onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
                       className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal min-h-[100px]"
                     />
                     {item.type === 'prayer' && (
                       <select
+                        aria-label="Prayer request priority"
                         value={editingItem.priority || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, priority: e.target.value ? e.target.value as 'Urgent' | 'Batched' : undefined })}
                         className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal"
@@ -221,4 +224,4 @@ export default function PrayerRequestApprovalQueue() {
       </div>
     </div>
   );
-} 
+}
