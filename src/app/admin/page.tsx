@@ -36,6 +36,7 @@ export default function ManageChurchOverview() {
   const canManageLifeGroups = isAdmin || Boolean(permissions?.canManageLifeGroups);
   const canManageAttendance = isAdmin || Boolean(permissions?.canManageAttendance);
   const canAssignServiceRoles = isAdmin || Boolean(permissions?.canAssignServiceRoles);
+  const canSendEmail = isAdmin || canManageAnnouncements || canManageLifeGroups;
   const canAccessManageChurch = isAdmin || canManageAnnouncements || canManageLifeGroups || canManageAttendance;
 
   useEffect(() => {
@@ -53,7 +54,7 @@ export default function ManageChurchOverview() {
     ...(isAdmin || canManageVolunteer || canAssignServiceRoles ? [{ href: '/admin/calendar', label: 'Update the calendar', description: 'Add or manage church events.', icon: CalendarDays }] : []),
     ...(canManageAttendance ? [{ href: '/admin/attendance', label: 'Take attendance', description: 'Record Sunday household attendance.', icon: ClipboardCheck }] : []),
     ...(canManageVolunteer ? [{ href: '/admin/volunteer', label: 'Manage volunteers', description: 'Create and update volunteer opportunities.', icon: UsersRound }] : []),
-    ...(isAdmin ? [{ href: '/admin/send-email', label: 'Send an email', description: 'Contact members or a saved email list.', icon: Mail }] : []),
+    ...(canSendEmail ? [{ href: '/admin/send-email', label: 'Send an email', description: 'Contact members or a saved email list.', icon: Mail }] : []),
     ...(isAdmin ? [{ href: '/admin/users', label: 'Manage users', description: 'Review accounts, roles, and access.', icon: Users }] : []),
   ];
 

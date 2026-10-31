@@ -126,11 +126,11 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Run the automated test suite.
 - [x] Produce a successful production build.
 - [x] Verify every existing page route remains reachable.
-- [ ] Test signed-out, member, organizer, and administrator navigation.
-- [ ] Test phone, tablet, and desktop layouts.
+- [ ] Test signed-out, member, organizer, and administrator navigation. Signed-out behavior is verified; role visibility was audited against page permissions and corrected, while live authenticated sessions remain to be tested.
+- [x] Test phone, tablet, and desktop layouts. Verified representative public, authentication, sermon, Bulletin, and Lesson Notes screens at 390×844, 768×1024, and 1440×900 without horizontal overflow.
 - [x] Test keyboard-only navigation.
 - [x] Check basic screen-reader structure and control names.
-- [ ] Test at 200% zoom.
+- [x] Test at 200% zoom. Verified with Chrome's native 200% zoom on representative public, authentication, sermon, Bulletin, and Lesson Notes screens without horizontal overflow or clipped controls.
 - [x] Check contrast and non-color status cues.
 - [x] Test loading, empty, error, retry, and permission-denied states.
 - [x] Confirm protected access boundaries remain intact; Life Groups was added to the shared signed-out route guard.

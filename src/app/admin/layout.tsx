@@ -113,6 +113,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const canManageAttendance = isAdmin || Boolean(permissions?.canManageAttendance);
   const canManageVolunteer = isAdmin || Boolean(permissions?.canManageVolunteerOpportunities);
   const canAssignServiceRoles = isAdmin || Boolean(permissions?.canAssignServiceRoles);
+  const canSendEmail = isAdmin || canManageAnnouncements || canManageLifeGroups;
 
   const sections: ManageSection[] = [
     {
@@ -120,9 +121,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       links: [
         ...(isAdmin ? [
           { href: '/admin/users', label: 'Users', icon: Users },
-          { href: '/admin/teachers', label: 'Teachers', icon: UserRoundCheck },
           { href: '/admin/directory', label: 'Directory', icon: UsersRound },
         ] : []),
+        ...(canAssignServiceRoles ? [{ href: '/admin/teachers', label: 'Teachers', icon: UserRoundCheck }] : []),
         ...(canManageAttendance ? [{ href: '/admin/households', label: 'Households', icon: UsersRound }] : []),
         ...(canManageLifeGroups ? [{ href: '/admin/life-groups', label: 'Life Groups', icon: Users }] : []),
       ],
@@ -134,11 +135,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           { href: '/admin/announcements', label: 'Announcements', icon: Megaphone },
           { href: '/admin/announcements/new', label: 'New announcement', icon: BellRing },
         ] : []),
-        ...(isAdmin ? [
+        ...(canSendEmail ? [
           { href: '/admin/send-email', label: 'Send email', icon: Mail },
           { href: '/admin/send-email/lists', label: 'Email lists', icon: Users },
-          { href: '/admin/prayer-requests', label: 'Prayer requests', icon: FileText },
         ] : []),
+        ...(isAdmin ? [{ href: '/admin/prayer-requests', label: 'Prayer requests', icon: FileText }] : []),
       ],
     },
     {
@@ -156,7 +157,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { href: '/admin/attendance', label: 'Take attendance', icon: ClipboardCheck },
         { href: '/admin/attendance/history', label: 'History', icon: FileText },
         { href: '/admin/attendance/reports', label: 'Reports', icon: FileText },
-        { href: '/admin/attendance/import', label: 'Import attendance', icon: Upload },
+        ...(isAdmin ? [{ href: '/admin/attendance/import', label: 'Import attendance', icon: Upload }] : []),
         { href: '/admin/attendance/contact', label: 'Follow-up', icon: UserRoundCheck },
         { href: '/admin/households/events', label: 'Member event list', icon: CalendarDays },
       ] : [],
