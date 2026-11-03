@@ -49,6 +49,7 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Rename Sign up to Request member access.
 - [x] Explain administrator approval before account submission.
 - [x] Preserve forgot-password and password-reset functionality.
+- [x] Use one friendly sign-in failure message for unknown emails, wrong passwords, invalid credentials, and disabled accounts so the page does not reveal whether an account exists.
 - [x] Return members to their originally requested protected page after sign-in.
 - [x] Use the member dashboard as the default signed-in destination.
 

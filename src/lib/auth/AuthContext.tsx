@@ -15,6 +15,10 @@ import { UserProfile } from '@/types';
 import { createUserProfile } from './authUtils';
 import { convertToDate } from '@/lib/utils/dateUtils';
 
+function accountAccessError(code: 'auth/account-pending' | 'auth/account-rejected', message: string) {
+  return Object.assign(new Error(message), { code });
+}
+
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
@@ -180,13 +184,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Check if user is approved
       if (profile.approvalStatus === 'pending') {
         await firebaseSignOut(auth);
-        throw new Error('Your account is pending approval. Please wait for an administrator to approve your account.');
+        throw accountAccessError(
+          'auth/account-pending',
+          'Member access is pending administrator approval.'
+        );
       } else if (profile.approvalStatus === 'rejected') {
         await firebaseSignOut(auth);
-        throw new Error('Your account has been rejected. Please contact an administrator for assistance.');
+        throw accountAccessError(
+          'auth/account-rejected',
+          'Member access was not approved.'
+        );
       }
     } catch (error) {
-      console.error('Sign in error:', error);
+      const code = error && typeof error === 'object' && 'code' in error ? String(error.code) : 'unknown';
+      console.error('Sign in error code:', code);
       setError(error as Error);
       throw error;
     }
@@ -239,7 +250,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       // Unsubscribe from any Firestore listeners
       if (typeof window !== 'undefined') {
-        const unsubFuncs = (window as any).__firebaseUnsubscribes || [];
+        const authWindow = window as Window & { __firebaseUnsubscribes?: Array<() => void> };
+        const unsubFuncs = authWindow.__firebaseUnsubscribes || [];
         unsubFuncs.forEach((unsub: () => void) => unsub());
       }
       
@@ -306,4 +318,4 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useAuth = () => useContext(AuthContext); 
+export const useAuth = () => useContext(AuthContext);

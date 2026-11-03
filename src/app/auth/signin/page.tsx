@@ -6,10 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/lib/auth/AuthContext';
 import Image from 'next/image';
 import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
-
-interface FirebaseError extends Error {
-  code?: string;
-}
+import { getSignInErrorMessage } from '@/lib/auth/signInError';
 
 export default function SignInPage() {
   useEffect(() => {
@@ -41,9 +38,8 @@ export default function SignInPage() {
       await signIn(email, password);
       const redirect = searchParams.get('redirect') || '/';
       router.push(redirect);
-    } catch (error) {
-      const firebaseError = error as FirebaseError;
-      setError(firebaseError.message || 'An error occurred during sign in');
+    } catch (signInError) {
+      setError(getSignInErrorMessage(signInError));
     } finally {
       setIsLoading(false);
     }
@@ -81,6 +77,8 @@ export default function SignInPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'sign-in-error' : undefined}
                 className="relative block min-h-12 w-full rounded-lg border border-border bg-bg px-3 text-base text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
                 placeholder="you@example.com"
               />
@@ -97,6 +95,8 @@ export default function SignInPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                aria-invalid={Boolean(error)}
+                aria-describedby={error ? 'sign-in-error' : undefined}
                 className="relative block min-h-12 w-full rounded-lg border border-border bg-bg px-3 text-base text-text focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary"
               />
             </div>
@@ -106,9 +106,9 @@ export default function SignInPage() {
             <div role="alert" className="rounded-md bg-error/10 p-4 border border-error/20">
               <div className="flex">
                 <div className="ml-3">
-                  <h3 className="text-sm font-medium text-error">
+                  <p id="sign-in-error" className="text-sm font-medium text-error">
                     {error}
-                  </h3>
+                  </p>
                 </div>
               </div>
             </div>
@@ -122,7 +122,7 @@ export default function SignInPage() {
                 isLoading ? 'opacity-50 cursor-not-allowed' : ''
               }`}
             >
-              {isLoading ? 'Signing in...' : 'Sign in'}
+              {isLoading ? 'Signing in…' : 'Sign in'}
             </button>
             <div className="text-center">
               <Link
