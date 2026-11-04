@@ -58,6 +58,8 @@ This checklist is the source of truth for the usability refresh. Existing featur
 - [x] Render an authenticated member dashboard instead of the public homepage.
 - [x] Use one column on phones and two columns on larger screens.
 - [x] Avoid carousels and hidden dashboard tabs.
+- [x] Organize the member home into a clear reading order: Latest from church, This week’s resources, Stay connected, then More member tools.
+- [x] Keep the optional onboarding tour compact so it does not push current information below the first screen.
 - [x] Show the three newest announcements with a View all action.
 - [x] Show the next three calendar events with a View full calendar action.
 - [x] Show the latest Bulletin and Lesson Notes.

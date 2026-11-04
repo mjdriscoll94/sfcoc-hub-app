@@ -29,31 +29,35 @@ const DIRECTORY_URL =
   'https://members.instantchurchdirectory.com/families/7aa8b3f0-5f58-4ef4-a314-9ab636f24cf4';
 
 function DashboardSection({
+  headingId,
   title,
   icon,
   href,
   linkLabel,
   children,
+  className = '',
 }: {
+  headingId: string;
   title: string;
   icon: ReactNode;
   href: string;
   linkLabel: string;
   children: ReactNode;
+  className?: string;
 }) {
   return (
-    <section className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+    <section aria-labelledby={headingId} className={`rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6 ${className}`}>
       <div className="flex items-start justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="rounded-lg bg-coral/15 p-2 text-coral-dark">{icon}</span>
-          <h2 className="text-2xl font-bold text-charcoal">{title}</h2>
+          <h3 id={headingId} className="text-xl font-bold text-charcoal sm:text-2xl">{title}</h3>
         </div>
-        <Link href={href} className="hidden min-h-11 items-center gap-1 rounded-lg px-2 font-semibold text-coral-dark hover:bg-coral/10 sm:inline-flex">
+        <Link href={href} className="hidden min-h-11 shrink-0 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-coral-dark hover:bg-coral/10 sm:inline-flex">
           {linkLabel}<ArrowRight aria-hidden="true" className="h-4 w-4" />
         </Link>
       </div>
-      <div className="mt-5">{children}</div>
-      <Link href={href} className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg font-semibold text-coral-dark sm:hidden">
+      <div className="mt-4">{children}</div>
+      <Link href={href} className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-lg font-semibold text-coral-dark sm:hidden">
         {linkLabel}<ArrowRight aria-hidden="true" className="h-4 w-4" />
       </Link>
     </section>
@@ -121,22 +125,34 @@ export function MemberDashboard() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
-        <header className="mb-8">
-          <p className="text-base font-semibold text-coral-dark">Member home</p>
-          <h1 className="mt-1 text-3xl font-bold text-charcoal sm:text-4xl">
-            {firstName ? `Welcome, ${firstName}` : 'Welcome'}
-          </h1>
-          <p className="mt-2 max-w-2xl text-lg text-text-light">Here is the latest information from your church family.</p>
+      <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <header className="mb-6 flex flex-col gap-4 border-b border-border pb-6 sm:flex-row sm:items-end sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-charcoal sm:text-4xl">
+              {firstName ? `Welcome, ${firstName}` : 'Welcome'}
+            </h1>
+            <p className="mt-2 max-w-2xl text-base text-text-light sm:text-lg">
+              Catch up on church news, upcoming events, and the resources you use most.
+            </p>
+          </div>
+          <Link
+            href="/calendar"
+            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light"
+          >
+            <CalendarDays aria-hidden="true" className="h-5 w-5" />
+            Open calendar
+          </Link>
         </header>
 
         {showWelcome ? (
-          <section className="mb-8 rounded-2xl bg-charcoal p-6 text-white" aria-labelledby="welcome-tour-heading">
-            <h2 id="welcome-tour-heading" className="text-2xl font-bold">Would you like a quick tour?</h2>
-            <p className="mt-2 max-w-2xl text-white/85">See where to find announcements, the calendar, resources, and the Prayer Board.</p>
-            <div className="mt-5 flex flex-wrap gap-3">
-              <button type="button" onClick={beginTour} className="min-h-12 rounded-lg bg-coral px-5 font-bold text-charcoal hover:bg-coral-light">Take a quick tour</button>
-              <button type="button" onClick={dismissWelcome} className="min-h-12 rounded-lg border-2 border-white px-5 font-bold text-white hover:bg-white hover:text-charcoal">Not now</button>
+          <section className="mb-6 flex flex-col gap-4 rounded-xl bg-charcoal px-5 py-4 text-white sm:flex-row sm:items-center sm:justify-between" aria-labelledby="welcome-tour-heading">
+            <div>
+              <h2 id="welcome-tour-heading" className="text-lg font-bold">New to the Church Hub?</h2>
+              <p className="mt-1 text-sm text-white/85">Take a short tour of announcements, the calendar, resources, and the Prayer Board.</p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <button type="button" onClick={beginTour} className="min-h-11 rounded-lg bg-coral px-4 font-bold text-charcoal hover:bg-coral-light">Take the tour</button>
+              <button type="button" onClick={dismissWelcome} className="min-h-11 rounded-lg border border-white/70 px-4 font-bold text-white hover:bg-white hover:text-charcoal">Not now</button>
             </div>
           </section>
         ) : null}
@@ -147,114 +163,136 @@ export function MemberDashboard() {
           </div>
         ) : null}
 
-        <div className="grid gap-6 lg:grid-cols-2">
-          <DashboardSection title="Announcements" icon={<Megaphone aria-hidden="true" className="h-6 w-6" />} href="/announcements" linkLabel="View all">
-            {dashboard.loading ? (
-              <DashboardRowsSkeleton label="Loading announcements…" />
-            ) : dashboard.announcements.length === 0 ? (
-              <p className="text-text-light">No announcements have been posted.</p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {dashboard.announcements.map((announcement) => (
-                  <li key={announcement.id}>
-                    <Link href={`/announcements#${announcement.id}`} className="block rounded-lg py-3 hover:bg-bg sm:px-2">
-                      <span className="font-bold text-charcoal">{announcement.title}</span>
-                      <span className="mt-1 flex flex-wrap gap-x-2 text-sm text-text-light">
-                        <span>{announcement.type}</span><span aria-hidden="true">•</span><span>{formatShortDate(announcement.createdAt)}</span>
-                      </span>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </DashboardSection>
+        <section aria-labelledby="latest-from-church-heading">
+          <div className="mb-4">
+            <p className="text-sm font-bold uppercase tracking-wide text-coral-dark">Start here</p>
+            <h2 id="latest-from-church-heading" className="mt-1 text-2xl font-bold text-charcoal sm:text-3xl">Latest from church</h2>
+            <p className="mt-1 text-text-light">Recent announcements and the next events on the church calendar.</p>
+          </div>
 
-          <DashboardSection title="Upcoming events" icon={<CalendarDays aria-hidden="true" className="h-6 w-6" />} href="/calendar" linkLabel="View full calendar">
-            {dashboard.loading ? (
-              <DashboardRowsSkeleton label="Loading upcoming events…" />
-            ) : dashboard.events.length === 0 ? (
-              <p className="text-text-light">No upcoming events are currently listed.</p>
-            ) : (
-              <ul className="space-y-3">
-                {dashboard.events.map((event) => (
-                  <li key={event.id} className="flex gap-4 rounded-xl bg-bg p-3">
-                    <time className="w-14 shrink-0 text-center font-bold text-coral-dark tabular-nums" dateTime={event.startDate.toISOString()}>
-                      <span className="block text-sm">{event.startDate.toLocaleDateString('en-US', { month: 'short' })}</span>
-                      <span className="block text-2xl leading-none">{event.startDate.getDate()}</span>
-                    </time>
-                    <div>
-                      <p className="font-bold text-charcoal">{event.title}</p>
-                      <p className="text-sm text-text-light">
-                        {event.allDay ? 'All day' : event.startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
-                        {event.location ? ` • ${event.location}` : ''}
-                      </p>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </DashboardSection>
+          <div className="grid gap-6 lg:grid-cols-12">
+            <DashboardSection headingId="announcements-heading" title="Latest announcements" icon={<Megaphone aria-hidden="true" className="h-6 w-6" />} href="/announcements" linkLabel="All announcements" className="lg:col-span-7">
+              {dashboard.loading ? (
+                <DashboardRowsSkeleton label="Loading announcements…" />
+              ) : dashboard.announcements.length === 0 ? (
+                <p className="text-text-light">No announcements have been posted.</p>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {dashboard.announcements.map((announcement) => (
+                    <li key={announcement.id}>
+                      <Link href={`/announcements#${announcement.id}`} className="block rounded-lg py-3 hover:bg-bg sm:px-2">
+                        <span className="font-bold text-charcoal">{announcement.title}</span>
+                        <span className="mt-1 flex flex-wrap gap-x-2 text-sm text-text-light">
+                          <span>{announcement.type}</span><span aria-hidden="true">•</span><span>{formatShortDate(announcement.createdAt)}</span>
+                        </span>
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </DashboardSection>
 
-          <DashboardSection title="Bulletin & lesson notes" icon={<FileText aria-hidden="true" className="h-6 w-6" />} href="/resources" linkLabel="View resources">
+            <DashboardSection headingId="upcoming-events-heading" title="Coming up" icon={<CalendarDays aria-hidden="true" className="h-6 w-6" />} href="/calendar" linkLabel="Full calendar" className="lg:col-span-5">
+              {dashboard.loading ? (
+                <DashboardRowsSkeleton label="Loading upcoming events…" />
+              ) : dashboard.events.length === 0 ? (
+                <p className="text-text-light">No upcoming events are currently listed.</p>
+              ) : (
+                <ul className="space-y-2">
+                  {dashboard.events.map((event) => (
+                    <li key={event.id} className="flex gap-3 rounded-xl bg-bg p-3">
+                      <time className="w-16 shrink-0 rounded-lg bg-white py-2 text-center font-bold text-coral-dark shadow-sm tabular-nums" dateTime={event.startDate.toISOString()}>
+                        <span className="block text-xs uppercase">{event.startDate.toLocaleDateString('en-US', { weekday: 'short' })}</span>
+                        <span className="block text-lg leading-tight">{event.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                      </time>
+                      <div className="min-w-0 py-1">
+                        <p className="font-bold text-charcoal">{event.title}</p>
+                        <p className="mt-0.5 text-sm text-text-light">
+                          {event.allDay ? 'All day' : event.startDate.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}
+                          {event.location ? ` • ${event.location}` : ''}
+                        </p>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </DashboardSection>
+          </div>
+        </section>
+
+        <section className="mt-8 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6" aria-labelledby="weekly-resources-heading">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className="rounded-lg bg-coral/15 p-2 text-coral-dark"><FileText aria-hidden="true" className="h-6 w-6" /></span>
+              <div>
+                <h2 id="weekly-resources-heading" className="text-2xl font-bold text-charcoal">This week’s resources</h2>
+                <p className="mt-1 text-sm text-text-light">Open the newest bulletin and lesson notes directly.</p>
+              </div>
+            </div>
+            <Link href="/resources" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-coral-dark hover:bg-coral/10">
+              Browse all resources<ArrowRight aria-hidden="true" className="h-4 w-4" />
+            </Link>
+          </div>
+          <div className="mt-5">
             {bulletinsLoading || notesLoading ? (
               <DashboardRowsSkeleton label="Loading the latest resources…" rows={2} />
             ) : (
-              <div className="grid gap-3">
+              <div className="grid gap-3 sm:grid-cols-2">
                 {bulletins[0] ? (
-                  <a href={bulletins[0].fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-14 items-center justify-between gap-4 rounded-xl bg-bg p-3 hover:bg-bg-secondary">
-                    <span><strong className="block text-charcoal">Latest bulletin</strong><span className="text-sm text-text-light">{bulletins[0].title} • {formatShortDate(bulletins[0].date)}</span></span>
+                  <a href={bulletins[0].fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
+                    <span><strong className="block text-charcoal">Latest bulletin</strong><span className="mt-1 block text-sm text-text-light">{bulletins[0].title} • {formatShortDate(bulletins[0].date)}</span></span>
                     <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
                   </a>
-                ) : <p className="text-text-light">No bulletin is currently available.</p>}
+                ) : <p className="rounded-xl bg-bg p-4 text-text-light">No bulletin is currently available.</p>}
                 {notes[0] ? (
-                  <a href={notes[0].fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-14 items-center justify-between gap-4 rounded-xl bg-bg p-3 hover:bg-bg-secondary">
-                    <span><strong className="block text-charcoal">Latest lesson notes</strong><span className="text-sm text-text-light">{notes[0].title} • {formatShortDate(notes[0].date)}</span></span>
+                  <a href={notes[0].fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
+                    <span><strong className="block text-charcoal">Latest lesson notes</strong><span className="mt-1 block text-sm text-text-light">{notes[0].title} • {formatShortDate(notes[0].date)}</span></span>
                     <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
                   </a>
-                ) : <p className="text-text-light">No lesson notes are currently available.</p>}
+                ) : <p className="rounded-xl bg-bg p-4 text-text-light">No lesson notes are currently available.</p>}
               </div>
             )}
-          </DashboardSection>
+          </div>
+        </section>
 
-          <DashboardSection title="Prayer Board" icon={<Heart aria-hidden="true" className="h-6 w-6" />} href="/prayer-board" linkLabel="View Prayer Board">
-            {prayersLoading ? (
-              <div role="status" aria-live="polite" aria-busy="true">
-                <span className="sr-only">Checking Prayer Board activity…</span>
-                <div aria-hidden="true" className="rounded-xl bg-bg p-4">
-                  <LoadingSkeleton className="h-9 w-16 rounded-md" />
-                  <LoadingSkeleton className="mt-3 h-4 w-56 max-w-full rounded-md" />
-                  <LoadingSkeleton className="mt-4 h-4 w-48 max-w-full rounded-md" />
+        <section className="mt-8" aria-labelledby="stay-connected-heading">
+          <div className="mb-4">
+            <h2 id="stay-connected-heading" className="text-2xl font-bold text-charcoal">Stay connected</h2>
+            <p className="mt-1 text-text-light">Protected information for prayer and Life Groups.</p>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            <DashboardSection headingId="prayer-board-heading" title="Prayer Board" icon={<Heart aria-hidden="true" className="h-6 w-6" />} href="/prayer-board" linkLabel="Open Prayer Board">
+              {prayersLoading ? (
+                <div role="status" aria-live="polite" aria-busy="true">
+                  <span className="sr-only">Checking Prayer Board activity…</span>
+                  <LoadingSkeleton className="h-8 w-36 rounded-md" />
                 </div>
-              </div>
-            ) : (
-              <div className="rounded-xl bg-bg p-4">
-                <p className="text-3xl font-bold text-charcoal tabular-nums" data-numeric>{prayerItems.length}</p>
-                <p className="mt-1 text-text-light">active prayer and praise {prayerItems.length === 1 ? 'post' : 'posts'}</p>
-                <p className="mt-3 text-sm text-text-light">Details stay on the protected Prayer Board.</p>
-              </div>
-            )}
-          </DashboardSection>
+              ) : (
+                <p className="text-text-light"><strong className="text-2xl text-charcoal tabular-nums" data-numeric>{prayerItems.length}</strong> active prayer and praise {prayerItems.length === 1 ? 'post' : 'posts'}. Details stay protected.</p>
+              )}
+            </DashboardSection>
 
-          <DashboardSection title="Life Groups" icon={<UsersRound aria-hidden="true" className="h-6 w-6" />} href="/life-groups" linkLabel="View Life Groups">
-            <div className="rounded-xl bg-bg p-4">
-              <p className="font-bold text-charcoal">Your Life Group information</p>
-              <p className="mt-2 text-text-light">View meeting details, group resources, and the other members of your group.</p>
-            </div>
-          </DashboardSection>
+            <DashboardSection headingId="life-groups-heading" title="Life Groups" icon={<UsersRound aria-hidden="true" className="h-6 w-6" />} href="/life-groups" linkLabel="Open Life Groups">
+              <p className="text-text-light">Find meeting details, shared resources, and the members of each group.</p>
+            </DashboardSection>
+          </div>
+        </section>
 
-          <section className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6" aria-labelledby="quick-links-heading">
+        <section className="mt-8 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6" aria-labelledby="quick-links-heading">
+          <div>
             <h2 id="quick-links-heading" className="text-2xl font-bold text-charcoal">More member tools</h2>
-            <div className="mt-5 grid gap-2 sm:grid-cols-2">
-              <a href={DIRECTORY_URL} target="_blank" rel="noopener noreferrer" className="flex min-h-12 items-center gap-3 rounded-lg bg-bg px-3 font-semibold text-charcoal hover:bg-bg-secondary">
-                <BookOpen aria-hidden="true" className="h-5 w-5 text-coral-dark" />Member Directory<ExternalLink aria-hidden="true" className="ml-auto h-4 w-4" />
-              </a>
-              <Link href="/volunteer" className="flex min-h-12 items-center gap-3 rounded-lg bg-bg px-3 font-semibold text-charcoal hover:bg-bg-secondary"><HandHeart aria-hidden="true" className="h-5 w-5 text-coral-dark" />Volunteer</Link>
-              <Link href="/service-roles" className="flex min-h-12 items-center gap-3 rounded-lg bg-bg px-3 font-semibold text-charcoal hover:bg-bg-secondary"><ClipboardCheck aria-hidden="true" className="h-5 w-5 text-coral-dark" />Service Roles</Link>
-              <Link href="/sermons" className="flex min-h-12 items-center gap-3 rounded-lg bg-bg px-3 font-semibold text-charcoal hover:bg-bg-secondary"><PlayCircle aria-hidden="true" className="h-5 w-5 text-coral-dark" />Sermons</Link>
-              <Link href="/give" className="flex min-h-12 items-center gap-3 rounded-lg bg-bg px-3 font-semibold text-charcoal hover:bg-bg-secondary"><Gift aria-hidden="true" className="h-5 w-5 text-coral-dark" />Giving</Link>
-            </div>
-          </section>
-        </div>
+            <p className="mt-1 text-text-light">Directory, service, sermons, and giving.</p>
+          </div>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            <a href={DIRECTORY_URL} target="_blank" rel="noopener noreferrer" className="flex min-h-14 items-center gap-3 rounded-xl bg-bg px-4 font-semibold text-charcoal hover:bg-bg-secondary">
+              <BookOpen aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />Directory<ExternalLink aria-hidden="true" className="ml-auto h-4 w-4" />
+            </a>
+            <Link href="/volunteer" className="flex min-h-14 items-center gap-3 rounded-xl bg-bg px-4 font-semibold text-charcoal hover:bg-bg-secondary"><HandHeart aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />Volunteer</Link>
+            <Link href="/service-roles" className="flex min-h-14 items-center gap-3 rounded-xl bg-bg px-4 font-semibold text-charcoal hover:bg-bg-secondary"><ClipboardCheck aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />Service Roles</Link>
+            <Link href="/sermons" className="flex min-h-14 items-center gap-3 rounded-xl bg-bg px-4 font-semibold text-charcoal hover:bg-bg-secondary"><PlayCircle aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />Sermons</Link>
+            <Link href="/give" className="flex min-h-14 items-center gap-3 rounded-xl bg-bg px-4 font-semibold text-charcoal hover:bg-bg-secondary"><Gift aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />Giving</Link>
+          </div>
+        </section>
       </div>
     </div>
   );
