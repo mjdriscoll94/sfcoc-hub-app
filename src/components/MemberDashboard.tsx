@@ -137,7 +137,7 @@ export function MemberDashboard() {
           </div>
           <Link
             href="/calendar"
-            className="inline-flex min-h-11 w-fit items-center gap-2 rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light"
+            className="inline-flex min-h-11 w-fit shrink-0 items-center gap-2 whitespace-nowrap rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light"
           >
             <CalendarDays aria-hidden="true" className="h-5 w-5" />
             Open calendar
