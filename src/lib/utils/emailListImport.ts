@@ -14,22 +14,60 @@ function cleanCell(s: string): string {
   return s.trim().replace(/^["']+|["']+$/g, '').trim();
 }
 
-export function parseEmailsFromRawText(text: string): string[] {
-  const set = new Set<string>();
+export type NormalizedEmailList = {
+  emails: string[];
+  duplicatesRemoved: number;
+};
+
+export function normalizeEmailListEntries(entries: string[]): NormalizedEmailList {
+  const emails: string[] = [];
+  const seen = new Set<string>();
+  let duplicatesRemoved = 0;
+
+  for (const entry of entries) {
+    const email = entry.trim().toLowerCase();
+    if (!isValidEmail(email)) continue;
+    if (seen.has(email)) {
+      duplicatesRemoved++;
+      continue;
+    }
+    seen.add(email);
+    emails.push(email);
+  }
+
+  return { emails, duplicatesRemoved };
+}
+
+export function extractEmailEntriesFromRawText(text: string): string[] {
+  const entries: string[] = [];
 
   for (const token of text.split(/[\n,;\t]+/)) {
     const cell = cleanCell(token);
-    if (cell && isValidEmail(cell)) set.add(cell.toLowerCase());
+    if (!cell) continue;
+
+    const matches = cell.match(new RegExp(EMAIL_REGEX.source, 'gi')) ?? [];
+    if (matches.length > 0) {
+      entries.push(...matches.map((email) => email.toLowerCase()));
+    } else if (isValidEmail(cell)) {
+      entries.push(cell.toLowerCase());
+    }
   }
 
-  let m: RegExpExecArray | null;
-  const re = new RegExp(EMAIL_REGEX.source, 'gi');
-  while ((m = re.exec(text)) !== null) {
-    const addr = m[0].toLowerCase();
-    if (isValidEmail(addr)) set.add(addr);
-  }
+  return entries;
+}
 
-  return [...set].sort();
+export function analyzeEmailsFromRawText(text: string): NormalizedEmailList & { entries: string[] } {
+  const entries = extractEmailEntriesFromRawText(text);
+  const normalized = normalizeEmailListEntries(entries);
+  return {
+    entries,
+    emails: [...normalized.emails].sort(),
+    duplicatesRemoved: normalized.duplicatesRemoved,
+  };
+}
+
+export function parseEmailsFromRawText(text: string): string[] {
+  return analyzeEmailsFromRawText(text).emails;
 }
 
 /** Derive a human-readable list name from an uploaded file name (e.g. "ministry_leaders.csv"). */

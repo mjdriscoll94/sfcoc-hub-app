@@ -1,15 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import admin from 'firebase-admin';
-
-function normalizeEmails(emails: string[]): string[] {
-  const set = new Set<string>();
-  for (const e of emails) {
-    const t = e.trim().toLowerCase();
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) set.add(t);
-  }
-  return [...set];
-}
+import { normalizeEmailListEntries } from '@/lib/utils/emailListImport';
 
 export async function GET(
   _request: Request,
@@ -49,8 +41,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'List not found' }, { status: 404 });
     }
     const updates: Record<string, unknown> = { updatedAt: admin.firestore.Timestamp.now() };
+    let duplicatesRemoved = 0;
     if (name !== undefined) updates.name = String(name).trim();
-    if (rawEmails !== undefined) updates.emails = normalizeEmails(Array.isArray(rawEmails) ? rawEmails : []);
+    if (rawEmails !== undefined) {
+      const normalized = normalizeEmailListEntries(Array.isArray(rawEmails) ? rawEmails : []);
+      updates.emails = normalized.emails;
+      duplicatesRemoved = normalized.duplicatesRemoved;
+    }
     await ref.update(updates);
     const updated = await ref.get();
     const data = updated.data()!;
@@ -58,6 +55,7 @@ export async function PATCH(
       id: updated.id,
       name: data.name || '',
       emailCount: ((data.emails as string[]) || []).length,
+      duplicatesRemoved,
     });
   } catch (error) {
     console.error('PATCH email-list error:', error);
