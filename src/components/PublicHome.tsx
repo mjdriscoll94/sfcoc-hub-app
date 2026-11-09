@@ -180,7 +180,7 @@ export function PublicHome() {
                       <div className="grid gap-4 p-5 sm:grid-cols-2">
                         {category.events.map((event, eventIndex) => (
                           <article key={event.id ?? eventIndex} className="flex gap-4 rounded-lg bg-bg p-4">
-                            <div className="shrink-0 rounded-full bg-coral/15 p-2"><EventIcon icon={event.icon} /></div>
+                            <div className="flex shrink-0 items-center justify-center rounded-full bg-coral/15 p-2"><EventIcon icon={event.icon} /></div>
                             <div>
                               <h4 className="text-lg font-bold text-charcoal">{event.name}</h4>
                               <p className="mt-1 font-semibold text-coral-dark tabular-nums" data-numeric>{event.time}</p>
