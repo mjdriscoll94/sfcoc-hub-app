@@ -1,5 +1,13 @@
 import { NextResponse } from 'next/server';
 import { transporter, getEmailFromAnnouncements } from '@/lib/email/config';
+import { getAdminDb } from '@/lib/firebase/admin';
+import {
+  appendUnsubscribeFooter,
+  createUnsubscribeUrl,
+  isOptionalBroadcastEmail,
+  unsubscribeHeaders,
+} from '@/lib/email/broadcastEmail';
+import { filterSuppressedEmailAddresses } from '@/lib/email/unsubscribeStore';
 
 export async function POST(request: Request) {
   try {
@@ -40,25 +48,51 @@ export async function POST(request: Request) {
       );
     }
 
-    const mailOptions = {
-      from: getEmailFromAnnouncements(),
-      to: recipients,
-      subject,
-      html: content,
-    };
+    if (!Array.isArray(recipients) || recipients.some((recipient) => typeof recipient !== 'string')) {
+      return NextResponse.json({ error: 'Recipients must be email addresses.' }, { status: 400 });
+    }
+
+    const uniqueRecipients = Array.from(
+      new Set(recipients.map((recipient) => recipient.trim()).filter(Boolean))
+    );
+    const isBroadcast = isOptionalBroadcastEmail(String(type));
+    const suppressionResult = isBroadcast
+      ? await filterSuppressedEmailAddresses(getAdminDb(), uniqueRecipients)
+      : { emails: uniqueRecipients, suppressedCount: 0 };
+
+    if (suppressionResult.emails.length === 0) {
+      return NextResponse.json({
+        success: true,
+        recipientCount: 0,
+        suppressedCount: suppressionResult.suppressedCount,
+      });
+    }
 
     console.log('Attempting to send email with options:', {
-      from: mailOptions.from,
-      subject: mailOptions.subject,
-      recipientCount: recipients.length,
+      from: getEmailFromAnnouncements(),
+      subject,
+      recipientCount: suppressionResult.emails.length,
     });
 
     try {
-      const result = await transporter.sendMail(mailOptions);
-      console.log('Email sent successfully:', { messageId: result.messageId });
+      let lastMessageId = '';
+      for (const to of suppressionResult.emails) {
+        const unsubscribeUrl = isBroadcast ? createUnsubscribeUrl(to) : null;
+        const result = await transporter.sendMail({
+          from: getEmailFromAnnouncements(),
+          to,
+          subject,
+          html: unsubscribeUrl ? appendUnsubscribeFooter(content, unsubscribeUrl) : content,
+          ...(unsubscribeUrl ? { headers: unsubscribeHeaders(unsubscribeUrl) } : {}),
+        });
+        lastMessageId = result.messageId;
+      }
+      console.log('Email sent successfully:', { messageId: lastMessageId });
       return NextResponse.json({
         success: true,
-        messageId: result.messageId,
+        messageId: lastMessageId,
+        recipientCount: suppressionResult.emails.length,
+        suppressedCount: suppressionResult.suppressedCount,
       });
     } catch (emailError: unknown) {
       const err = emailError instanceof Error ? emailError : new Error(String(emailError));

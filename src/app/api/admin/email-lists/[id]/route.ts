@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import admin from 'firebase-admin';
 import { normalizeEmailListEntries } from '@/lib/utils/emailListImport';
+import { filterSuppressedEmailAddresses } from '@/lib/email/unsubscribeStore';
 
 export async function GET(
   _request: Request,
@@ -42,11 +43,14 @@ export async function PATCH(
     }
     const updates: Record<string, unknown> = { updatedAt: admin.firestore.Timestamp.now() };
     let duplicatesRemoved = 0;
+    let suppressedRemoved = 0;
     if (name !== undefined) updates.name = String(name).trim();
     if (rawEmails !== undefined) {
       const normalized = normalizeEmailListEntries(Array.isArray(rawEmails) ? rawEmails : []);
-      updates.emails = normalized.emails;
+      const suppressionResult = await filterSuppressedEmailAddresses(adminDb, normalized.emails);
+      updates.emails = suppressionResult.emails;
       duplicatesRemoved = normalized.duplicatesRemoved;
+      suppressedRemoved = suppressionResult.suppressedCount;
     }
     await ref.update(updates);
     const updated = await ref.get();
@@ -56,6 +60,7 @@ export async function PATCH(
       name: data.name || '',
       emailCount: ((data.emails as string[]) || []).length,
       duplicatesRemoved,
+      suppressedRemoved,
     });
   } catch (error) {
     console.error('PATCH email-list error:', error);

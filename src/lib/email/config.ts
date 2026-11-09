@@ -50,6 +50,8 @@ export interface SendMailOptions {
   replyTo?: string | string[];
   /** When set, sends via SES Raw email (required for attachments). */
   attachments?: EmailAttachment[];
+  /** RFC 822 headers such as List-Unsubscribe. Sends through SES Raw email. */
+  headers?: Record<string, string>;
 }
 
 /** Single address for replies (must be verified in SES if different from From domain rules apply). */
@@ -75,7 +77,7 @@ export async function sendMailViaSES(options: SendMailOptions): Promise<{ messag
   }
   const replyToAddresses = getReplyToAddresses(options.replyTo);
 
-  if (options.attachments?.length) {
+  if (options.attachments?.length || options.headers) {
     return sendRawMailViaSES(sesClient, {
       from: options.from,
       to: toAddresses,
@@ -83,7 +85,8 @@ export async function sendMailViaSES(options: SendMailOptions): Promise<{ messag
       html: options.html,
       text: options.text,
       replyTo: replyToAddresses,
-      attachments: options.attachments,
+      attachments: options.attachments ?? [],
+      headers: options.headers,
     });
   }
 
@@ -118,6 +121,7 @@ export const transporter = {
       text: options.text,
       replyTo: options.replyTo,
       attachments: options.attachments,
+      headers: options.headers,
     });
   },
   verify: async () => {

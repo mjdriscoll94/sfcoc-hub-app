@@ -3,6 +3,8 @@ import { getAdminDb } from '@/lib/firebase/admin';
 import { transporter, getEmailFromInformationHub } from '@/lib/email/config';
 import { attachmentsFromFormData } from '@/lib/email/attachments';
 import { wrapMemberEmailHtml } from '@/lib/email/memberEmailTemplate';
+import { createUnsubscribeUrl, unsubscribeHeaders } from '@/lib/email/broadcastEmail';
+import { filterSuppressedEmailAddresses } from '@/lib/email/unsubscribeStore';
 
 type Audience = 'all' | 'announcements' | 'events' | 'newsletter' | 'list';
 
@@ -72,7 +74,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Email list not found' }, { status: 404 });
       }
       const listData = listDoc.data();
-      uniqueEmails = [...new Set((listData?.emails as string[]) || [])].filter(Boolean);
+      uniqueEmails = Array.from(new Set((listData?.emails as string[]) || [])).filter(Boolean);
     } else {
       const usersSnap = await adminDb
         .collection('users')
@@ -98,27 +100,36 @@ export async function POST(request: Request) {
         if (isSubscribed) emails.push(email);
       });
 
-      uniqueEmails = [...new Set(emails)];
+      uniqueEmails = Array.from(new Set(emails));
     }
+    const suppressionResult = await filterSuppressedEmailAddresses(adminDb, uniqueEmails);
+    uniqueEmails = suppressionResult.emails;
+
     if (uniqueEmails.length === 0) {
       return NextResponse.json(
-        { error: 'No recipients found for the selected audience' },
+        {
+          error:
+            suppressionResult.suppressedCount > 0
+              ? 'Every address in this audience has unsubscribed from optional church emails.'
+              : 'No recipients found for the selected audience',
+        },
         { status: 400 }
       );
     }
-
-    const html = wrapMemberEmailHtml(content);
 
     const from = getEmailFromInformationHub();
     let sentCount = 0;
 
     for (const to of uniqueEmails) {
       try {
+        const unsubscribeUrl = createUnsubscribeUrl(to);
+        const html = wrapMemberEmailHtml(content, { unsubscribeUrl });
         await transporter.sendMail({
           from,
           to,
           subject,
           html,
+          headers: unsubscribeHeaders(unsubscribeUrl),
           ...(attachments.length > 0 ? { attachments } : {}),
         });
         sentCount += 1;
@@ -141,6 +152,7 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       recipientCount: uniqueEmails.length,
+      suppressedCount: suppressionResult.suppressedCount,
       attachmentCount: attachments.length,
     });
   } catch (error) {

@@ -2,8 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { doc, updateDoc } from 'firebase/firestore';
-import { db, auth } from '@/lib/firebase/config';
+import { auth } from '@/lib/firebase/config';
 import {
   EmailAuthProvider,
   reauthenticateWithCredential,
@@ -127,12 +126,19 @@ export default function SettingsPage() {
         }));
       }
 
-      // Update Firestore
-      const userRef = doc(db, 'users', user.uid);
-      await updateDoc(userRef, {
-        emailSubscriptions: newSubscriptions,
-        updatedAt: new Date()
+      const token = await user.getIdToken();
+      const response = await fetch('/api/member/email-preferences', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ emailSubscriptions: newSubscriptions }),
       });
+      if (!response.ok) {
+        const result = await response.json().catch(() => null);
+        throw new Error(result?.error || 'Failed to update settings.');
+      }
 
       setSuccessMessage(`${SUBSCRIPTION_LABELS[type]} turned ${value ? 'on' : 'off'}.`);
     } catch (err) {
@@ -324,6 +330,11 @@ export default function SettingsPage() {
             <div>
               <h2 className="mb-2 text-lg font-bold text-text">Notifications</h2>
               <p className="mb-5 text-sm text-text/70">Changes save automatically. The current setting is written next to each switch.</p>
+              {userProfile.emailGloballyUnsubscribed && (
+                <div className="mb-5 rounded-md border border-primary/25 bg-primary/5 p-3 text-sm text-text" role="status">
+                  You previously unsubscribed from all optional church emails. Turning on any category below will opt this email address back in for that category.
+                </div>
+              )}
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2">
                 <div className="flex-1">

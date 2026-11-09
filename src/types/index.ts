@@ -1,7 +1,7 @@
 import { User as FirebaseUser } from 'firebase/auth';
 import { UserRole } from './roles';
 
-export interface User extends FirebaseUser {}
+export type User = FirebaseUser;
 
 export interface UserProfile {
   uid: string;
@@ -23,6 +23,9 @@ export interface UserProfile {
     prayerRequests?: boolean;
     praiseReports?: boolean;
   };
+  /** True after the member uses the global unsubscribe link in an email. */
+  emailGloballyUnsubscribed?: boolean;
+  emailUnsubscribedAt?: Date;
   /** Set to true after user completes or dismisses the onboarding tour (e.g. on first login). */
   hasSeenOnboardingTour?: boolean;
 }
