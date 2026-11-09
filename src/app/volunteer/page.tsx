@@ -18,6 +18,7 @@ export default function VolunteerPage() {
     loading, 
     error, 
     isIndexBuilding,
+    retry,
     signUpForOpportunity,
     removeSignUp
   } = useVolunteerOpportunities();
@@ -183,9 +184,14 @@ export default function VolunteerPage() {
 
       {/* Error State */}
       {error && !isIndexBuilding && (
-        <div role="alert" className="rounded-lg border border-error/20 bg-error/10 p-5 text-error">
-          <p className="font-semibold">Volunteer opportunities could not be loaded.</p>
-          <p className="mt-1">{error}</p>
+        <div role="alert" className="flex flex-col gap-3 rounded-lg border border-error/20 bg-error/10 p-5 text-error sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold">Volunteer opportunities could not be loaded.</p>
+            <p className="mt-1">{error}</p>
+          </div>
+          <button type="button" onClick={retry} className="min-h-10 shrink-0 rounded-lg border border-error/40 px-4 text-sm font-semibold hover:bg-error/10">
+            Try again
+          </button>
         </div>
       )}
 
