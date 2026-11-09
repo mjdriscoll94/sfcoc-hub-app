@@ -492,7 +492,19 @@ export default function AttendanceMembersPage() {
                 return (
                   <Fragment key={household.id}>
                     <tr className="odd:bg-white even:bg-slate-50/40">
-                      <td className="border-t border-border px-4 py-3 text-charcoal"><div className="flex items-center gap-2"><button type="button" onClick={() => setExpandedIds((current) => current.includes(household.id) ? current.filter((id) => id !== household.id) : [...current, household.id])} className="rounded-md border border-border p-1 transition hover:border-coral hover:text-coral" aria-label={expanded ? 'Collapse household' : 'Expand household'}>{expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</button><span className="font-medium">{household.householdName}</span>{household.isLifeGroupLeader ? <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">Life Group leader</span> : null}<button type="button" onClick={() => openHouseholdEditor(household)} className="rounded p-1 text-text-light transition hover:text-coral" aria-label={`Edit ${household.householdName}`}><Pencil className="h-3.5 w-3.5" /></button><button type="button" onClick={() => deleteHousehold(household)} className="rounded p-1 text-red-700 transition hover:text-red-900" aria-label={`Delete ${household.householdName}`}><Trash2 className="h-3.5 w-3.5" /></button></div></td>
+                      <td className="border-t border-border px-4 py-3 text-charcoal">
+                        <div className="flex items-start gap-2">
+                          <button type="button" onClick={() => setExpandedIds((current) => current.includes(household.id) ? current.filter((id) => id !== household.id) : [...current, household.id])} className="mt-0.5 shrink-0 rounded-md border border-border p-1 transition hover:border-coral hover:text-coral" aria-label={expanded ? 'Collapse household' : 'Expand household'}>{expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</button>
+                          <div className="min-w-0 flex-1">
+                            <span className="block font-medium">{household.householdName}</span>
+                            {household.isLifeGroupLeader ? <span className="mt-1 inline-flex whitespace-nowrap rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">Life Group leader</span> : null}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button type="button" onClick={() => openHouseholdEditor(household)} className="rounded p-1 text-text-light transition hover:text-coral" aria-label={`Edit ${household.householdName}`}><Pencil className="h-3.5 w-3.5" /></button>
+                            <button type="button" onClick={() => deleteHousehold(household)} className="rounded p-1 text-red-700 transition hover:text-red-900" aria-label={`Delete ${household.householdName}`}><Trash2 className="h-3.5 w-3.5" /></button>
+                          </div>
+                        </div>
+                      </td>
                       <td className="border-t border-border px-4 py-3 text-charcoal">{format(household.availableFrom, 'MMMM d, yyyy')}</td>
                     </tr>
                     {expanded ? <tr key={`${household.id}-members`} className="bg-slate-50/60"><td colSpan={2} className="border-t border-border p-4"><div className="flex items-center justify-between"><h2 className="font-semibold text-charcoal">Household Members</h2><button type="button" onClick={() => openPersonEditor(household)} className="inline-flex items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"><UserPlus className="mr-1.5 h-4 w-4" />Add Member</button></div>
