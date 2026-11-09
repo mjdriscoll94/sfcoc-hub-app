@@ -198,9 +198,9 @@ export function MemberDashboard() {
                 <ul className="space-y-2">
                   {dashboard.events.map((event) => (
                     <li key={event.id} className="flex gap-3 rounded-xl bg-bg p-3">
-                      <time className="w-16 shrink-0 rounded-lg bg-white py-2 text-center font-bold text-coral-dark shadow-sm tabular-nums" dateTime={event.startDate.toISOString()}>
+                      <time className="w-[4.5rem] shrink-0 rounded-lg bg-white px-2 py-2 text-center font-bold text-coral-dark shadow-sm tabular-nums" dateTime={event.startDate.toISOString()}>
                         <span className="block text-xs uppercase">{event.startDate.toLocaleDateString('en-US', { weekday: 'short' })}</span>
-                        <span className="block text-lg leading-tight">{event.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                        <span className="block whitespace-nowrap text-base leading-tight">{event.startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
                       </time>
                       <div className="min-w-0 py-1">
                         <p className="font-bold text-charcoal">{event.title}</p>
