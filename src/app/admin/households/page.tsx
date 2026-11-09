@@ -12,6 +12,8 @@ import { db } from '@/lib/firebase/config';
 import { getSundayForDate, getSundayKey, normalizeAttendanceName } from '@/lib/utils/attendance';
 import { getActiveHouseholdMembers, hasPassedAwayEvent, isInactiveMember } from '@/lib/utils/householdMembers';
 import { canManageAttendance } from '@/types/roles';
+import DataLoadError from '@/components/DataLoadError';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 
 type ImportantEventType = 'birthday' | 'baptism' | 'attendanceStart' | 'anniversary' | 'passedAway' | 'other';
 
@@ -104,6 +106,9 @@ export default function AttendanceMembersPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const canManage = canManageAttendance(userProfile);
 
   useEffect(() => {
     document.title = 'Household Management | Sioux Falls Church of Christ';
@@ -114,13 +119,21 @@ export default function AttendanceMembersPage() {
   }, [router, userProfile]);
 
   useEffect(() => {
-    if (!userProfile || !canManageAttendance(userProfile)) return;
+    if (!canManage) return;
+
+    let active = true;
+    const loadingTimeout = window.setTimeout(() => {
+      if (!active) return;
+      setLoadError(FIRESTORE_TIMEOUT_MESSAGE);
+      setLoading(false);
+    }, FIRESTORE_LOAD_TIMEOUT_MS);
+
     const loadHouseholds = async () => {
       try {
         setLoading(true);
-        setError(null);
+        setLoadError(null);
         const snapshot = await getDocs(query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc')));
-        setHouseholds(snapshot.docs.flatMap((snapshot) => {
+        const nextHouseholds = snapshot.docs.flatMap((snapshot) => {
           const data = snapshot.data() as { householdName?: string; normalizedName?: string; isLifeGroupLeader?: boolean; active?: boolean; availableFrom?: Timestamp; createdAt?: Timestamp; members?: HouseholdPerson[]; importantEvents?: ImportantEvent[] };
           return [{
             id: snapshot.id,
@@ -134,16 +147,28 @@ export default function AttendanceMembersPage() {
               : [],
             importantEvents: sortEvents(Array.isArray(data.importantEvents) ? data.importantEvents : []),
           }];
-        }));
+        });
+        if (active) {
+          setHouseholds(nextHouseholds);
+          setLoadError(null);
+        }
       } catch (loadError) {
         console.error('Error loading attendance households:', loadError);
-        setError('Failed to load attendance households.');
+        if (active) {
+          setLoadError('We couldn’t load households and members. Please try again.');
+        }
       } finally {
-        setLoading(false);
+        window.clearTimeout(loadingTimeout);
+        if (active) setLoading(false);
       }
     };
     loadHouseholds();
-  }, [userProfile]);
+
+    return () => {
+      active = false;
+      window.clearTimeout(loadingTimeout);
+    };
+  }, [canManage, reloadKey]);
 
   if (!userProfile || !canManageAttendance(userProfile)) return null;
 
@@ -427,6 +452,8 @@ export default function AttendanceMembersPage() {
       {error ? <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
       {loading ? (
         <div className="flex min-h-[240px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D6805F]" /></div>
+      ) : loadError ? (
+        <DataLoadError message={loadError} onRetry={() => setReloadKey((current) => current + 1)} />
       ) : (
         <div>
         <h2 className="mb-3 text-lg font-semibold text-charcoal">Active households</h2>

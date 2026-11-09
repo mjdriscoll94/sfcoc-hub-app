@@ -1,7 +1,13 @@
 'use client';
 
-import { initializeApp, getApps } from 'firebase/app';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, type FirebaseApp } from 'firebase/app';
+import {
+  getFirestore,
+  initializeFirestore,
+  persistentLocalCache,
+  persistentMultipleTabManager,
+  type Firestore,
+} from 'firebase/firestore';
 import { getAuth, setPersistence, browserLocalPersistence, onAuthStateChanged } from 'firebase/auth';
 import { getDatabase } from 'firebase/database';
 import { getStorage } from 'firebase/storage';
@@ -29,12 +35,14 @@ console.log('Firebase Config Status:', {
   databaseURLExists: !!firebaseConfig.databaseURL
 });
 
-// Initialize Firebase
-let app;
+// Initialize Firebase once and reuse it across route changes and hot reloads.
+let app: FirebaseApp;
+let isNewApp = false;
 try {
   if (getApps().length === 0) {
     console.log('Initializing new Firebase app...');
     app = initializeApp(firebaseConfig);
+    isNewApp = true;
   } else {
     console.log('Using existing Firebase app...');
     app = getApps()[0];
@@ -48,9 +56,21 @@ try {
   throw error;
 }
 
-// Initialize Firestore
+// Initialize Firestore. In the browser, keep a multi-tab IndexedDB cache so
+// previously viewed data can appear immediately while Firestore refreshes it.
 console.log('Initializing Firestore...');
-const db = getFirestore(app);
+const db: Firestore = isNewApp
+  ? initializeFirestore(
+      app,
+      typeof window === 'undefined'
+        ? {}
+        : {
+            localCache: persistentLocalCache({
+              tabManager: persistentMultipleTabManager(),
+            }),
+          }
+    )
+  : getFirestore(app);
 
 // Initialize Auth with persistence
 console.log('Initializing Auth...');
@@ -77,31 +97,4 @@ console.log('Initializing Storage...');
 const storage = getStorage(app);
 console.log('Storage initialized');
 
-// Cleanup Firebase on page unload to prevent "access control checks" errors
-// This fixes issues with Firebase re-initialization and stale connections
-if (typeof window !== 'undefined') {
-  const cleanupFirebase = async () => {
-    try {
-      const apps = getApps();
-      if (apps.length > 0) {
-        console.log('Cleaning up Firebase apps...');
-        await Promise.all(apps.map(app => app.delete()));
-        console.log('Firebase apps cleaned up successfully');
-      }
-    } catch (error) {
-      console.error('Error cleaning up Firebase:', error);
-    }
-  };
-
-  // Clean up before page unload
-  window.addEventListener('beforeunload', cleanupFirebase);
-  
-  // Clean up on visibility change (when tab is hidden/closed)
-  window.addEventListener('visibilitychange', () => {
-    if (document.visibilityState === 'hidden') {
-      cleanupFirebase();
-    }
-  });
-}
-
-export { app, db, auth, rtdb, storage }; 
+export { app, db, auth, rtdb, storage };

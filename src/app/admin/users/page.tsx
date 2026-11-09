@@ -12,6 +12,8 @@ import { UserProfile } from '@/types';
 import { ROLE_DISPLAY_NAMES, type UserRole } from '@/types/roles';
 import { Users } from 'lucide-react';
 import ConfirmationModal from '@/components/ConfirmationModal';
+import DataLoadError from '@/components/DataLoadError';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 
 export default function UserManagement() {
   useEffect(() => {
@@ -21,7 +23,9 @@ export default function UserManagement() {
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { userProfile } = useAuth();
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const { userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
@@ -38,6 +42,18 @@ export default function UserManagement() {
 
   // Fetch users
   useEffect(() => {
+    if (authLoading || !userProfile?.isAdmin) return;
+
+    let active = true;
+    setLoading(true);
+    setLoadError(null);
+
+    const loadingTimeout = window.setTimeout(() => {
+      if (!active) return;
+      setLoadError(FIRESTORE_TIMEOUT_MESSAGE);
+      setLoading(false);
+    }, FIRESTORE_LOAD_TIMEOUT_MS);
+
     const fetchUsers = async () => {
       try {
         const q = query(
@@ -66,17 +82,28 @@ export default function UserManagement() {
           usersData.push(processedData);
         });
         
-        setUsers(usersData);
+        if (active) {
+          setUsers(usersData);
+          setLoadError(null);
+        }
       } catch (error) {
         console.error('Error fetching users:', error);
-        setError('Failed to load users');
+        if (active) {
+          setLoadError('We couldn’t load the member list. Please try again.');
+        }
       } finally {
-        setLoading(false);
+        window.clearTimeout(loadingTimeout);
+        if (active) setLoading(false);
       }
     };
 
     fetchUsers();
-  }, []);
+
+    return () => {
+      active = false;
+      window.clearTimeout(loadingTimeout);
+    };
+  }, [authLoading, userProfile?.isAdmin, reloadKey]);
 
   const handleApproval = async (uid: string, status: 'approved' | 'rejected') => {
     try {
@@ -319,6 +346,8 @@ export default function UserManagement() {
         <div className="flex justify-center items-center min-h-[200px]">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#D6805F]"></div>
         </div>
+      ) : loadError ? (
+        <DataLoadError message={loadError} onRetry={() => setReloadKey((current) => current + 1)} />
       ) : (
         <div className="bg-card rounded-lg shadow overflow-hidden">
           {/* Desktop view */}
@@ -525,4 +554,4 @@ export default function UserManagement() {
       />
     </div>
   );
-} 
+}

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePrayerPraise, PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import { CheckIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { sendUrgentPrayerRequestEmail, getEmailSubscribers } from '@/lib/email/emailService';
+import DataLoadError from '@/components/DataLoadError';
 
 interface EditingItem {
   id: string;
@@ -13,7 +14,7 @@ interface EditingItem {
 }
 
 export default function PrayerRequestApprovalQueue() {
-  const { items, loading, error, updateApprovalStatus, updatePrayerRequest } = usePrayerPraise(undefined, true);
+  const { items, loading, error, retry, updateApprovalStatus, updatePrayerRequest } = usePrayerPraise(undefined, true);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
 
   const pendingItems = items.filter(item => item.approvalStatus === 'pending');
@@ -101,9 +102,7 @@ export default function PrayerRequestApprovalQueue() {
 
   if (error) {
     return (
-      <div className="text-red-500 text-center py-4">
-        {error}
-      </div>
+      <DataLoadError message={error} onRetry={retry} />
     );
   }
 

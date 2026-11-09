@@ -5,6 +5,8 @@ import { collection, query, where, orderBy, onSnapshot } from 'firebase/firestor
 import { db } from '@/lib/firebase/config';
 import { doc, updateDoc } from 'firebase/firestore';
 import { CheckIcon, XMarkIcon } from '@heroicons/react/24/outline';
+import DataLoadError from '@/components/DataLoadError';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 
 interface PendingUser {
   uid: string;
@@ -18,15 +20,25 @@ export default function PendingUserQueue() {
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+
     const q = query(
       collection(db, 'users'),
       where('approvalStatus', 'in', ['pending', 'rejected']),
       orderBy('createdAt', 'desc')
     );
 
+    const loadingTimeout = window.setTimeout(() => {
+      setError(FIRESTORE_TIMEOUT_MESSAGE);
+      setLoading(false);
+    }, FIRESTORE_LOAD_TIMEOUT_MS);
+
     const unsubscribe = onSnapshot(q, (snapshot) => {
+      window.clearTimeout(loadingTimeout);
       const pendingUsers = snapshot.docs.map(doc => {
         const data = doc.data();
         const createdAt = data.createdAt?.toDate?.() ||
@@ -41,15 +53,20 @@ export default function PendingUserQueue() {
         } as PendingUser;
       });
       setUsers(pendingUsers);
+      setError(null);
       setLoading(false);
     }, (error) => {
+      window.clearTimeout(loadingTimeout);
       console.error('Error fetching pending users:', error);
-      setError('Failed to load pending users');
+      setError('We couldn’t load pending member accounts. Please try again.');
       setLoading(false);
     });
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      window.clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
+  }, [reloadKey]);
 
   const handleApproval = async (uid: string, status: 'approved' | 'rejected') => {
     const targetUser = users.find(u => u.uid === uid);
@@ -89,9 +106,7 @@ export default function PendingUserQueue() {
 
   if (error) {
     return (
-      <div className="text-red-500 text-center py-4">
-        {error}
-      </div>
+      <DataLoadError message={error} onRetry={() => setReloadKey((current) => current + 1)} />
     );
   }
 
@@ -151,4 +166,4 @@ export default function PendingUserQueue() {
       ))}
     </div>
   );
-} 
+}

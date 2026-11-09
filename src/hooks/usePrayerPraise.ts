@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { db } from '@/lib/firebase/config';
 import { 
   collection, 
@@ -16,6 +16,7 @@ import {
   FirestoreError,
   Query,
 } from 'firebase/firestore';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 
 export interface PrayerPraiseItem {
   id: string;
@@ -49,6 +50,11 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isIndexBuilding, setIsIndexBuilding] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const retry = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -84,10 +90,16 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
       return () => {};
     }
 
+    const loadingTimeout = window.setTimeout(() => {
+      setError(FIRESTORE_TIMEOUT_MESSAGE);
+      setLoading(false);
+    }, FIRESTORE_LOAD_TIMEOUT_MS);
+
     // Set up real-time listener
     const unsubscribe = onSnapshot(
       q,
       (querySnapshot) => {
+        window.clearTimeout(loadingTimeout);
         const prayerPraiseItems = querySnapshot.docs.map(doc => {
           const data = doc.data();
           return {
@@ -97,10 +109,12 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
           } as PrayerPraiseItem;
         });
         setItems(prayerPraiseItems);
+        setError(null);
         setLoading(false);
         setIsIndexBuilding(false);
       },
       (error) => {
+        window.clearTimeout(loadingTimeout);
         console.error('Error fetching prayer/praise items:', error);
         
         // Check if the error is due to missing index
@@ -110,15 +124,18 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
           setIsIndexBuilding(true);
           setError('The database is being optimized for faster queries. This may take a few minutes. Please refresh the page shortly.');
         } else {
-          setError('Failed to load prayer and praise items');
+          setError('We couldn’t load prayer and praise items. Please try again.');
         }
         setLoading(false);
       }
     );
 
     // Cleanup subscription
-    return () => unsubscribe();
-  }, [type, includeUnapproved]);
+    return () => {
+      window.clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
+  }, [type, includeUnapproved, reloadKey]);
 
   // Function to increment prayer count
   const incrementPrayerCount = async (id: string) => {
@@ -175,9 +192,10 @@ export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: b
     loading,
     error,
     isIndexBuilding,
+    retry,
     incrementPrayerCount,
     updateApprovalStatus,
     updatePrayerRequest,
     deletePrayerRequest,
   };
-} 
+}
