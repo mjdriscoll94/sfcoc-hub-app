@@ -23,11 +23,11 @@ export default function SignInPage() {
 
   // Redirect if already logged in
   useEffect(() => {
-    if (user) {
+    if (user && !isLoading) {
       const redirect = searchParams.get('redirect') || '/';
-      router.push(redirect);
+      router.replace(redirect);
     }
-  }, [user, router, searchParams]);
+  }, [isLoading, user, router, searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,8 +36,6 @@ export default function SignInPage() {
 
     try {
       await signIn(email, password);
-      const redirect = searchParams.get('redirect') || '/';
-      router.push(redirect);
     } catch (signInError) {
       setError(getSignInErrorMessage(signInError));
     } finally {

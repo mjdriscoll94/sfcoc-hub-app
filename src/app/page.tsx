@@ -14,11 +14,19 @@ const PublicHome = dynamic(
 );
 
 export default function HomePage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
     document.title = 'Home | Sioux Falls Church of Christ';
   }, []);
+
+  if (loading) {
+    return (
+      <div className="mx-auto max-w-7xl px-4 py-12" role="status" aria-live="polite">
+        <p className="text-text-light">Loading your home…</p>
+      </div>
+    );
+  }
 
   return user ? <MemberDashboard /> : <PublicHome />;
 }

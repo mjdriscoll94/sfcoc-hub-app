@@ -19,9 +19,6 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useMemberDashboard } from '@/hooks/useMemberDashboard';
-import { useBulletins } from '@/hooks/useBulletins';
-import { useLessonNotes } from '@/hooks/useLessonNotes';
-import { usePrayerPraise } from '@/hooks/usePrayerPraise';
 import { isOnboardingTourActive, useOnboardingTour, useTourActive } from '@/components/tour';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
@@ -87,9 +84,6 @@ function DashboardRowsSkeleton({ label, rows = 3 }: { label: string; rows?: numb
 export function MemberDashboard() {
   const { userProfile, markOnboardingTourSeen } = useAuth();
   const dashboard = useMemberDashboard();
-  const { bulletins, loading: bulletinsLoading } = useBulletins();
-  const { notes, loading: notesLoading } = useLessonNotes();
-  const { items: prayerItems, loading: prayersLoading } = usePrayerPraise();
   const startTour = useOnboardingTour();
   const { setTourActive } = useTourActive();
   const router = useRouter();
@@ -158,8 +152,11 @@ export function MemberDashboard() {
         ) : null}
 
         {dashboard.error ? (
-          <div className="mb-6 rounded-xl border border-warning/40 bg-warning-bg p-4 text-charcoal" role="status">
-            {dashboard.error}
+          <div className="mb-6 flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning-bg p-4 text-charcoal sm:flex-row sm:items-center sm:justify-between" role="alert">
+            <p>{dashboard.error}</p>
+            <button type="button" onClick={dashboard.retry} className="min-h-10 shrink-0 rounded-lg border border-coral px-4 text-sm font-bold text-coral-dark hover:bg-coral/10">
+              Try again
+            </button>
           </div>
         ) : null}
 
@@ -234,19 +231,19 @@ export function MemberDashboard() {
             </Link>
           </div>
           <div className="mt-5">
-            {bulletinsLoading || notesLoading ? (
+            {dashboard.loading ? (
               <DashboardRowsSkeleton label="Loading the latest resources…" rows={2} />
             ) : (
               <div className="grid gap-3 sm:grid-cols-2">
-                {bulletins[0] ? (
-                  <a href={bulletins[0].fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
-                    <span><strong className="block text-charcoal">Latest bulletin</strong><span className="mt-1 block text-sm text-text-light">{bulletins[0].title} • {formatShortDate(bulletins[0].date)}</span></span>
+                {dashboard.bulletin ? (
+                  <a href={dashboard.bulletin.fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
+                    <span><strong className="block text-charcoal">Latest bulletin</strong><span className="mt-1 block text-sm text-text-light">{dashboard.bulletin.title} • {formatShortDate(dashboard.bulletin.date)}</span></span>
                     <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
                   </a>
                 ) : <p className="rounded-xl bg-bg p-4 text-text-light">No bulletin is currently available.</p>}
-                {notes[0] ? (
-                  <a href={notes[0].fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
-                    <span><strong className="block text-charcoal">Latest lesson notes</strong><span className="mt-1 block text-sm text-text-light">{notes[0].title} • {formatShortDate(notes[0].date)}</span></span>
+                {dashboard.lessonNote ? (
+                  <a href={dashboard.lessonNote.fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
+                    <span><strong className="block text-charcoal">Latest lesson notes</strong><span className="mt-1 block text-sm text-text-light">{dashboard.lessonNote.title} • {formatShortDate(dashboard.lessonNote.date)}</span></span>
                     <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
                   </a>
                 ) : <p className="rounded-xl bg-bg p-4 text-text-light">No lesson notes are currently available.</p>}
@@ -262,13 +259,13 @@ export function MemberDashboard() {
           </div>
           <div className="grid gap-4 md:grid-cols-2">
             <DashboardSection headingId="prayer-board-heading" title="Prayer Board" icon={<Heart aria-hidden="true" className="h-6 w-6" />} href="/prayer-board" linkLabel="Open Prayer Board">
-              {prayersLoading ? (
+              {dashboard.loading ? (
                 <div role="status" aria-live="polite" aria-busy="true">
                   <span className="sr-only">Checking Prayer Board activity…</span>
                   <LoadingSkeleton className="h-8 w-36 rounded-md" />
                 </div>
               ) : (
-                <p className="text-text-light"><strong className="text-2xl text-charcoal tabular-nums" data-numeric>{prayerItems.length}</strong> active prayer and praise {prayerItems.length === 1 ? 'post' : 'posts'}. Details stay protected.</p>
+                <p className="text-text-light"><strong className="text-2xl text-charcoal tabular-nums" data-numeric>{dashboard.prayerCount}</strong> active prayer and praise {dashboard.prayerCount === 1 ? 'post' : 'posts'}. Details stay protected.</p>
               )}
             </DashboardSection>
 

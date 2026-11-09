@@ -1,18 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import {
-  collection,
-  getDocs,
-  limit,
-  orderBy,
-  query,
-  Timestamp,
-  where,
-} from 'firebase/firestore';
-import { db } from '@/lib/firebase/config';
-import type { CalendarEvent } from '@/lib/firebase/models';
-import { calendarEventFromFirestore, expandAllEvents } from '@/lib/calendar/recurrence';
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 
 export type DashboardAnnouncement = {
   id: string;
@@ -21,107 +11,126 @@ export type DashboardAnnouncement = {
   createdAt: Date;
 };
 
+export type DashboardEvent = {
+  id: string;
+  title: string;
+  startDate: Date;
+  allDay: boolean;
+  location?: string;
+};
+
+export type DashboardResource = {
+  id: string;
+  title: string;
+  date: Date;
+  fileUrl: string;
+};
+
 type DashboardState = {
   announcements: DashboardAnnouncement[];
-  events: CalendarEvent[];
+  events: DashboardEvent[];
+  bulletin: DashboardResource | null;
+  lessonNote: DashboardResource | null;
+  prayerCount: number;
   loading: boolean;
   error: string | null;
 };
 
-async function loadAnnouncements(): Promise<DashboardAnnouncement[]> {
-  const snapshot = await getDocs(
-    query(collection(db, 'announcements'), orderBy('createdAt', 'desc'), limit(3))
-  );
+type DashboardResponse = {
+  announcements?: Array<Omit<DashboardAnnouncement, 'createdAt'> & { createdAt: number }>;
+  events?: Array<Omit<DashboardEvent, 'startDate'> & { startDate: number }>;
+  bulletin?: (Omit<DashboardResource, 'date'> & { date: number }) | null;
+  lessonNote?: (Omit<DashboardResource, 'date'> & { date: number }) | null;
+  prayerCount?: number;
+  partialError?: boolean;
+  error?: string;
+};
 
-  return snapshot.docs.map((document) => {
-    const data = document.data();
-    return {
-      id: document.id,
-      title: String(data.title ?? 'Announcement'),
-      type: String(data.type ?? 'General'),
-      createdAt: (data.createdAt as Timestamp | undefined)?.toDate?.() ?? new Date(),
-    };
-  });
-}
+const INITIAL_STATE: DashboardState = {
+  announcements: [],
+  events: [],
+  bulletin: null,
+  lessonNote: null,
+  prayerCount: 0,
+  loading: true,
+  error: null,
+};
 
-async function loadUpcomingEvents(): Promise<CalendarEvent[]> {
-  const rangeStart = new Date();
-  const rangeEnd = new Date(rangeStart);
-  rangeEnd.setMonth(rangeEnd.getMonth() + 6);
+export function useMemberDashboard(): DashboardState & { retry: () => void } {
+  const { user } = useAuth();
+  const [state, setState] = useState<DashboardState>(INITIAL_STATE);
+  const [reloadKey, setReloadKey] = useState(0);
 
-  const futureQuery = query(
-    collection(db, 'calendarEvents'),
-    where('startDate', '>=', Timestamp.fromDate(rangeStart)),
-    where('startDate', '<=', Timestamp.fromDate(rangeEnd)),
-    orderBy('startDate'),
-    limit(20)
-  );
-  const recurringQuery = query(
-    collection(db, 'calendarEvents'),
-    where('hasRecurrence', '==', true),
-    where('startDate', '<=', Timestamp.fromDate(rangeEnd)),
-    orderBy('startDate')
-  );
-  const [futureSnapshot, recurringSnapshot] = await Promise.all([
-    getDocs(futureQuery),
-    getDocs(recurringQuery),
-  ]);
-
-  const raw: CalendarEvent[] = [];
-  const seen = new Set<string>();
-  for (const document of futureSnapshot.docs) {
-    seen.add(document.id);
-    raw.push(calendarEventFromFirestore(document.id, document.data()));
-  }
-  for (const document of recurringSnapshot.docs) {
-    if (!seen.has(document.id)) {
-      raw.push(calendarEventFromFirestore(document.id, document.data()));
-    }
-  }
-
-  return expandAllEvents(raw, rangeStart, rangeEnd)
-    .filter((event) => event.startDate >= rangeStart)
-    .sort((a, b) => a.startDate.getTime() - b.startDate.getTime())
-    .slice(0, 3);
-}
-
-export function useMemberDashboard(): DashboardState {
-  const [state, setState] = useState<DashboardState>({
-    announcements: [],
-    events: [],
-    loading: true,
-    error: null,
-  });
+  const retry = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
+    if (!user) return;
+
+    const currentUser = user;
     let active = true;
+    const controller = new AbortController();
+    const loadingTimeout = window.setTimeout(() => controller.abort(), FIRESTORE_LOAD_TIMEOUT_MS);
 
     async function loadDashboard() {
       try {
-        const [announcements, events] = await Promise.all([
-          loadAnnouncements(),
-          loadUpcomingEvents(),
-        ]);
+        setState((current) => ({ ...current, loading: true, error: null }));
+        const idToken = await currentUser.getIdToken();
+        const response = await fetch('/api/member/dashboard', {
+          headers: { Authorization: `Bearer ${idToken}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const data = await response.json() as DashboardResponse;
+        if (!response.ok) {
+          throw new Error(data.error || 'We couldn’t load your member home.');
+        }
+
         if (active) {
-          setState({ announcements, events, loading: false, error: null });
+          setState({
+            announcements: (data.announcements || []).map((announcement) => ({
+              ...announcement,
+              createdAt: new Date(announcement.createdAt),
+            })),
+            events: (data.events || []).map((event) => ({
+              ...event,
+              startDate: new Date(event.startDate),
+            })),
+            bulletin: data.bulletin ? { ...data.bulletin, date: new Date(data.bulletin.date) } : null,
+            lessonNote: data.lessonNote ? { ...data.lessonNote, date: new Date(data.lessonNote.date) } : null,
+            prayerCount: data.prayerCount || 0,
+            loading: false,
+            error: data.partialError
+              ? 'Some member updates could not be loaded. The full pages are still available.'
+              : null,
+          });
         }
       } catch (error) {
+        if (!active) return;
         console.error('Failed to load member dashboard:', error);
-        if (active) {
-          setState((current) => ({
-            ...current,
-            loading: false,
-            error: 'Some member updates could not be loaded. The full pages are still available.',
-          }));
-        }
+        setState((current) => ({
+          ...current,
+          loading: false,
+          error:
+            error instanceof DOMException && error.name === 'AbortError'
+              ? FIRESTORE_TIMEOUT_MESSAGE
+              : error instanceof Error
+                ? error.message
+                : 'We couldn’t load your member home. Please try again.',
+        }));
+      } finally {
+        window.clearTimeout(loadingTimeout);
       }
     }
 
     loadDashboard();
     return () => {
       active = false;
+      controller.abort();
+      window.clearTimeout(loadingTimeout);
     };
-  }, []);
+  }, [reloadKey, user]);
 
-  return state;
+  return { ...state, retry };
 }
