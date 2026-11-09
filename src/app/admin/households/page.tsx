@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Timestamp, addDoc, collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
+import { Timestamp, addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ChevronDown, ChevronRight, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
 import BackButton from '@/components/BackButton';
@@ -79,7 +79,7 @@ const formatEventDate = (event: ImportantEvent) => {
 const sortEvents = (events: ImportantEvent[]) => [...events].sort((a, b) => a.date.localeCompare(b.date) || a.type.localeCompare(b.type));
 
 export default function AttendanceMembersPage() {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const [households, setHouseholds] = useState<AttendanceHousehold[]>([]);
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
@@ -119,35 +119,53 @@ export default function AttendanceMembersPage() {
   }, [router, userProfile]);
 
   useEffect(() => {
-    if (!canManage) return;
+    if (!canManage || !user) return;
 
     let active = true;
-    const loadingTimeout = window.setTimeout(() => {
-      if (!active) return;
-      setLoadError(FIRESTORE_TIMEOUT_MESSAGE);
-      setLoading(false);
-    }, FIRESTORE_LOAD_TIMEOUT_MS);
+    const controller = new AbortController();
+    const loadingTimeout = window.setTimeout(() => controller.abort(), FIRESTORE_LOAD_TIMEOUT_MS);
 
     const loadHouseholds = async () => {
       try {
         setLoading(true);
         setLoadError(null);
-        const snapshot = await getDocs(query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc')));
-        const nextHouseholds = snapshot.docs.flatMap((snapshot) => {
-          const data = snapshot.data() as { householdName?: string; normalizedName?: string; isLifeGroupLeader?: boolean; active?: boolean; availableFrom?: Timestamp; createdAt?: Timestamp; members?: HouseholdPerson[]; importantEvents?: ImportantEvent[] };
-          return [{
-            id: snapshot.id,
-            householdName: data.householdName || 'Unnamed Household',
-            normalizedName: data.normalizedName || normalizeAttendanceName(data.householdName || ''),
-            active: data.active !== false,
-            isLifeGroupLeader: data.isLifeGroupLeader === true,
-            availableFrom: data.availableFrom?.toDate() || data.createdAt?.toDate() || new Date(2000, 0, 2, 12),
-            members: Array.isArray(data.members)
-              ? data.members.map((person) => ({ ...person, importantEvents: sortEvents(person.importantEvents || []) }))
-              : [],
-            importantEvents: sortEvents(Array.isArray(data.importantEvents) ? data.importantEvents : []),
-          }];
+        const idToken = await user.getIdToken();
+        const response = await fetch('/api/admin/households', {
+          headers: { Authorization: `Bearer ${idToken}` },
+          cache: 'no-store',
+          signal: controller.signal,
         });
+        const responseData = await response.json() as {
+          error?: string;
+          households?: Array<{
+            id: string;
+            householdName?: string;
+            normalizedName?: string;
+            isLifeGroupLeader?: boolean;
+            active?: boolean;
+            availableFrom?: number | null;
+            members?: HouseholdPerson[];
+            importantEvents?: ImportantEvent[];
+          }>;
+        };
+        if (!response.ok) {
+          throw new Error(responseData.error || 'Failed to load households and members.');
+        }
+
+        const nextHouseholds = (responseData.households || []).map((data) => ({
+          id: data.id,
+          householdName: data.householdName || 'Unnamed Household',
+          normalizedName: data.normalizedName || normalizeAttendanceName(data.householdName || ''),
+          active: data.active !== false,
+          isLifeGroupLeader: data.isLifeGroupLeader === true,
+          availableFrom: typeof data.availableFrom === 'number'
+            ? new Date(data.availableFrom)
+            : new Date(2000, 0, 2, 12),
+          members: Array.isArray(data.members)
+            ? data.members.map((person) => ({ ...person, importantEvents: sortEvents(person.importantEvents || []) }))
+            : [],
+          importantEvents: sortEvents(Array.isArray(data.importantEvents) ? data.importantEvents : []),
+        }));
         if (active) {
           setHouseholds(nextHouseholds);
           setLoadError(null);
@@ -155,7 +173,13 @@ export default function AttendanceMembersPage() {
       } catch (loadError) {
         console.error('Error loading attendance households:', loadError);
         if (active) {
-          setLoadError('We couldn’t load households and members. Please try again.');
+          setLoadError(
+            loadError instanceof DOMException && loadError.name === 'AbortError'
+              ? FIRESTORE_TIMEOUT_MESSAGE
+              : loadError instanceof Error
+                ? loadError.message
+                : 'We couldn’t load households and members. Please try again.'
+          );
         }
       } finally {
         window.clearTimeout(loadingTimeout);
@@ -166,9 +190,10 @@ export default function AttendanceMembersPage() {
 
     return () => {
       active = false;
+      controller.abort();
       window.clearTimeout(loadingTimeout);
     };
-  }, [canManage, reloadKey]);
+  }, [canManage, reloadKey, user]);
 
   if (!userProfile || !canManageAttendance(userProfile)) return null;
 
