@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { db } from '@/lib/firebase/config';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 import { 
   collection, 
   query, 
@@ -38,71 +40,137 @@ export interface VolunteerOpportunityItem {
   };
 }
 
+type VolunteerOpportunitiesResponse = {
+  items?: Array<Omit<VolunteerOpportunityItem, 'dateTime' | 'createdAt'> & {
+    dateTime: number;
+    createdAt: number;
+  }>;
+  error?: string;
+};
+
 export function useVolunteerOpportunities() {
+  const { user } = useAuth();
   const [items, setItems] = useState<VolunteerOpportunityItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isIndexBuilding, setIsIndexBuilding] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const retry = useCallback(() => {
+    setReloadKey((current) => current + 1);
+  }, []);
 
   useEffect(() => {
+    if (!user) return;
+
+    const currentUser = user;
+    let active = true;
+    let realtimeHasLoaded = false;
     setLoading(true);
     setError(null);
     setIsIndexBuilding(false);
+    const controller = new AbortController();
+    const loadingTimeout = window.setTimeout(() => controller.abort(), FIRESTORE_LOAD_TIMEOUT_MS);
+
+    async function loadInitialItems() {
+      try {
+        const idToken = await currentUser.getIdToken();
+        const response = await fetch('/api/member/volunteer-opportunities', {
+          headers: { Authorization: `Bearer ${idToken}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const data = await response.json() as VolunteerOpportunitiesResponse;
+        if (!response.ok) {
+          throw new Error(data.error || 'We couldn’t load volunteer opportunities.');
+        }
+
+        if (active) {
+          if (!realtimeHasLoaded) {
+            setItems((data.items || []).map((item) => ({
+              ...item,
+              dateTime: new Date(item.dateTime),
+              createdAt: new Date(item.createdAt),
+            })));
+          }
+          setLoading(false);
+          setError(null);
+          setIsIndexBuilding(false);
+        }
+      } catch (loadError) {
+        if (!active) return;
+        console.error('Failed to load volunteer opportunities:', loadError);
+        setLoading(false);
+        setError(
+          loadError instanceof DOMException && loadError.name === 'AbortError'
+            ? FIRESTORE_TIMEOUT_MESSAGE
+            : loadError instanceof Error
+              ? loadError.message
+              : 'We couldn’t load volunteer opportunities. Please try again.'
+        );
+      } finally {
+        window.clearTimeout(loadingTimeout);
+      }
+    }
 
     // Create query - only show approved opportunities
-    let q: Query;
+    let unsubscribe = () => {};
     try {
-      q = query(
+      const q: Query = query(
         collection(db, 'volunteerOpportunities'),
         where('status', '==', 'open'),
         where('approvalStatus', '==', 'approved'),
         orderBy('dateTime', 'asc')
       );
-    } catch (error) {
-      console.error('Error creating query:', error);
-      setError('Failed to create query');
-      setLoading(false);
-      return () => {};
+      // Keep the real-time listener for live capacity and sign-up updates. The
+      // authenticated API above supplies the fast initial response.
+      unsubscribe = onSnapshot(
+        q,
+        (querySnapshot) => {
+          realtimeHasLoaded = true;
+          const volunteerItems = querySnapshot.docs.map(doc => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              ...data,
+              dateTime: (data.dateTime as Timestamp)?.toDate() || new Date(),
+              createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
+              volunteers: data.volunteers || [],
+              currentVolunteers: data.currentVolunteers || 0
+            } as VolunteerOpportunityItem;
+          });
+          setItems(volunteerItems);
+          setLoading(false);
+          setError(null);
+          setIsIndexBuilding(false);
+        },
+        (error) => {
+          console.error('Error fetching real-time volunteer updates:', error);
+
+          // The API can still provide the initial list if real-time updates are
+          // temporarily unavailable.
+          if (error instanceof FirestoreError &&
+              error.code === 'failed-precondition' &&
+              error.message.includes('requires an index')) {
+            setIsIndexBuilding(true);
+            setError('The database is being optimized for faster queries. This may take a few minutes. Please refresh the page shortly.');
+          }
+        }
+      );
+    } catch (queryError) {
+      console.error('Error starting real-time volunteer updates:', queryError);
     }
 
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        const volunteerItems = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            dateTime: (data.dateTime as Timestamp)?.toDate() || new Date(),
-            createdAt: (data.createdAt as Timestamp)?.toDate() || new Date(),
-            volunteers: data.volunteers || [],
-            currentVolunteers: data.currentVolunteers || 0
-          } as VolunteerOpportunityItem;
-        });
-        setItems(volunteerItems);
-        setLoading(false);
-        setIsIndexBuilding(false);
-      },
-      (error) => {
-        console.error('Error fetching volunteer opportunities:', error);
-        
-        // Check if the error is due to missing index
-        if (error instanceof FirestoreError && 
-            error.code === 'failed-precondition' && 
-            error.message.includes('requires an index')) {
-          setIsIndexBuilding(true);
-          setError('The database is being optimized for faster queries. This may take a few minutes. Please refresh the page shortly.');
-        } else {
-          setError('Failed to load volunteer opportunities');
-        }
-        setLoading(false);
-      }
-    );
+    loadInitialItems();
 
     // Cleanup subscription
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
+  }, [reloadKey, user]);
 
   // Function to sign up for a volunteer opportunity
   const signUpForOpportunity = async (opportunityId: string, userId: string, userName: string) => {
@@ -170,7 +238,8 @@ export function useVolunteerOpportunities() {
     loading,
     error,
     isIndexBuilding,
+    retry,
     signUpForOpportunity,
     removeSignUp
   };
-} 
+}

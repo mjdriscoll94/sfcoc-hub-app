@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { useSearchParams } from 'next/navigation';
 import { confirmPasswordReset, verifyPasswordResetCode } from 'firebase/auth';
 import { auth } from '@/lib/firebase/config';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 function readActionParams(): { mode: string | null; oobCode: string | null } {
   if (typeof window === 'undefined') {
@@ -167,7 +168,7 @@ function ResetPasswordInner() {
               height={80}
               className="mb-6"
             />
-            <h2 className="text-center text-2xl font-bold text-text uppercase tracking-wide">Set a new password</h2>
+            <h1 className="text-center text-2xl font-bold text-text">Set a new password</h1>
             {emailHint && (
               <p className="text-center text-sm text-text-light mt-2">
                 Account: <span className="text-charcoal font-medium">{emailHint}</span>
@@ -176,9 +177,11 @@ function ResetPasswordInner() {
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>
+            <RequiredFieldsNote />
+            <p className="text-sm text-text-light">Use at least 6 characters.</p>
             <div>
               <label htmlFor="new-password" className="block text-sm font-medium text-charcoal mb-1">
-                New password
+                New password<RequiredFieldIndicator />
               </label>
               <input
                 id="new-password"
@@ -193,7 +196,7 @@ function ResetPasswordInner() {
             </div>
             <div>
               <label htmlFor="confirm-password" className="block text-sm font-medium text-charcoal mb-1">
-                Confirm password
+                Confirm password<RequiredFieldIndicator />
               </label>
               <input
                 id="confirm-password"
@@ -208,13 +211,13 @@ function ResetPasswordInner() {
             </div>
 
             {error && (
-              <div className="rounded-md bg-error/10 p-3 border border-error/20 text-sm text-error">{error}</div>
+              <div role="alert" className="rounded-md bg-error/10 p-3 border border-error/20 text-sm text-error">{error}</div>
             )}
 
             <button
               type="submit"
               disabled={submitting}
-              className="w-full py-2 px-4 rounded-md text-on-primary bg-primary font-semibold text-sm uppercase tracking-wide hover:opacity-90 disabled:opacity-50"
+              className="min-h-11 w-full rounded-md bg-primary px-4 py-2 font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50"
             >
               {submitting ? 'Saving…' : 'Update password'}
             </button>

@@ -1,193 +1,126 @@
 'use client';
 
 import { useEffect } from 'react';
-import { useAuth } from '@/lib/auth/AuthContext';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import {
+  ArrowRight,
+  BellRing,
+  CalendarDays,
+  ClipboardCheck,
+  Mail,
+  ShieldCheck,
+  Users,
+  UsersRound,
+} from 'lucide-react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { getRoleCapabilities } from '@/types/roles';
 import PrayerRequestApprovalQueue from '@/components/PrayerRequestApprovalQueue';
 import PendingUserQueue from '@/components/PendingUserQueue';
 import VolunteerOpportunityApprovalQueue from '@/components/VolunteerOpportunityApprovalQueue';
-import { Users, FileText, Upload, UsersRound, CalendarDays, Megaphone, Mail, ClipboardList, Settings, type LucideIcon } from 'lucide-react';
-import Link from 'next/link';
-import { PlusIcon } from '@heroicons/react/24/outline';
-import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
 
-function AdminMenu({
-  label,
-  icon: Icon,
-  items,
-}: {
+type QuickAction = {
+  href: string;
   label: string;
-  icon: LucideIcon;
-  items: { href: string; label: string; description: string; icon: LucideIcon }[];
-}) {
-  if (!items.length) return null;
+  description: string;
+  icon: typeof Users;
+};
+
+export default function ManageChurchOverview() {
+  const { userProfile } = useAuth();
+  const router = useRouter();
+  const {
+    isAdmin,
+    canManageAnnouncements,
+    canManageVolunteerOpportunities: canManageVolunteer,
+    canManageAttendance,
+    canAssignServiceRoles,
+    canSendEmail,
+    canAccessManageChurch,
+  } = getRoleCapabilities(userProfile);
+
+  useEffect(() => {
+    document.title = 'Manage Church | Sioux Falls Church of Christ';
+  }, []);
+
+  useEffect(() => {
+    if (userProfile && !canAccessManageChurch) router.push('/');
+  }, [userProfile, canAccessManageChurch, router]);
+
+  if (!canAccessManageChurch) return null;
+
+  const quickActions: QuickAction[] = [
+    ...(canManageAnnouncements ? [{ href: '/admin/announcements/new', label: 'Post an announcement', description: 'Share an update with the church family.', icon: BellRing }] : []),
+    ...(isAdmin || canManageVolunteer || canAssignServiceRoles ? [{ href: '/admin/calendar', label: 'Update the calendar', description: 'Add or manage church events.', icon: CalendarDays }] : []),
+    ...(canManageAttendance ? [{ href: '/admin/attendance', label: 'Take attendance', description: 'Record Sunday household attendance.', icon: ClipboardCheck }] : []),
+    ...(canManageVolunteer ? [{ href: '/admin/volunteer', label: 'Manage volunteers', description: 'Create and update volunteer opportunities.', icon: UsersRound }] : []),
+    ...(canSendEmail ? [{ href: '/admin/send-email', label: 'Send an email', description: 'Contact members or a saved email list.', icon: Mail }] : []),
+    ...(isAdmin ? [{ href: '/admin/users', label: 'Manage users', description: 'Review accounts, roles, and access.', icon: Users }] : []),
+  ];
 
   return (
-    <div className="rounded-lg border border-border bg-white shadow-sm">
-      <div className="flex items-center gap-3 px-5 py-4 text-charcoal">
-        <Icon className="h-5 w-5 text-coral" aria-hidden="true" />
-        <span className="flex-1 font-semibold">{label}</span>
-      </div>
-      <div className="border-t border-border px-3 py-2">
-        {items.map(({ href, label: itemLabel, description, icon: ItemIcon }) => (
-          <Link
-            key={href}
-            href={href}
-            className="flex items-center gap-3 rounded-md px-3 py-3 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <ItemIcon className="h-5 w-5 flex-shrink-0 text-coral" aria-hidden="true" />
-            <span>
-              <span className="block text-sm font-medium text-charcoal">{itemLabel}</span>
-              <span className="block text-sm text-text-light">{description}</span>
-            </span>
-          </Link>
-        ))}
-      </div>
+    <div className="mx-auto max-w-7xl px-4 pb-10 pt-5 sm:px-6 lg:px-8">
+      <header>
+        <div className="flex items-center gap-3">
+          <span className="rounded-xl bg-coral/15 p-3 text-coral-dark"><ShieldCheck aria-hidden="true" className="h-7 w-7" /></span>
+          <div>
+            <p className="font-semibold text-coral-dark">Authorized workspace</p>
+            <h1 className="text-3xl font-bold text-charcoal sm:text-4xl">Manage Church</h1>
+          </div>
+        </div>
+        <p className="mt-4 max-w-3xl text-lg text-text-light">
+          Review items that need attention, then go directly to the task you need.
+        </p>
+      </header>
+
+      <section className="mt-8" aria-labelledby="attention-heading">
+        <h2 id="attention-heading" className="text-2xl font-bold text-charcoal">Needs attention</h2>
+        <p className="mt-1 text-text-light">Pending approvals and follow-up items appear here.</p>
+        <div className="mt-5 grid gap-6">
+          {isAdmin ? (
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+              <h3 className="mb-4 text-xl font-bold text-charcoal">Pending member accounts</h3>
+              <PendingUserQueue />
+            </div>
+          ) : null}
+          {isAdmin ? (
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+              <h3 className="mb-4 text-xl font-bold text-charcoal">Prayer request approvals</h3>
+              <PrayerRequestApprovalQueue />
+            </div>
+          ) : null}
+          {canManageVolunteer ? (
+            <div className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6">
+              <h3 className="mb-4 text-xl font-bold text-charcoal">Volunteer opportunity approvals</h3>
+              <VolunteerOpportunityApprovalQueue />
+            </div>
+          ) : null}
+          {!isAdmin && !canManageVolunteer ? (
+            <div className="rounded-2xl border border-border bg-white p-6 text-text-light">
+              No approval queues are assigned to your role.
+            </div>
+          ) : null}
+        </div>
+      </section>
+
+      <section className="mt-10" aria-labelledby="common-tasks-heading">
+        <h2 id="common-tasks-heading" className="text-2xl font-bold text-charcoal">Common tasks</h2>
+        <div className="mt-5 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+          {quickActions.map((action) => {
+            const Icon = action.icon;
+            return (
+              <Link key={action.href} href={action.href} className="group flex min-h-32 items-start gap-4 rounded-2xl border border-border bg-white p-5 shadow-sm hover:border-coral hover:shadow-md">
+                <span className="rounded-lg bg-coral/15 p-2 text-coral-dark"><Icon aria-hidden="true" className="h-5 w-5" /></span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-lg font-bold text-charcoal">{action.label}</span>
+                  <span className="mt-1 block text-sm text-text-light">{action.description}</span>
+                </span>
+                <ArrowRight aria-hidden="true" className="mt-1 h-5 w-5 shrink-0 text-text-muted group-hover:text-coral-dark" />
+              </Link>
+            );
+          })}
+        </div>
+      </section>
     </div>
   );
 }
-
-export default function AdminDashboard() {
-  useEffect(() => {
-    document.title = 'Admin Dashboard | Sioux Falls Church of Christ';
-  }, []);
-
-  const { userProfile } = useAuth();
-  const router = useRouter();
-
-  const canAccessAdmin = userProfile?.isAdmin || (
-    userProfile?.role && (
-      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAnnouncements ||
-      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups ||
-      ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAttendance
-    )
-  );
-  const canManageVolunteer = userProfile?.isAdmin || (
-    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canManageVolunteerOpportunities
-  );
-  const canAssignServiceRoles = userProfile?.isAdmin || (
-    userProfile?.role && ROLE_PERMISSIONS[userProfile.role]?.canAssignServiceRoles
-  );
-  const canManageLifeGroups = userProfile?.isAdmin || (
-    !!userProfile?.role && ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageLifeGroups
-  );
-  const canManageAttendance = userProfile?.isAdmin || (
-    !!userProfile?.role && ROLE_PERMISSIONS[userProfile.role as UserRole]?.canManageAttendance
-  );
-
-  useEffect(() => {
-    if (userProfile && !canAccessAdmin) {
-      router.push('/');
-      return;
-    }
-  }, [userProfile, canAccessAdmin, router]);
-
-  if (!canAccessAdmin) {
-    return null;
-  }
-
-  return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-8">
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-3xl font-bold text-charcoal">Admin Dashboard</h1>
-          <p className="mt-2 text-sm text-text-light">
-            Manage prayer requests, users, and other administrative tasks.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <AdminMenu
-            label="People & Groups"
-            icon={Users}
-            items={[
-              ...(userProfile?.isAdmin ? [{ href: '/admin/users', label: 'User Management', description: 'Manage user accounts and approvals', icon: Users }] : []),
-              ...(canManageAttendance ? [{ href: '/admin/households', label: 'Household Management', description: 'Manage households, members, and important events', icon: UsersRound }] : []),
-              ...(canManageLifeGroups ? [{ href: '/admin/life-groups', label: 'Life Groups', description: 'Manage life groups and members', icon: Users }] : []),
-              ...(userProfile?.isAdmin ? [{ href: '/admin/attendance', label: 'Attendance', description: 'Track Sunday household attendance', icon: ClipboardList }] : []),
-            ]}
-          />
-          <AdminMenu
-            label="Email & Communication"
-            icon={Mail}
-            items={[
-              ...(canAccessAdmin ? [{ href: '/admin/announcements/new', label: 'Add Announcement', description: 'Create a new announcement', icon: PlusIcon as unknown as LucideIcon }] : []),
-              ...(userProfile?.isAdmin ? [
-                { href: '/admin/send-email', label: 'Send Email', description: 'Broadcast to members or send a test', icon: Mail },
-                { href: '/admin/send-email/lists', label: 'Email Lists', description: 'Manage custom email lists and groups', icon: Users },
-                { href: '/admin/announcements', label: 'Manage Announcements', description: 'View, edit, or delete announcements', icon: Megaphone },
-              ] : []),
-            ]}
-          />
-          <AdminMenu
-            label="Events & Scheduling"
-            icon={CalendarDays}
-            items={[
-              ...(userProfile?.isAdmin || canManageVolunteer || canAssignServiceRoles ? [{ href: '/admin/calendar', label: 'Calendar', description: 'Add and manage church calendar events', icon: CalendarDays }] : []),
-              ...(canAssignServiceRoles ? [{ href: '/service-roles', label: 'Service Roles', description: 'Manage Sunday service assignments', icon: Users }] : []),
-              ...(canManageVolunteer ? [{ href: '/admin/volunteer', label: 'Volunteer Opportunities', description: 'Manage volunteer opportunities', icon: UsersRound }] : []),
-              ...(userProfile?.isAdmin ? [{ href: '/admin/events', label: 'Home Page Events', description: 'Manage events shown on the home page', icon: CalendarDays }] : []),
-            ]}
-          />
-          <AdminMenu
-            label="Content Management"
-            icon={FileText}
-            items={userProfile?.isAdmin ? [
-              { href: '/admin/bulletin', label: 'Upload Bulletin', description: 'Manage and upload weekly bulletins', icon: FileText },
-              { href: '/admin/lesson-notes', label: 'Upload Sermon Notes', description: 'Manage and upload lesson notes', icon: Upload },
-            ] : []}
-          />
-          <AdminMenu
-            label="Administration"
-            icon={Settings}
-            items={userProfile?.isAdmin ? [
-              { href: '/admin/settings', label: 'Settings', description: 'Configure attendance reports and other app options', icon: Settings },
-            ] : []}
-          />
-          {userProfile?.isAdmin && (
-            <Link href="/admin/prayer-requests" className="flex items-center gap-3 rounded-lg border border-border bg-white px-5 py-4 font-semibold text-charcoal shadow-sm hover:border-coral hover:shadow-md">
-              <FileText className="h-5 w-5 text-coral" aria-hidden="true" />
-              Manage Prayer Requests
-            </Link>
-          )}
-        </div>
-
-        {/* Approval Queues */}
-        <div>
-          <h2 className="text-lg font-semibold text-charcoal mb-3">Approvals & Pending Items</h2>
-          <div className="grid grid-cols-1 gap-8">
-          {/* Prayer Request Approval Queue - Admin only */}
-          {userProfile?.isAdmin && (
-          <div className="bg-white rounded-lg p-6 border border-border shadow">
-            <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
-              Prayer Request Approval Queue
-            </h2>
-            <PrayerRequestApprovalQueue />
-          </div>
-          )}
-
-          {/* Volunteer Opportunity Approval Queue - Admin and Organizer */}
-          {canManageVolunteer && (
-          <div className="bg-white rounded-lg p-6 border border-border shadow">
-            <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
-              Volunteer Opportunity Approval Queue
-            </h2>
-            <VolunteerOpportunityApprovalQueue />
-          </div>
-          )}
-
-          {/* Pending User Accounts - Admin only */}
-          {userProfile?.isAdmin && (
-          <div className="bg-white rounded-lg p-6 border border-border shadow">
-            <h2 className="text-xl font-semibold text-charcoal mb-4 sm:text-left text-center">
-              Pending User Accounts
-            </h2>
-            <PendingUserQueue />
-          </div>
-          )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-} 

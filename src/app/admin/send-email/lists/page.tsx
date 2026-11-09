@@ -11,6 +11,7 @@ import {
   listNameFromFilename,
   parseEmailsFromRawText,
 } from '@/lib/utils/emailListImport';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 type EmailListSummary = { id: string; name: string; emailCount: number };
 
@@ -246,12 +247,15 @@ export default function AdminEmailListsPage() {
             {editingId ? 'Edit list' : 'New list'}
           </h2>
           <div className="space-y-4">
+            <RequiredFieldsNote />
             <div>
-              <label className="block text-sm font-medium text-charcoal mb-1">List name</label>
+              <label htmlFor="email-list-name" className="block text-sm font-medium text-charcoal mb-1">List name<RequiredFieldIndicator /></label>
               <input
+                id="email-list-name"
                 type="text"
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
+                required
                 className="block w-full rounded-md border border-border bg-card text-charcoal px-3 py-2 sm:text-sm"
                 placeholder="e.g. Ministry Leaders (filled from CSV file name when you import)"
               />

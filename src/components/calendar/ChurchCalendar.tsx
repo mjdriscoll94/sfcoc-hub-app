@@ -21,6 +21,8 @@ import {
   arrayUnion,
 } from 'firebase/firestore';
 import Link from 'next/link';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 import {
   CalendarEvent,
   CalendarCategory,
@@ -260,6 +262,12 @@ export function ChurchCalendar({
   const defaultSubtitle = readOnly
     ? 'Click a day to view events. Filter by category or add the calendar to your phone.'
     : 'Click a day to add an event. Switch view to see events in detail.';
+
+  useEffect(() => {
+    if (window.matchMedia('(max-width: 767px)').matches) {
+      setViewMode('month');
+    }
+  }, []);
 
   useEffect(() => {
     const unsub = onSnapshot(
@@ -511,7 +519,7 @@ export function ChurchCalendar({
                     if (mode === 'month') setFocusDate(() => new Date(today.getFullYear(), today.getMonth(), 1));
                     if (mode === 'week') setFocusDate(() => new Date());
                   }}
-                  className={`px-3 py-1.5 text-sm font-medium rounded-md capitalize ${viewMode === mode ? 'admin-calendar-btn-coral' : 'text-[var(--charcoal)] hover:bg-[var(--bg-secondary)]'}`}
+                  className={`min-h-11 rounded-md px-3 py-2 text-sm font-medium capitalize ${viewMode === mode ? 'admin-calendar-btn-coral' : 'text-[var(--charcoal)] hover:bg-[var(--bg-secondary)]'}`}
                 >
                   {mode} view
                 </button>
@@ -521,7 +529,7 @@ export function ChurchCalendar({
               <button
                 type="button"
                 onClick={goPrev}
-                className="p-1.5 text-charcoal hover:bg-bg-secondary rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Previous"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -534,7 +542,7 @@ export function ChurchCalendar({
               <button
                 type="button"
                 onClick={goNext}
-                className="p-1.5 text-charcoal hover:bg-bg-secondary rounded focus:outline-none focus:ring-2 focus:ring-primary"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-label="Next"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -546,7 +554,7 @@ export function ChurchCalendar({
               <button
                 type="button"
                 onClick={() => setExportOpen((o) => !o)}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
                 aria-expanded={exportOpen}
                 aria-haspopup="true"
               >
@@ -561,7 +569,7 @@ export function ChurchCalendar({
                     <button
                       type="button"
                       onClick={handleDownloadIcs}
-                      className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-charcoal hover:bg-bg-secondary"
+                      className="flex min-h-11 w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-charcoal hover:bg-bg-secondary"
                     >
                       <Download className="h-4 w-4" />
                       Download .ics file
@@ -573,6 +581,7 @@ export function ChurchCalendar({
                     <div className="flex gap-1">
                       <input
                         type="text"
+                        aria-label="Calendar subscription URL"
                         readOnly
                         value={feedUrl}
                         className="flex-1 min-w-0 rounded border border-border bg-bg px-2 py-1.5 text-xs text-charcoal"
@@ -580,7 +589,7 @@ export function ChurchCalendar({
                       <button
                         type="button"
                         onClick={handleCopyFeedUrl}
-                        className="flex items-center gap-1 rounded border border-border bg-card px-2 py-1.5 text-xs font-medium text-charcoal hover:bg-bg-secondary"
+                        className="flex min-h-11 items-center gap-1 rounded border border-border bg-card px-2 py-1.5 text-sm font-medium text-charcoal hover:bg-bg-secondary"
                       >
                         {copiedFeed ? <Check className="h-3.5 w-3.5" /> : null}
                         {copiedFeed ? 'Copied' : 'Copy'}
@@ -601,7 +610,7 @@ export function ChurchCalendar({
               <button
                 type="button"
                 onClick={() => setCategoriesEditorOpen(true)}
-                className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+                className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
               >
                 <Tags className="h-4 w-4" />
                 Edit Categories
@@ -642,7 +651,7 @@ export function ChurchCalendar({
                     disabled={!id}
                     aria-pressed={shown}
                     title={shown ? 'Click to hide these events' : 'Click to show these events'}
-                    className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${
+                    className={`inline-flex min-h-11 items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-50 ${
                       shown
                         ? 'border-transparent bg-bg-secondary/70 text-charcoal hover:bg-bg-secondary'
                         : 'border-border bg-white/80 text-text-light opacity-60 line-through decoration-charcoal/40'
@@ -668,7 +677,7 @@ export function ChurchCalendar({
                     ? 'Click to hide events with no category'
                     : 'Click to show events with no category'
                 }
-                className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 ${
+                className={`inline-flex min-h-11 items-center gap-2 rounded-md border px-2.5 py-1.5 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-1 ${
                   !hiddenCategoryKeys.has(UNCATEGORIZED_FILTER_KEY)
                     ? 'border-transparent bg-bg-secondary/70 text-charcoal hover:bg-bg-secondary'
                     : 'border-border bg-white/80 text-text-light opacity-60 line-through decoration-charcoal/40'
@@ -687,16 +696,12 @@ export function ChurchCalendar({
           </ul>
         </div>
 
-        {loading && (
-          <div className="flex justify-center py-8">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
-          </div>
-        )}
+        {loading && <LoadingCardList count={4} label="Loading calendar events…" className="py-4" />}
 
         {!loading && (
           <>
             {viewMode === 'year' && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
                 {months.map(({ year: y, month: m }) => (
                   <MonthCard
                     key={`${y}-${m}`}
@@ -900,8 +905,9 @@ function MonthCard({
                 type="button"
                 onClick={() => onDayClick(year, month, d)}
                 title={dayEvents.length > 0 ? dayEvents.map((e) => e.title).join(', ') : undefined}
+                aria-label={`${MONTH_NAMES[month]} ${d}, ${year}, ${dayEvents.length} ${dayEvents.length === 1 ? 'event' : 'events'}`}
                 className={`
-                  min-h-[28px] rounded text-xs font-medium
+                  min-h-11 rounded text-sm font-medium
                   hover:bg-sage/20 hover:border-sage/40 focus:outline-none focus:ring-2 focus:ring-[var(--coral)] focus:ring-offset-1
                   border border-transparent
                   ${dayEvents.length > 0 ? 'admin-calendar-day-has-events' : 'text-[var(--charcoal)]'}
@@ -1071,7 +1077,7 @@ function DayModal({
             <button
               type="button"
               onClick={onClose}
-              className="rounded p-1 text-text-light hover:bg-bg-secondary hover:text-charcoal"
+              className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-text-light hover:bg-bg-secondary hover:text-charcoal"
               aria-label="Close"
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1452,11 +1458,12 @@ function AddEventForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-3">
+      <RequiredFieldsNote />
       {error && (
         <p className="text-sm text-error bg-error-bg rounded px-2 py-1">{error}</p>
       )}
       <div>
-        <label htmlFor="ev-title" className="block text-sm font-medium text-charcoal mb-1">Title *</label>
+        <label htmlFor="ev-title" className="block text-sm font-medium text-charcoal mb-1">Title<RequiredFieldIndicator /></label>
         <input
           id="ev-title"
           name="title"
@@ -1867,6 +1874,7 @@ function CategoryEditRow({
           <label className="block text-xs font-medium text-text-light mb-0.5">Name</label>
           <input
             type="text"
+            aria-label="Category name"
             value={name}
             onChange={(e) => setName(e.target.value)}
             disabled={busy}
@@ -1882,6 +1890,7 @@ function CategoryEditRow({
               aria-hidden
             />
             <select
+              aria-label="Category color"
               value={color}
               onChange={(e) => setColor(e.target.value)}
               disabled={busy}
@@ -2047,7 +2056,7 @@ function EditCategoriesModal({
           <button
             type="button"
             onClick={onClose}
-            className="rounded-md p-1.5 text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+            className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
             aria-label="Close"
           >
             <X className="h-5 w-5" />

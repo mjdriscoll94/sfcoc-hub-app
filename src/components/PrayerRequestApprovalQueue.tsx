@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { usePrayerPraise, PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import { CheckIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
 import { sendUrgentPrayerRequestEmail, getEmailSubscribers } from '@/lib/email/emailService';
+import DataLoadError from '@/components/DataLoadError';
 
 interface EditingItem {
   id: string;
@@ -13,7 +14,7 @@ interface EditingItem {
 }
 
 export default function PrayerRequestApprovalQueue() {
-  const { items, loading, error, updateApprovalStatus, updatePrayerRequest } = usePrayerPraise(undefined, true);
+  const { items, loading, error, retry, updateApprovalStatus, updatePrayerRequest } = usePrayerPraise(undefined, true);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
 
   const pendingItems = items.filter(item => item.approvalStatus === 'pending');
@@ -101,9 +102,7 @@ export default function PrayerRequestApprovalQueue() {
 
   if (error) {
     return (
-      <div className="text-red-500 text-center py-4">
-        {error}
-      </div>
+      <DataLoadError message={error} onRetry={retry} />
     );
   }
 
@@ -129,23 +128,26 @@ export default function PrayerRequestApprovalQueue() {
                   <div className="space-y-3">
                     <input
                       type="text"
+                      aria-label="Prayer request title"
                       value={editingItem.title}
                       onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
                       className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal"
                     />
                     <textarea
+                      aria-label="Prayer request description"
                       value={editingItem.description}
                       onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
                       className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal min-h-[100px]"
                     />
                     {item.type === 'prayer' && (
                       <select
+                        aria-label="Prayer request priority (required)"
                         value={editingItem.priority || ''}
                         onChange={(e) => setEditingItem({ ...editingItem, priority: e.target.value ? e.target.value as 'Urgent' | 'Batched' : undefined })}
                         className="w-full px-3 py-2 bg-white border border-border rounded-md text-charcoal"
                         required
                       >
-                        <option value="">Select Priority</option>
+                        <option value="">Select priority (required)</option>
                         <option value="Urgent">Urgent</option>
                         <option value="Batched">Batched</option>
                       </select>
@@ -221,4 +223,4 @@ export default function PrayerRequestApprovalQueue() {
       </div>
     </div>
   );
-} 
+}

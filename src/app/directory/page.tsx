@@ -5,29 +5,13 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs } from 'firebase/firestore';
 import { ROLE_PERMISSIONS } from '@/types/roles';
-import { Phone, Mail, MapPin, Search, Plus, Users, User } from 'lucide-react';
+import { Phone, Mail, MapPin, Search, Plus, User } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import BackButton from '@/components/BackButton';
 import DirectoryModal from '@/components/DirectoryModal';
 
 interface DirectoryMember {
-  id: string;
-  firstName: string;
-  lastName: string;
-  email: string | null;
-  phoneNumber: string | null;
-  address: string | null;
-  photoURL: string | null;
-  familyMembers: {
-    firstName: string;
-    lastName: string;
-    relationship: string;
-    birthday: string;
-  }[];
-}
-
-interface DirectoryEntry {
   id: string;
   firstName: string;
   lastName: string;
@@ -139,7 +123,7 @@ export default function DirectoryPage() {
       <div className="mb-8 flex items-center justify-between">
         <div className="flex items-center">
           <BackButton className="mr-4" />
-          <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Church Directory</h1>
+          <h1 className="text-3xl font-bold text-text">Church Directory</h1>
         </div>
         {canAccessDirectory && (
           <Link
@@ -155,14 +139,16 @@ export default function DirectoryPage() {
       {/* Full width search box */}
       <div className="mb-8">
         <div className="relative w-full">
+          <label htmlFor="directory-search" className="sr-only">Search the church directory</label>
           <input
+            id="directory-search"
             type="text"
             placeholder="Search directory..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full px-4 py-2 pl-10 rounded-lg border border-sage/20 bg-card text-text focus:ring-primary focus:border-primary"
           />
-          <Search className="absolute left-3 top-2.5 h-5 w-5 text-text/40" />
+          <Search aria-hidden="true" className="absolute left-3 top-2.5 h-5 w-5 text-text/40" />
         </div>
       </div>
 
@@ -239,4 +225,4 @@ export default function DirectoryPage() {
       )}
     </div>
   );
-} 
+}

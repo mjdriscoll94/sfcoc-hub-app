@@ -1,11 +1,13 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { db } from '@/lib/firebase/config';
 import { collection, addDoc, Timestamp } from 'firebase/firestore';
 import { Plus, X, Loader2, Camera } from 'lucide-react';
 import { uploadFamilyPhoto } from '@/lib/cloudinary/upload';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface FamilyMember {
   firstName: string;
@@ -29,7 +31,7 @@ interface DirectorySubmission {
 }
 
 export default function DirectorySubmissionForm() {
-  const { user, userProfile } = useAuth();
+  const { user } = useAuth();
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -183,6 +185,7 @@ export default function DirectorySubmissionForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      <RequiredFieldsNote className="text-sm text-white/70" />
       {error && (
         <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-500/30 rounded-md p-4">
           <p className="text-sm text-red-700 dark:text-red-300">{error}</p>
@@ -198,9 +201,12 @@ export default function DirectorySubmissionForm() {
           <div className="mt-2 flex items-center gap-x-3">
             {photoPreview ? (
               <div className="relative">
-                <img
+                <Image
                   src={photoPreview}
                   alt="Family photo preview"
+                  width={96}
+                  height={96}
+                  unoptimized
                   className="h-24 w-24 object-cover rounded-lg"
                 />
                 <button
@@ -242,7 +248,7 @@ export default function DirectorySubmissionForm() {
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <div>
             <label htmlFor="firstName" className="block text-sm font-medium text-white">
-              First Name
+              First Name<RequiredFieldIndicator className="text-white/70" />
             </label>
             <input
               type="text"
@@ -256,7 +262,7 @@ export default function DirectorySubmissionForm() {
 
           <div>
             <label htmlFor="lastName" className="block text-sm font-medium text-white">
-              Last Name
+              Last Name<RequiredFieldIndicator className="text-white/70" />
             </label>
             <input
               type="text"
@@ -270,7 +276,7 @@ export default function DirectorySubmissionForm() {
 
           <div>
             <label htmlFor="email" className="block text-sm font-medium text-white">
-              Email
+              Email<RequiredFieldIndicator className="text-white/70" />
             </label>
             <input
               type="email"
@@ -437,4 +443,4 @@ export default function DirectorySubmissionForm() {
       </div>
     </form>
   );
-} 
+}

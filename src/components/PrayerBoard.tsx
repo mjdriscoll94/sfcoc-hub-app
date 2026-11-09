@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { usePrayerPraise, PrayerPraiseItem } from '@/hooks/usePrayerPraise';
+import { usePrayerPraise } from '@/hooks/usePrayerPraise';
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/outline';
 
 export default function PrayerBoard() {
@@ -69,7 +69,7 @@ export default function PrayerBoard() {
                     <span
                       className={`text-xs font-medium px-2 py-1 rounded ${
                         item.type === 'prayer'
-                          ? 'bg-coral text-white'
+                          ? 'bg-primary text-on-primary'
                           : 'bg-mint text-white'
                       }`}
                     >
@@ -135,4 +135,4 @@ export default function PrayerBoard() {
       </div>
     </div>
   );
-} 
+}

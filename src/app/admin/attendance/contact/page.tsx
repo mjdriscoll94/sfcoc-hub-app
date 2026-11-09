@@ -158,7 +158,7 @@ function AttendanceContactForm() {
           <p className="mt-2 text-text-light">
             {ATTENDANCE_CONTACT_OUTCOME_LABELS[outcome]} was recorded for {householdName}.
           </p>
-          <Link href="/admin/attendance" className="mt-6 inline-flex rounded-md bg-coral px-4 py-2 text-sm font-medium text-white transition hover:opacity-90">
+          <Link href="/admin/attendance" className="mt-6 inline-flex rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary transition hover:bg-primary-hover">
             Return to Attendance
           </Link>
         </div>
@@ -224,7 +224,7 @@ function AttendanceContactForm() {
           <button
             type="submit"
             disabled={!outcome || !householdName || saving}
-            className="inline-flex items-center rounded-md bg-coral px-4 py-2 text-sm font-medium text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex items-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary transition hover:bg-primary-hover disabled:cursor-not-allowed disabled:opacity-60"
           >
             {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
             {saving ? 'Saving...' : 'Confirm and Save'}

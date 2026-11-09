@@ -11,6 +11,7 @@ import {
   MAX_ATTACHMENT_BYTES_PER_FILE,
   MAX_ATTACHMENT_BYTES_TOTAL,
 } from '@/lib/email/attachments';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 type EmailListSummary = { id: string; name: string; emailCount: number };
 
@@ -201,7 +202,7 @@ export default function AdminSendEmailPage() {
         <form onSubmit={handleSendTest} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1">
             <label htmlFor="test-email" className="block text-sm font-medium text-charcoal mb-1">
-              Recipient email
+              Recipient email<RequiredFieldIndicator />
             </label>
             <input
               id="test-email"
@@ -209,6 +210,7 @@ export default function AdminSendEmailPage() {
               autoComplete="email"
               value={testEmail}
               onChange={(e) => setTestEmail(e.target.value)}
+              required
               placeholder="you@example.com"
               className="block w-full rounded-md border border-border bg-white text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
             />
@@ -234,6 +236,7 @@ export default function AdminSendEmailPage() {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6 bg-white rounded-lg border border-border p-6 shadow-sm">
+        <RequiredFieldsNote />
         <div>
           <label htmlFor="audience" className="block text-sm font-medium text-charcoal mb-1">
             Who should receive this email?
@@ -279,7 +282,7 @@ export default function AdminSendEmailPage() {
 
         <div>
           <label htmlFor="subject" className="block text-sm font-medium text-charcoal mb-1">
-            Subject
+            Subject<RequiredFieldIndicator />
           </label>
           <input
             id="subject"
@@ -294,7 +297,7 @@ export default function AdminSendEmailPage() {
 
         <div>
           <label htmlFor="body" className="block text-sm font-medium text-charcoal mb-1">
-            Message
+            Message<RequiredFieldIndicator />
           </label>
           <textarea
             id="body"

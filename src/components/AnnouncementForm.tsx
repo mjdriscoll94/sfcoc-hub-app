@@ -5,6 +5,7 @@ import { addDoc, collection, serverTimestamp } from 'firebase/firestore';
 import { db } from '@/lib/firebase/config';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { ROLE_PERMISSIONS } from '@/types/roles';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface AnnouncementFormProps {
   onSuccess?: () => void;
@@ -90,9 +91,10 @@ export default function AnnouncementForm({ onSuccess }: AnnouncementFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 bg-white/5 p-6 rounded-lg">
+      <RequiredFieldsNote className="text-sm text-white/70" />
       <div>
         <label htmlFor="title" className="block text-sm font-medium text-white">
-          Title
+          Title<RequiredFieldIndicator className="text-white/70" />
         </label>
         <input
           type="text"
@@ -107,7 +109,7 @@ export default function AnnouncementForm({ onSuccess }: AnnouncementFormProps) {
 
       <div>
         <label htmlFor="content" className="block text-sm font-medium text-white">
-          Content
+          Content<RequiredFieldIndicator className="text-white/70" />
         </label>
         <textarea
           id="content"
@@ -183,4 +185,4 @@ export default function AnnouncementForm({ onSuccess }: AnnouncementFormProps) {
       </div>
     </form>
   );
-} 
+}

@@ -153,7 +153,7 @@ export default function VolunteerOpportunityManagement() {
   const formatDateTime = (date: Date) => {
     try {
       return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } catch (error) {
+    } catch {
       return 'Date not available';
     }
   };
@@ -296,7 +296,7 @@ export default function VolunteerOpportunityManagement() {
                           </button>
                           <button
                             onClick={() => handleSaveEdit(opportunity.id)}
-                            className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors"
+                            className="px-4 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-hover transition-colors"
                           >
                             Save
                           </button>

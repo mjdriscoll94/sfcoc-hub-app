@@ -14,6 +14,8 @@ import {
   Timestamp
 } from 'firebase/firestore';
 import { CheckIcon, XMarkIcon, PencilIcon } from '@heroicons/react/24/outline';
+import DataLoadError from '@/components/DataLoadError';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 
 interface PendingOpportunity {
   id: string;
@@ -48,17 +50,27 @@ export default function VolunteerOpportunityApprovalQueue() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [editingItem, setEditingItem] = useState<EditingItem | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
 
   useEffect(() => {
+    setLoading(true);
+    setError(null);
+
     const q = query(
       collection(db, 'volunteerOpportunities'),
       where('approvalStatus', '==', 'pending'),
       orderBy('createdAt', 'desc')
     );
 
+    const loadingTimeout = window.setTimeout(() => {
+      setError(FIRESTORE_TIMEOUT_MESSAGE);
+      setLoading(false);
+    }, FIRESTORE_LOAD_TIMEOUT_MS);
+
     const unsubscribe = onSnapshot(
       q,
       (snapshot) => {
+        window.clearTimeout(loadingTimeout);
         const items = snapshot.docs.map(doc => {
           const data = doc.data();
           return {
@@ -73,20 +85,24 @@ export default function VolunteerOpportunityApprovalQueue() {
         setLoading(false);
       },
       (err) => {
+        window.clearTimeout(loadingTimeout);
         console.error('Error fetching pending volunteer opportunities:', err);
         // Check if it's a missing index error - treat as empty list
         if (err.message?.includes('index')) {
           setPendingItems([]);
           setError(null);
         } else {
-          setError('Failed to load pending opportunities');
+          setError('We couldn’t load pending volunteer opportunities. Please try again.');
         }
         setLoading(false);
       }
     );
 
-    return () => unsubscribe();
-  }, []);
+    return () => {
+      window.clearTimeout(loadingTimeout);
+      unsubscribe();
+    };
+  }, [reloadKey]);
 
   const handleApprove = async (id: string) => {
     try {
@@ -165,9 +181,7 @@ export default function VolunteerOpportunityApprovalQueue() {
 
   if (error) {
     return (
-      <div className="text-error text-center py-4">
-        {error}
-      </div>
+      <DataLoadError message={error} onRetry={() => setReloadKey((current) => current + 1)} />
     );
   }
 
@@ -192,6 +206,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                 <label className="block text-sm font-medium text-charcoal mb-1">Title</label>
                 <input
                   type="text"
+                  aria-label="Volunteer opportunity title"
                   value={editingItem.title}
                   onChange={(e) => setEditingItem({ ...editingItem, title: e.target.value })}
                   className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
@@ -201,6 +216,7 @@ export default function VolunteerOpportunityApprovalQueue() {
               <div>
                 <label className="block text-sm font-medium text-charcoal mb-1">Description</label>
                 <textarea
+                  aria-label="Volunteer opportunity description"
                   value={editingItem.description}
                   onChange={(e) => setEditingItem({ ...editingItem, description: e.target.value })}
                   rows={4}
@@ -213,6 +229,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                   <label className="block text-sm font-medium text-charcoal mb-1">Date & Time</label>
                   <input
                     type="datetime-local"
+                    aria-label="Volunteer opportunity date and time"
                     value={editingItem.dateTime}
                     onChange={(e) => setEditingItem({ ...editingItem, dateTime: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
@@ -223,6 +240,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                   <label className="block text-sm font-medium text-charcoal mb-1">Location</label>
                   <input
                     type="text"
+                    aria-label="Volunteer opportunity location"
                     value={editingItem.location}
                     onChange={(e) => setEditingItem({ ...editingItem, location: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
@@ -235,6 +253,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                   <label className="block text-sm font-medium text-charcoal mb-1">Contact Email</label>
                   <input
                     type="email"
+                    aria-label="Volunteer opportunity contact email"
                     value={editingItem.contactEmail}
                     onChange={(e) => setEditingItem({ ...editingItem, contactEmail: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
@@ -245,6 +264,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                   <label className="block text-sm font-medium text-charcoal mb-1">Contact Phone</label>
                   <input
                     type="tel"
+                    aria-label="Volunteer opportunity contact phone"
                     value={editingItem.contactPhone}
                     onChange={(e) => setEditingItem({ ...editingItem, contactPhone: e.target.value })}
                     className="w-full px-3 py-2 border border-border rounded-md focus:outline-none focus:ring-2 focus:ring-primary bg-white text-charcoal"
@@ -256,6 +276,7 @@ export default function VolunteerOpportunityApprovalQueue() {
                 <label className="block text-sm font-medium text-charcoal mb-1">Max Volunteers</label>
                 <input
                   type="number"
+                  aria-label="Maximum volunteers"
                   min="1"
                   value={editingItem.maxVolunteers}
                   onChange={(e) => setEditingItem({ ...editingItem, maxVolunteers: parseInt(e.target.value) || 1 })}

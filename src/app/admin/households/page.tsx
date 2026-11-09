@@ -3,7 +3,7 @@
 import { Fragment, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { Timestamp, addDoc, collection, doc, getDocs, orderBy, query, updateDoc } from 'firebase/firestore';
+import { Timestamp, addDoc, collection, doc, updateDoc } from 'firebase/firestore';
 import { format } from 'date-fns';
 import { ChevronDown, ChevronRight, Pencil, Plus, Trash2, UserPlus } from 'lucide-react';
 import BackButton from '@/components/BackButton';
@@ -12,6 +12,8 @@ import { db } from '@/lib/firebase/config';
 import { getSundayForDate, getSundayKey, normalizeAttendanceName } from '@/lib/utils/attendance';
 import { getActiveHouseholdMembers, hasPassedAwayEvent, isInactiveMember } from '@/lib/utils/householdMembers';
 import { canManageAttendance } from '@/types/roles';
+import DataLoadError from '@/components/DataLoadError';
+import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
 
 type ImportantEventType = 'birthday' | 'baptism' | 'attendanceStart' | 'anniversary' | 'passedAway' | 'other';
 
@@ -77,7 +79,7 @@ const formatEventDate = (event: ImportantEvent) => {
 const sortEvents = (events: ImportantEvent[]) => [...events].sort((a, b) => a.date.localeCompare(b.date) || a.type.localeCompare(b.type));
 
 export default function AttendanceMembersPage() {
-  const { userProfile } = useAuth();
+  const { user, userProfile } = useAuth();
   const router = useRouter();
   const [households, setHouseholds] = useState<AttendanceHousehold[]>([]);
   const [expandedIds, setExpandedIds] = useState<string[]>([]);
@@ -104,6 +106,9 @@ export default function AttendanceMembersPage() {
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+  const canManage = canManageAttendance(userProfile);
 
   useEffect(() => {
     document.title = 'Household Management | Sioux Falls Church of Christ';
@@ -114,36 +119,81 @@ export default function AttendanceMembersPage() {
   }, [router, userProfile]);
 
   useEffect(() => {
-    if (!userProfile || !canManageAttendance(userProfile)) return;
+    if (!canManage || !user) return;
+
+    let active = true;
+    const controller = new AbortController();
+    const loadingTimeout = window.setTimeout(() => controller.abort(), FIRESTORE_LOAD_TIMEOUT_MS);
+
     const loadHouseholds = async () => {
       try {
         setLoading(true);
-        setError(null);
-        const snapshot = await getDocs(query(collection(db, 'attendanceHouseholds'), orderBy('householdName', 'asc')));
-        setHouseholds(snapshot.docs.flatMap((snapshot) => {
-          const data = snapshot.data() as { householdName?: string; normalizedName?: string; isLifeGroupLeader?: boolean; active?: boolean; availableFrom?: Timestamp; createdAt?: Timestamp; members?: HouseholdPerson[]; importantEvents?: ImportantEvent[] };
-          return [{
-            id: snapshot.id,
-            householdName: data.householdName || 'Unnamed Household',
-            normalizedName: data.normalizedName || normalizeAttendanceName(data.householdName || ''),
-            active: data.active !== false,
-            isLifeGroupLeader: data.isLifeGroupLeader === true,
-            availableFrom: data.availableFrom?.toDate() || data.createdAt?.toDate() || new Date(2000, 0, 2, 12),
-            members: Array.isArray(data.members)
-              ? data.members.map((person) => ({ ...person, importantEvents: sortEvents(person.importantEvents || []) }))
-              : [],
-            importantEvents: sortEvents(Array.isArray(data.importantEvents) ? data.importantEvents : []),
-          }];
+        setLoadError(null);
+        const idToken = await user.getIdToken();
+        const response = await fetch('/api/admin/households', {
+          headers: { Authorization: `Bearer ${idToken}` },
+          cache: 'no-store',
+          signal: controller.signal,
+        });
+        const responseData = await response.json() as {
+          error?: string;
+          households?: Array<{
+            id: string;
+            householdName?: string;
+            normalizedName?: string;
+            isLifeGroupLeader?: boolean;
+            active?: boolean;
+            availableFrom?: number | null;
+            members?: HouseholdPerson[];
+            importantEvents?: ImportantEvent[];
+          }>;
+        };
+        if (!response.ok) {
+          throw new Error(responseData.error || 'Failed to load households and members.');
+        }
+
+        const nextHouseholds = (responseData.households || []).map((data) => ({
+          id: data.id,
+          householdName: data.householdName || 'Unnamed Household',
+          normalizedName: data.normalizedName || normalizeAttendanceName(data.householdName || ''),
+          active: data.active !== false,
+          isLifeGroupLeader: data.isLifeGroupLeader === true,
+          availableFrom: typeof data.availableFrom === 'number'
+            ? new Date(data.availableFrom)
+            : new Date(2000, 0, 2, 12),
+          members: Array.isArray(data.members)
+            ? data.members.map((person) => ({ ...person, importantEvents: sortEvents(person.importantEvents || []) }))
+            : [],
+          importantEvents: sortEvents(Array.isArray(data.importantEvents) ? data.importantEvents : []),
         }));
+        if (active) {
+          setHouseholds(nextHouseholds);
+          setLoadError(null);
+        }
       } catch (loadError) {
         console.error('Error loading attendance households:', loadError);
-        setError('Failed to load attendance households.');
+        if (active) {
+          setLoadError(
+            loadError instanceof DOMException && loadError.name === 'AbortError'
+              ? FIRESTORE_TIMEOUT_MESSAGE
+              : loadError instanceof Error
+                ? loadError.message
+                : 'We couldn’t load households and members. Please try again.'
+          );
+        }
       } finally {
-        setLoading(false);
+        window.clearTimeout(loadingTimeout);
+        if (active) setLoading(false);
       }
     };
     loadHouseholds();
-  }, [userProfile]);
+
+    return () => {
+      active = false;
+      controller.abort();
+      window.clearTimeout(loadingTimeout);
+    };
+  }, [canManage, reloadKey, user]);
 
   if (!userProfile || !canManageAttendance(userProfile)) return null;
 
@@ -427,6 +477,8 @@ export default function AttendanceMembersPage() {
       {error ? <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-sm text-red-700">{error}</div> : null}
       {loading ? (
         <div className="flex min-h-[240px] items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-b-2 border-[#D6805F]" /></div>
+      ) : loadError ? (
+        <DataLoadError message={loadError} onRetry={() => setReloadKey((current) => current + 1)} />
       ) : (
         <div>
         <h2 className="mb-3 text-lg font-semibold text-charcoal">Active households</h2>
@@ -440,7 +492,19 @@ export default function AttendanceMembersPage() {
                 return (
                   <Fragment key={household.id}>
                     <tr className="odd:bg-white even:bg-slate-50/40">
-                      <td className="border-t border-border px-4 py-3 text-charcoal"><div className="flex items-center gap-2"><button type="button" onClick={() => setExpandedIds((current) => current.includes(household.id) ? current.filter((id) => id !== household.id) : [...current, household.id])} className="rounded-md border border-border p-1 transition hover:border-coral hover:text-coral" aria-label={expanded ? 'Collapse household' : 'Expand household'}>{expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</button><span className="font-medium">{household.householdName}</span>{household.isLifeGroupLeader ? <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">Life Group leader</span> : null}<button type="button" onClick={() => openHouseholdEditor(household)} className="rounded p-1 text-text-light transition hover:text-coral" aria-label={`Edit ${household.householdName}`}><Pencil className="h-3.5 w-3.5" /></button><button type="button" onClick={() => deleteHousehold(household)} className="rounded p-1 text-red-700 transition hover:text-red-900" aria-label={`Delete ${household.householdName}`}><Trash2 className="h-3.5 w-3.5" /></button></div></td>
+                      <td className="border-t border-border px-4 py-3 text-charcoal">
+                        <div className="flex items-start gap-2">
+                          <button type="button" onClick={() => setExpandedIds((current) => current.includes(household.id) ? current.filter((id) => id !== household.id) : [...current, household.id])} className="mt-0.5 shrink-0 rounded-md border border-border p-1 transition hover:border-coral hover:text-coral" aria-label={expanded ? 'Collapse household' : 'Expand household'}>{expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}</button>
+                          <div className="min-w-0 flex-1">
+                            <span className="block font-medium">{household.householdName}</span>
+                            {household.isLifeGroupLeader ? <span className="mt-1 inline-flex whitespace-nowrap rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">Life Group leader</span> : null}
+                          </div>
+                          <div className="flex shrink-0 items-center gap-1">
+                            <button type="button" onClick={() => openHouseholdEditor(household)} className="rounded p-1 text-text-light transition hover:text-coral" aria-label={`Edit ${household.householdName}`}><Pencil className="h-3.5 w-3.5" /></button>
+                            <button type="button" onClick={() => deleteHousehold(household)} className="rounded p-1 text-red-700 transition hover:text-red-900" aria-label={`Delete ${household.householdName}`}><Trash2 className="h-3.5 w-3.5" /></button>
+                          </div>
+                        </div>
+                      </td>
                       <td className="border-t border-border px-4 py-3 text-charcoal">{format(household.availableFrom, 'MMMM d, yyyy')}</td>
                     </tr>
                     {expanded ? <tr key={`${household.id}-members`} className="bg-slate-50/60"><td colSpan={2} className="border-t border-border p-4"><div className="flex items-center justify-between"><h2 className="font-semibold text-charcoal">Household Members</h2><button type="button" onClick={() => openPersonEditor(household)} className="inline-flex items-center rounded-md border border-border px-3 py-1.5 text-sm font-medium text-charcoal transition hover:border-coral hover:text-coral"><UserPlus className="mr-1.5 h-4 w-4" />Add Member</button></div>
@@ -483,9 +547,9 @@ export default function AttendanceMembersPage() {
         </div>
       )}
 
-      {editingHousehold ? <Modal title="Edit Household" onClose={() => setEditingHousehold(null)}><div className="space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name</span><input value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={householdIsActive} onChange={(event) => setHouseholdIsActive(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-border text-coral focus:ring-coral" /><span><span className="block text-sm font-medium text-charcoal">Active household</span><span className="mt-1 block text-xs text-text-light">Inactive households are hidden from attendance, Life Groups, and other active household lists.</span></span></label><label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={householdIsLifeGroupLeader} onChange={(event) => setHouseholdIsLifeGroupLeader(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-border text-coral focus:ring-coral" /><span><span className="block text-sm font-medium text-charcoal">Life Group leader household</span><span className="mt-1 block text-xs text-text-light">Makes this household available in the leader dropdown when generating Life Groups.</span></span></label></div><ModalActions saving={saving} onCancel={() => setEditingHousehold(null)} onSave={saveHouseholdName} label="Save Household" /></Modal> : null}
-      {addingHousehold ? <Modal title="Add Household" onClose={() => setAddingHousehold(false)}><div className="space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name</span><input value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Started Attending</span><input type="date" value={householdStartDate} onChange={(event) => setHouseholdStartDate(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /><span className="mt-1 block text-xs text-text-light">Attendance is tracked by Sunday; another day will be saved to that week&apos;s Sunday.</span></label></div><ModalActions saving={saving} onCancel={() => setAddingHousehold(false)} onSave={createHousehold} label="Add Household" /></Modal> : null}
-      {personEditor ? <Modal title={personEditor.person ? 'Edit Member' : 'Add Member'} onClose={() => setPersonEditor(null)}><div className="space-y-4"><div className="grid grid-cols-2 gap-3"><label><span className="mb-2 block text-sm font-medium text-charcoal">First Name</span><input value={firstName} onChange={(event) => setFirstName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label><span className="mb-2 block text-sm font-medium text-charcoal">Last Name</span><input value={lastName} onChange={(event) => setLastName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label></div><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Member status</span><select value={memberIsActive ? 'active' : 'inactive'} onChange={(event) => setMemberIsActive(event.target.value === 'active')} className="w-full rounded-md border border-border px-3 py-2"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>{!memberIsActive ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Inactive reason</span><textarea required value={memberInactiveReason} onChange={(event) => setMemberInactiveReason(event.target.value)} rows={3} placeholder="Why is this member inactive?" className="w-full rounded-md border border-border px-3 py-2" /></label> : null}</div><ModalActions saving={saving} onCancel={() => setPersonEditor(null)} onSave={savePerson} label={personEditor.person ? 'Save Member' : 'Add Member'} /></Modal> : null}
+      {editingHousehold ? <Modal title="Edit Household" onClose={() => setEditingHousehold(null)}><div className="space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name <span className="font-normal text-text-muted">(required)</span></span><input required value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={householdIsActive} onChange={(event) => setHouseholdIsActive(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-border text-coral focus:ring-coral" /><span><span className="block text-sm font-medium text-charcoal">Active household</span><span className="mt-1 block text-xs text-text-light">Inactive households are hidden from attendance, Life Groups, and other active household lists.</span></span></label><label className="flex items-start gap-3 rounded-lg border border-border p-3"><input type="checkbox" checked={householdIsLifeGroupLeader} onChange={(event) => setHouseholdIsLifeGroupLeader(event.target.checked)} className="mt-0.5 h-4 w-4 rounded border-border text-coral focus:ring-coral" /><span><span className="block text-sm font-medium text-charcoal">Life Group leader household</span><span className="mt-1 block text-xs text-text-light">Makes this household available in the leader dropdown when generating Life Groups.</span></span></label></div><ModalActions saving={saving} onCancel={() => setEditingHousehold(null)} onSave={saveHouseholdName} label="Save Household" /></Modal> : null}
+      {addingHousehold ? <Modal title="Add Household" onClose={() => setAddingHousehold(false)}><div className="space-y-4"><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Household Name <span className="font-normal text-text-muted">(required)</span></span><input required value={householdName} onChange={(event) => setHouseholdName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Started Attending <span className="font-normal text-text-muted">(required)</span></span><input required type="date" value={householdStartDate} onChange={(event) => setHouseholdStartDate(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /><span className="mt-1 block text-xs text-text-light">Attendance is tracked by Sunday; another day will be saved to that week&apos;s Sunday.</span></label></div><ModalActions saving={saving} onCancel={() => setAddingHousehold(false)} onSave={createHousehold} label="Add Household" /></Modal> : null}
+      {personEditor ? <Modal title={personEditor.person ? 'Edit Member' : 'Add Member'} onClose={() => setPersonEditor(null)}><div className="space-y-4"><div className="grid grid-cols-2 gap-3"><label><span className="mb-2 block text-sm font-medium text-charcoal">First Name <span className="font-normal text-text-muted">(required)</span></span><input required value={firstName} onChange={(event) => setFirstName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label><label><span className="mb-2 block text-sm font-medium text-charcoal">Last Name <span className="font-normal text-text-muted">(optional)</span></span><input value={lastName} onChange={(event) => setLastName(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label></div><label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Member status</span><select value={memberIsActive ? 'active' : 'inactive'} onChange={(event) => setMemberIsActive(event.target.value === 'active')} className="w-full rounded-md border border-border px-3 py-2"><option value="active">Active</option><option value="inactive">Inactive</option></select></label>{!memberIsActive ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Inactive reason <span className="font-normal text-text-muted">(required)</span></span><textarea required value={memberInactiveReason} onChange={(event) => setMemberInactiveReason(event.target.value)} rows={3} placeholder="Why is this member inactive?" className="w-full rounded-md border border-border px-3 py-2" /></label> : null}</div><ModalActions saving={saving} onCancel={() => setPersonEditor(null)} onSave={savePerson} label={personEditor.person ? 'Save Member' : 'Add Member'} /></Modal> : null}
       {eventEditor ? <Modal title={eventEditor.person ? `${eventEditor.person.firstName}'s Important Event` : 'Household Anniversary'} onClose={() => setEventEditor(null)}><div className="space-y-4">{eventEditor.person ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Type</span><select value={eventType} onChange={(event) => setEventType(event.target.value as ImportantEventType)} className="w-full rounded-md border border-border px-3 py-2">{Object.entries(EVENT_TYPE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label> : <p className="text-sm text-text-light">This anniversary will be stored at the household level.</p>}{isCelebrationEvent(eventType) ? <div><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><div className="grid grid-cols-2 gap-3"><select value={eventMonth} onChange={(event) => { const month = Number(event.target.value); setEventMonth(month); setEventDay((day) => Math.min(day, getDaysInMonth(month))); }} className="rounded-md border border-border px-3 py-2">{Array.from({ length: 12 }, (_, month) => <option key={month} value={month + 1}>{format(new Date(2000, month, 1), 'MMMM')}</option>)}</select><select value={eventDay} onChange={(event) => setEventDay(Number(event.target.value))} className="rounded-md border border-border px-3 py-2">{Array.from({ length: getDaysInMonth(eventMonth) }, (_, day) => <option key={day} value={day + 1}>{day + 1}</option>)}</select></div></div> : <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Date</span><input type="date" value={eventDate} onChange={(event) => setEventDate(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label>}{!eventEditor.person ? <fieldset><legend className="mb-2 block text-sm font-medium text-charcoal">Members celebrating</legend><div className="space-y-2">{getActiveHouseholdMembers(eventEditor.household.members).map((person) => <label key={person.id} className="flex items-center gap-2 text-sm text-charcoal"><input type="checkbox" checked={anniversaryMemberIds.includes(person.id)} onChange={() => setAnniversaryMemberIds((current) => current.includes(person.id) ? current.filter((id) => id !== person.id) : current.length < 2 ? [...current, person.id] : current)} className="h-4 w-4 rounded border-border text-coral focus:ring-coral" /><span>{person.firstName} {person.lastName}</span></label>)}</div><p className="mt-2 text-xs text-text-light">Choose exactly two members.</p></fieldset> : null}{eventType === 'other' ? <label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Event Description</span><input value={eventTitle} onChange={(event) => setEventTitle(event.target.value)} className="w-full rounded-md border border-border px-3 py-2" /></label> : null}<label className="block"><span className="mb-2 block text-sm font-medium text-charcoal">Notes</span><textarea value={eventNotes} onChange={(event) => setEventNotes(event.target.value)} rows={3} className="w-full rounded-md border border-border px-3 py-2" /></label></div><ModalActions saving={saving} onCancel={() => setEventEditor(null)} onSave={savePersonEvent} label={eventEditor.event ? 'Save Event' : 'Add Event'} /></Modal> : null}
     </div>
   );

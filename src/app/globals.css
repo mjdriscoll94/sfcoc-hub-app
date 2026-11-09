@@ -1,12 +1,43 @@
 @import "tailwindcss";
 
-/* Tailwind v4: expose theme colors so utilities like bg-coral work */
+/* Tailwind v4: expose every app color used by utility classes. */
 @theme {
-  --color-coral: #E88B5F;
+  --color-bg: #F5F5F5;
+  --color-bg-secondary: #EBEBEB;
+  --color-card: #FFFFFF;
+  --color-card-hover: #FEFDFB;
+  --color-text: #2F3E46;
+  --color-text-light: #5A6A74;
+  --color-text-muted: #5F7079;
+  --color-coral: #EC956C;
   --color-coral-light: #F4A881;
-  --color-coral-dark: #D6714A;
-  --color-primary: #E88B5F;
+  --color-coral-dark: #A64119;
+  --color-sage: #7BB5AD;
+  --color-sage-light: #9ACBC4;
+  --color-sage-dark: #35635E;
+  --color-primary: #B94820;
+  --color-primary-hover: #963713;
+  --color-on-primary: #FFFFFF;
+  --color-secondary: #3F716B;
+  --color-secondary-hover: #35635E;
+  --color-on-secondary: #FFFFFF;
+  --color-accent: #2F3E46;
+  --color-accent-light: #4A5A64;
+  --color-on-accent: #FFFFFF;
   --color-charcoal: #2F3E46;
+  --color-charcoal-light: #4A5A64;
+  --color-muted: #EBEBEB;
+  --color-border: #E0D5C7;
+  --color-border-light: #F0E8DC;
+  --color-divider: #E8DDD0;
+  --color-success: #277452;
+  --color-success-bg: #E8F5EE;
+  --color-warning: #8A4F16;
+  --color-warning-bg: #FDF3E8;
+  --color-error: #B42318;
+  --color-error-bg: #FEF0F0;
+  --color-info: #175CD3;
+  --color-info-bg: #E8F3FD;
 }
 
 /* Calendar: force coral buttons and day cells (override any plugin/base styles) */
@@ -19,7 +50,7 @@
   background-color: var(--coral-dark) !important;
   border-color: var(--coral-dark) !important;
 }
-/* Year grid: days with events — sage tint so it’s not confused with uncategorized events (coral #E88B5F) */
+/* Year grid: days with events — sage tint so it is not confused with uncategorized events. */
 .admin-calendar-day-has-events {
   background-color: rgba(112, 168, 160, 0.38) !important;
   color: #2F3E46 !important;
@@ -34,12 +65,12 @@
 /* Unified Brand Color Scheme - Vibrant & Modern */
 :root {
   /* Brand Colors */
-  --coral: #E88B5F;
+  --coral: #EC956C;
   --coral-light: #F4A881;
-  --coral-dark: #D6714A;
-  --sage: #70A8A0;
-  --sage-light: #8FC4BC;
-  --sage-dark: #5A8A83;
+  --coral-dark: #A64119;
+  --sage: #7BB5AD;
+  --sage-light: #9ACBC4;
+  --sage-dark: #35635E;
   --charcoal: #2F3E46;
   --charcoal-light: #4A5A64;
   
@@ -52,15 +83,15 @@
   /* Text Colors */
   --text: #2F3E46;
   --text-light: #5A6A74;
-  --text-muted: #8A9AA4;
+  --text-muted: #5F7079;
   
   /* Semantic Colors */
-  --primary: #E88B5F;
-  --primary-hover: #D6714A;
+  --primary: #B94820;
+  --primary-hover: #963713;
   --on-primary: #FFFFFF;
   
-  --secondary: #70A8A0;
-  --secondary-hover: #5A8A83;
+  --secondary: #3F716B;
+  --secondary-hover: #35635E;
   --on-secondary: #FFFFFF;
   
   --accent: #2F3E46;
@@ -73,13 +104,13 @@
   --divider: #E8DDD0;
   
   /* State Colors */
-  --success: #5FAF8A;
+  --success: #277452;
   --success-bg: #E8F5EE;
-  --warning: #E8A05F;
+  --warning: #8A4F16;
   --warning-bg: #FDF3E8;
-  --error: #E87A7A;
+  --error: #B42318;
   --error-bg: #FEF0F0;
-  --info: #5F9FE8;
+  --info: #175CD3;
   --info-bg: #E8F3FD;
   
   /* Shadow Colors */
@@ -87,6 +118,11 @@
   --shadow: 0 2px 8px rgba(47, 62, 70, 0.08);
   --shadow-md: 0 4px 16px rgba(47, 62, 70, 0.1);
   --shadow-lg: 0 8px 24px rgba(47, 62, 70, 0.12);
+
+  /* Shape system */
+  --radius-control: 0.5rem;
+  --radius-card: 0.75rem;
+  --radius-feature: 1rem;
   
   /* Overlay Colors */
   --overlay: rgba(47, 62, 70, 0.5);
@@ -108,18 +144,111 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Remove all theme transition effects */
-* {
-  transition-property: none;
+html {
+  scroll-padding-top: 5rem;
 }
 
-/* Add back specific transitions where needed */
+:where(h1, h2) {
+  text-wrap: balance;
+}
+
+:where(p, li) {
+  text-wrap: pretty;
+}
+
+:where(time, [data-numeric]) {
+  font-variant-numeric: tabular-nums;
+}
+
+body {
+  font-size: 1rem;
+}
+
+:where(a, button, input, select, textarea):focus-visible {
+  outline: 3px solid var(--primary);
+  outline-offset: 2px;
+}
+
+/* Bright coral remains a brand surface; darker coral is used for readable text and controls. */
+.text-coral {
+  color: var(--coral-dark) !important;
+}
+
+.hover\:text-coral:hover {
+  color: var(--coral-dark) !important;
+}
+
+.border-coral {
+  border-color: var(--coral-dark) !important;
+}
+
+.focus\:ring-coral:focus {
+  --tw-ring-color: var(--coral-dark) !important;
+}
+
+button:disabled,
+input:disabled,
+select:disabled,
+textarea:disabled {
+  cursor: not-allowed;
+}
+
+:where(input:not([type='checkbox']):not([type='radio']):not([type='range']):not([type='color']), select) {
+  min-height: 2.75rem;
+  font-size: 1rem;
+}
+
+textarea {
+  font-size: 1rem;
+}
+
+/* Keep feedback quick and avoid animating layout-affecting properties. */
 button,
 a,
 input,
 select,
-textarea {
-  transition: all 0.2s ease;
+textarea,
+summary {
+  transition-duration: 180ms;
+  transition-property: color, background-color, border-color, box-shadow, opacity, transform;
+  transition-timing-function: ease-out;
+}
+
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background: var(--bg-secondary);
+}
+
+.skeleton::after {
+  position: absolute;
+  inset: 0;
+  content: '';
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.72), transparent);
+  transform: translateX(-100%);
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+.safe-area-panel {
+  padding-top: max(1rem, env(safe-area-inset-top));
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
 }
 
 /* Focus Utilities */
@@ -150,7 +279,7 @@ textarea {
 .card {
   background: var(--card);
   border: 1px solid var(--border);
-  border-radius: 0.5rem;
+  border-radius: var(--radius-card);
   box-shadow: var(--shadow-sm);
   transition: all 0.2s ease;
 }
@@ -163,8 +292,9 @@ textarea {
 /* Button Base Styles */
 .btn {
   font-weight: 500;
-  border-radius: 0.375rem;
+  border-radius: var(--radius-control);
   padding: 0.625rem 1.25rem;
+  min-height: 2.75rem;
   transition: all 0.2s ease;
   cursor: pointer;
   border: none;
@@ -192,13 +322,13 @@ textarea {
 
 /* Section Backgrounds with Brand Colors */
 .section-coral {
-  background: linear-gradient(135deg, #F4A881 0%, #E88B5F 100%);
-  color: var(--on-primary);
+  background: linear-gradient(135deg, var(--coral-light) 0%, var(--coral) 100%);
+  color: var(--charcoal);
 }
 
 .section-sage {
-  background: linear-gradient(135deg, #8FC4BC 0%, #70A8A0 100%);
-  color: var(--on-secondary);
+  background: linear-gradient(135deg, var(--sage-light) 0%, var(--sage) 100%);
+  color: var(--charcoal);
 }
 
 .section-charcoal {

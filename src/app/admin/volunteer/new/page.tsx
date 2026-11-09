@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { addVolunteerOpportunity } from '@/lib/firebase/utils';
 import BackButton from '@/components/BackButton';
 import { ROLE_PERMISSIONS } from '@/types/roles';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 export default function NewVolunteerOpportunityPage() {
   useEffect(() => {
@@ -92,9 +93,10 @@ export default function NewVolunteerOpportunityPage() {
         )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          <RequiredFieldsNote />
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-charcoal">
-              Title
+              Title<RequiredFieldIndicator />
             </label>
             <input
               type="text"
@@ -109,7 +111,7 @@ export default function NewVolunteerOpportunityPage() {
 
           <div>
             <label htmlFor="description" className="block text-sm font-medium text-charcoal">
-              Description
+              Description<RequiredFieldIndicator />
             </label>
             <textarea
               id="description"
@@ -125,7 +127,7 @@ export default function NewVolunteerOpportunityPage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label htmlFor="date" className="block text-sm font-medium text-charcoal">
-                Date
+                Date<RequiredFieldIndicator />
               </label>
               <input
                 type="date"
@@ -139,7 +141,7 @@ export default function NewVolunteerOpportunityPage() {
 
             <div>
               <label htmlFor="time" className="block text-sm font-medium text-charcoal">
-                Time
+                Time<RequiredFieldIndicator />
               </label>
               <input
                 type="time"
@@ -154,7 +156,7 @@ export default function NewVolunteerOpportunityPage() {
 
           <div>
             <label htmlFor="location" className="block text-sm font-medium text-charcoal">
-              Location
+              Location<RequiredFieldIndicator />
             </label>
             <input
               type="text"
@@ -170,7 +172,7 @@ export default function NewVolunteerOpportunityPage() {
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
             <div>
               <label htmlFor="contactEmail" className="block text-sm font-medium text-charcoal">
-                Contact Email
+                Contact Email<RequiredFieldIndicator />
               </label>
               <input
                 type="email"
@@ -200,7 +202,7 @@ export default function NewVolunteerOpportunityPage() {
 
           <div>
             <label htmlFor="maxVolunteers" className="block text-sm font-medium text-charcoal">
-              Maximum Number of Volunteers
+              Maximum Number of Volunteers<RequiredFieldIndicator />
             </label>
             <input
               type="number"
@@ -234,4 +236,4 @@ export default function NewVolunteerOpportunityPage() {
       </div>
     </div>
   );
-} 
+}

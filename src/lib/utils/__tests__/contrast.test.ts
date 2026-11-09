@@ -1,4 +1,5 @@
 import { getContrastRatio, meetsWCAGAA, meetsWCAGAAA, testThemeContrast } from '../contrast';
+import { describe, expect, it } from 'vitest';
 
 describe('Contrast Utilities', () => {
   describe('getContrastRatio', () => {
@@ -14,7 +15,7 @@ describe('Contrast Utilities', () => {
 
     it('should calculate correct contrast ratio for gray on white', () => {
       const ratio = getContrastRatio('#808080', '#FFFFFF');
-      expect(ratio).toBeCloseTo(4.5, 1);
+      expect(ratio).toBeCloseTo(3.95, 2);
     });
 
     it('should throw error for invalid hex colors', () => {
@@ -82,6 +83,12 @@ describe('Contrast Utilities', () => {
       const results = testThemeContrast();
       
       expect(results.light['text-on-bg'].aa).toBe(true);
+      expect(results.light['on-primary-on-primary'].aa).toBe(true);
+      expect(results.light['on-secondary-on-secondary'].aa).toBe(true);
+      expect(results.light['success-on-bg'].aa).toBe(true);
+      expect(results.light['warning-on-bg'].aa).toBe(true);
+      expect(results.light['error-on-bg'].aa).toBe(true);
+      expect(results.light['info-on-bg'].aa).toBe(true);
       expect(results.dark['text-on-bg'].aa).toBe(true);
     });
   });

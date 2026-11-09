@@ -9,11 +9,8 @@ import { CheckCircle, XCircle, Clock, ChevronDown, ChevronRight, UserPlus } from
 import { format, nextSunday, addWeeks } from 'date-fns';
 import { ROLE_PERMISSIONS } from '@/types/roles';
 import Link from 'next/link';
-
-interface RoleAssignment {
-  role: ServiceRole;
-  userId: string | null;
-}
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 interface WeekData {
   date: Date;
@@ -21,6 +18,22 @@ interface WeekData {
   pendingAssignments: Record<ServiceRole, string | null>;
   isEditing: boolean;
   isExpanded: boolean;
+}
+
+function AssignmentStatus({ status }: { status?: ServiceAssignment['status'] }) {
+  if (status === 'accepted') {
+    return <span className="inline-flex items-center gap-2 font-semibold text-success"><CheckCircle aria-hidden="true" className="h-5 w-5" />Accepted</span>;
+  }
+  if (status === 'declined') {
+    return <span className="inline-flex items-center gap-2 font-semibold text-error"><XCircle aria-hidden="true" className="h-5 w-5" />Declined</span>;
+  }
+  if (status === 'awaiting_confirmation') {
+    return <span className="inline-flex items-center gap-2 font-semibold text-warning"><Clock aria-hidden="true" className="h-5 w-5" />Awaiting confirmation</span>;
+  }
+  if (status === 'pending') {
+    return <span className="inline-flex items-center gap-2 font-semibold text-warning"><Clock aria-hidden="true" className="h-5 w-5" />Pending</span>;
+  }
+  return <span className="text-text-muted">Not assigned</span>;
 }
 
 export default function ServiceRolesPage() {
@@ -31,6 +44,7 @@ export default function ServiceRolesPage() {
   const { user, userProfile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [participants, setParticipants] = useState<ServiceRoleParticipant[]>([]);
   const [weeks, setWeeks] = useState<WeekData[]>([]);
   const [showAddParticipant, setShowAddParticipant] = useState(false);
@@ -39,6 +53,8 @@ export default function ServiceRolesPage() {
   const [addParticipantRoles, setAddParticipantRoles] = useState<ServiceRole[]>([]);
   const [addParticipantSaving, setAddParticipantSaving] = useState(false);
   const [addParticipantError, setAddParticipantError] = useState<string | null>(null);
+  const firstWeekDate = weeks[0]?.date;
+  const lastWeekDate = weeks[weeks.length - 1]?.date;
 
   // Update permission check to handle both role-based and legacy permissions
   const canAssignRoles = userProfile && (
@@ -87,8 +103,8 @@ export default function ServiceRolesPage() {
         }
 
         // Fetch assignments for all weeks
-        const firstSunday = weeks[0]?.date;
-        const lastSunday = weeks[weeks.length - 1]?.date;
+        const firstSunday = firstWeekDate;
+        const lastSunday = lastWeekDate;
 
         if (!firstSunday || !lastSunday) {
           setLoading(false);
@@ -152,7 +168,7 @@ export default function ServiceRolesPage() {
     };
 
     fetchData();
-  }, [user, canAssignRoles, weeks[0]?.date]);
+  }, [user, canAssignRoles, firstWeekDate, lastWeekDate]);
 
   const handleAssignmentChange = (weekIndex: number, role: ServiceRole, userId: string | null) => {
     if (!canAssignRoles) return;
@@ -178,6 +194,7 @@ export default function ServiceRolesPage() {
     try {
       setLoading(true);
       setError(null);
+      setSuccessMessage(null);
 
       const week = weeks[weekIndex];
       if (!week) return;
@@ -246,6 +263,7 @@ export default function ServiceRolesPage() {
             : w
         )
       );
+      setSuccessMessage(`Assignments for ${format(week.date, 'MMMM d, yyyy')} were saved.`);
     } catch (error) {
       console.error('Failed to save assignments:', error);
       setError('Failed to save assignments');
@@ -324,20 +342,6 @@ export default function ServiceRolesPage() {
     }
   };
 
-  const getStatusStyles = (status?: string) => {
-    switch(status) {
-      case 'accepted':
-        return 'bg-success-bg text-success';
-      case 'declined':
-        return 'bg-error-bg text-error';
-      case 'pending':
-      case 'awaiting_confirmation':
-        return 'bg-warning-bg text-warning';
-      default:
-        return '';
-    }
-  };
-
   if (authLoading) {
     return null;
   }
@@ -349,15 +353,18 @@ export default function ServiceRolesPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="space-y-8">
-        <div className="pb-12">
-          <div className="flex flex-wrap justify-between items-center gap-4">
-            <h1 className="text-3xl font-bold text-charcoal">Sunday Service Roles List</h1>
-            <div className="flex items-center gap-3">
+        <header>
+          <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-start">
+            <div>
+              <h1 className="text-3xl font-bold text-charcoal">Sunday Service Roles</h1>
+              <p className="mt-2 max-w-2xl text-text-light">View assignments for the next four Sundays and see whether each person has responded.</p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
               {canAssignRoles && (
                 <button
                   type="button"
                   onClick={() => setShowAddParticipant(true)}
-                  className="inline-flex items-center px-4 py-2 border-2 border-charcoal text-sm font-semibold rounded-lg text-charcoal bg-white hover:bg-gray-50 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
+                  className="inline-flex min-h-11 items-center rounded-lg border-2 border-charcoal bg-white px-4 py-2 text-sm font-semibold text-charcoal transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-charcoal focus:ring-offset-2"
                 >
                   <UserPlus className="w-5 h-5 mr-2" />
                   Add person
@@ -365,40 +372,43 @@ export default function ServiceRolesPage() {
               )}
               <Link
                 href="/service-roles/history"
-                className="inline-flex items-center px-6 py-3 border-2 border-[#70A8A0] text-sm font-semibold rounded-lg text-white bg-[#70A8A0] hover:bg-[#5A8A83] shadow-md hover:shadow-lg transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#70A8A0]"
+                className="inline-flex min-h-11 items-center rounded-lg border-2 border-[#70A8A0] bg-[#70A8A0] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-[#5A8A83] focus:outline-none focus:ring-2 focus:ring-[#70A8A0] focus:ring-offset-2"
               >
                 <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                 </svg>
-                Service History
+                Past assignments
               </Link>
             </div>
           </div>
-        </div>
+        </header>
 
         {canAssignRoles && showAddParticipant && (
           <div className="bg-white rounded-lg border border-border p-6 shadow-sm">
             <h2 className="text-lg font-semibold text-charcoal mb-4">Add person to assignment list</h2>
             <form onSubmit={handleAddParticipant} className="space-y-4">
+              <RequiredFieldsNote />
               <div>
-                <label htmlFor="add-name" className="block text-sm font-medium text-charcoal mb-1">Name</label>
+                <label htmlFor="add-name" className="block text-sm font-medium text-charcoal mb-1">Name<RequiredFieldIndicator /></label>
                 <input
                   id="add-name"
                   type="text"
                   value={addParticipantName}
                   onChange={(e) => setAddParticipantName(e.target.value)}
-                  className="block w-full max-w-md rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+                  required
+                  className="block min-h-11 w-full max-w-md rounded-md border border-border bg-card px-3 py-2 text-base text-charcoal focus:border-primary focus:ring-primary"
                   placeholder="Full name"
                 />
               </div>
               <div>
-                <label htmlFor="add-email" className="block text-sm font-medium text-charcoal mb-1">Email</label>
+                <label htmlFor="add-email" className="block text-sm font-medium text-charcoal mb-1">Email<RequiredFieldIndicator /></label>
                 <input
                   id="add-email"
                   type="email"
                   value={addParticipantEmail}
                   onChange={(e) => setAddParticipantEmail(e.target.value)}
-                  className="block w-full max-w-md rounded-md border border-border bg-card text-charcoal focus:ring-primary focus:border-primary sm:text-sm px-3 py-2"
+                  required
+                  className="block min-h-11 w-full max-w-md rounded-md border border-border bg-card px-3 py-2 text-base text-charcoal focus:border-primary focus:ring-primary"
                   placeholder="email@example.com"
                 />
               </div>
@@ -425,7 +435,7 @@ export default function ServiceRolesPage() {
                 <button
                   type="submit"
                   disabled={addParticipantSaving}
-                  className="px-4 py-2 bg-[#E88B5F] text-white text-sm font-semibold rounded-lg hover:bg-[#D6714A] disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F]"
+                  className="min-h-11 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-on-primary hover:bg-primary-hover disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                 >
                   {addParticipantSaving ? 'Adding…' : 'Add person'}
                 </button>
@@ -438,7 +448,7 @@ export default function ServiceRolesPage() {
                     setAddParticipantEmail('');
                     setAddParticipantRoles([]);
                   }}
-                  className="px-4 py-2 border border-border text-charcoal text-sm font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
+                  className="min-h-11 px-4 py-2 border border-border text-charcoal text-sm font-semibold rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
                 >
                   Cancel
                 </button>
@@ -448,15 +458,19 @@ export default function ServiceRolesPage() {
         )}
 
         {error && (
-          <div className="bg-error-bg border border-error rounded-md p-4 text-error">
+          <div role="alert" className="bg-error-bg border border-error rounded-md p-4 text-error">
             {error}
           </div>
         )}
 
-        {loading && !weeks.length ? (
-          <div className="flex justify-center py-12">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-coral"></div>
+        {successMessage && (
+          <div role="status" className="rounded-md border border-success bg-success-bg p-4 text-success">
+            {successMessage}
           </div>
+        )}
+
+        {loading ? (
+          <LoadingCardList count={4} label="Loading service assignments…" />
         ) : (
           <div className="space-y-6">
             {weeks.map((week, weekIndex) => (
@@ -471,9 +485,9 @@ export default function ServiceRolesPage() {
                     ) : (
                       <ChevronRight className="w-5 h-5 text-text-muted" />
                     )}
-                    <h3 className="text-lg font-medium text-charcoal">
+                    <h2 className="text-lg font-medium text-charcoal">
                       {format(week.date, 'MMMM d, yyyy')}
-                    </h3>
+                    </h2>
                   </div>
                   {week.isEditing && (
                     <span className="text-sm text-coral">Unsaved changes</span>
@@ -507,6 +521,7 @@ export default function ServiceRolesPage() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-charcoal">
                                 {canAssignRoles && week.isEditing ? (
                                   <select
+                                    aria-label={`Person assigned to ${role}`}
                                     value={week.pendingAssignments[role] || ''}
                                     onChange={(e) => handleAssignmentChange(weekIndex, role, e.target.value || null)}
                                     className="mt-1 block w-full sm:w-64 pl-3 pr-10 py-2 text-base text-charcoal border-border bg-card focus:outline-none focus:ring-primary focus:border-primary sm:text-sm rounded-md"
@@ -527,40 +542,14 @@ export default function ServiceRolesPage() {
                                     ) : (
                                       <span className="text-text-muted italic">Not assigned</span>
                                     )}
+                                    <div className="mt-2 sm:hidden">
+                                      <AssignmentStatus status={assignment?.status} />
+                                    </div>
                                   </div>
                                 )}
                               </td>
                               <td className="hidden sm:table-cell px-6 py-4 whitespace-nowrap text-sm text-charcoal">
-                                {assignment ? (
-                                  <div className="flex items-center">
-                                    {assignment.status === 'accepted' && (
-                                      <>
-                                        <CheckCircle className="h-5 w-5 text-success mr-2" />
-                                        <span className="text-success font-semibold">Accepted</span>
-                                      </>
-                                    )}
-                                    {assignment.status === 'declined' && (
-                                      <>
-                                        <XCircle className="h-5 w-5 text-error mr-2" />
-                                        <span className="text-error font-semibold">Declined</span>
-                                      </>
-                                    )}
-                                    {assignment.status === 'awaiting_confirmation' && (
-                                      <>
-                                        <Clock className="h-5 w-5 text-warning mr-2" />
-                                        <span className="text-warning font-semibold">Awaiting confirmation</span>
-                                      </>
-                                    )}
-                                    {assignment.status === 'pending' && (
-                                      <>
-                                        <Clock className="h-5 w-5 text-warning mr-2" />
-                                        <span className="text-warning font-semibold">Pending</span>
-                                      </>
-                                    )}
-                                  </div>
-                                ) : (
-                                  <span className="text-text-muted">Not assigned</span>
-                                )}
+                                <AssignmentStatus status={assignment?.status} />
                               </td>
                             </tr>
                           );
@@ -582,7 +571,7 @@ export default function ServiceRolesPage() {
                               onClick={() => handleSave(weekIndex)}
                               className="px-6 py-3 border-2 border-[#E88B5F] text-sm font-bold rounded-lg text-white bg-[#E88B5F] hover:bg-[#D6714A] shadow-lg hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F]"
                             >
-                              Save Changes
+                              Save assignments
                             </button>
                           </>
                         ) : (
@@ -601,7 +590,7 @@ export default function ServiceRolesPage() {
                             }}
                             className="px-6 py-3 border-2 border-[#E88B5F] text-sm font-bold rounded-lg text-white bg-[#E88B5F] hover:bg-[#D6714A] shadow-lg hover:shadow-xl transition-all focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F]"
                           >
-                            Edit Assignments
+                            Edit assignments
                           </button>
                         )}
                       </div>
@@ -615,4 +604,4 @@ export default function ServiceRolesPage() {
       </div>
     </div>
   );
-} 
+}

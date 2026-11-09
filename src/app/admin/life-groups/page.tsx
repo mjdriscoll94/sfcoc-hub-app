@@ -525,7 +525,7 @@ export default function LifeGroupsManagement() {
           </button>
           <button
             onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
             Create Life Group
@@ -600,7 +600,7 @@ export default function LifeGroupsManagement() {
               <button
                 onClick={handleCurriculumUpload}
                 disabled={!curriculumFile || uploadingCurriculum}
-                className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                className="px-4 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
               >
                 {uploadingCurriculum ? (
                   <>
@@ -692,7 +692,7 @@ export default function LifeGroupsManagement() {
                   type="button"
                   onClick={handleMemberResourceUpload}
                   disabled={!memberResourceFile || uploadingMemberResource}
-                  className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
+                  className="px-4 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center"
                 >
                   {uploadingMemberResource ? (
                     <>
@@ -803,7 +803,7 @@ export default function LifeGroupsManagement() {
               </button>
               <button
                 onClick={handleSave}
-                className="px-4 py-2 bg-[#E88B5F] text-white rounded-md hover:bg-[#D6714A] transition-colors"
+                className="px-4 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-hover transition-colors"
               >
                 {editingId ? 'Update' : 'Create'}
               </button>
@@ -823,7 +823,7 @@ export default function LifeGroupsManagement() {
           </div>
           <button
             onClick={() => router.push('/admin/households')}
-            className="inline-flex items-center px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
             Manage Households
@@ -1026,7 +1026,7 @@ export default function LifeGroupsManagement() {
           <p className="text-text-light mb-4">No life groups yet. Create your first one!</p>
           <button
             onClick={handleCreate}
-            className="inline-flex items-center px-4 py-2 bg-[#E88B5F] text-white rounded-lg hover:bg-[#D6714A] transition-colors"
+            className="inline-flex items-center px-4 py-2 bg-primary text-on-primary rounded-lg hover:bg-primary-hover transition-colors"
           >
             <PlusIcon className="h-5 w-5 mr-2" />
             Create Life Group

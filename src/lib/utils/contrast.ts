@@ -79,12 +79,16 @@ export function testThemeContrast(): {
 } {
   // Light theme colors
   const lightTheme = {
-    text: '#1D252B',
-    bg: '#FCFCFD',
-    primary: '#FF6F61',
+    text: '#2F3E46',
+    bg: '#F5F5F5',
+    primary: '#B94820',
     'on-primary': '#FFFFFF',
-    secondary: '#9CAF88',
-    'on-secondary': '#0E1A14',
+    secondary: '#3F716B',
+    'on-secondary': '#FFFFFF',
+    success: '#277452',
+    warning: '#8A4F16',
+    error: '#B42318',
+    info: '#175CD3',
   };
 
   // Dark theme colors
@@ -111,6 +115,10 @@ export function testThemeContrast(): {
       'text-on-bg': testContrast(lightTheme.text, lightTheme.bg),
       'on-primary-on-primary': testContrast(lightTheme['on-primary'], lightTheme.primary),
       'on-secondary-on-secondary': testContrast(lightTheme['on-secondary'], lightTheme.secondary),
+      'success-on-bg': testContrast(lightTheme.success, lightTheme.bg),
+      'warning-on-bg': testContrast(lightTheme.warning, lightTheme.bg),
+      'error-on-bg': testContrast(lightTheme.error, lightTheme.bg),
+      'info-on-bg': testContrast(lightTheme.info, lightTheme.bg),
     },
     dark: {
       'text-on-bg': testContrast(darkTheme.text, darkTheme.bg),

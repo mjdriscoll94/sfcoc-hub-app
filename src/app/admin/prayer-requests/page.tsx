@@ -244,7 +244,7 @@ export default function PrayerRequestsManagement() {
                           <button
                             type="button"
                             onClick={handleSave}
-                            className="px-4 py-2 bg-coral text-white rounded-md hover:bg-coral-dark"
+                            className="px-4 py-2 bg-primary text-on-primary rounded-md hover:bg-primary-hover"
                           >
                             Save
                           </button>

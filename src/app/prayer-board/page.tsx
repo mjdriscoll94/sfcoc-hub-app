@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePrayerPraise, type PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import PrayerRequestForm from '@/components/PrayerRequestForm';
 import { addPrayerPraise } from '@/lib/firebase/utils';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useTourActive } from '@/components/tour';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 type FilterType = 'all' | 'prayer' | 'praise';
 
@@ -25,6 +26,61 @@ const TOUR_DEMO_REQUEST: PrayerPraiseItem = {
   approvalStatus: 'approved',
 };
 
+function ExpandableDescription({
+  requestId,
+  description,
+  forceControl = false,
+}: {
+  requestId: string;
+  description: string;
+  forceControl?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const descriptionId = `prayer-description-${requestId}`;
+
+  useEffect(() => {
+    if (expanded) return;
+    const element = descriptionRef.current;
+    if (!element) return;
+
+    const measureOverflow = () => {
+      setHasOverflow(element.scrollHeight > element.clientHeight + 1);
+    };
+    measureOverflow();
+
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measureOverflow);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [description, expanded]);
+
+  return (
+    <div className="mt-3">
+      <p
+        ref={descriptionRef}
+        id={descriptionId}
+        className={`whitespace-pre-wrap text-text/80 ${expanded ? '' : 'line-clamp-2'}`}
+      >
+        {description}
+      </p>
+      {hasOverflow || forceControl ? (
+        <button
+          id={forceControl ? 'tour-demo-see-more' : undefined}
+          type="button"
+          aria-controls={descriptionId}
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+          className="mt-2 min-h-10 rounded-lg px-2 text-sm font-semibold text-coral-dark hover:bg-coral/10"
+        >
+          {expanded ? 'See less' : 'See more'}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function PrayerBoard() {
   useEffect(() => {
     document.title = 'Prayer Board | Sioux Falls Church of Christ';
@@ -32,7 +88,6 @@ export default function PrayerBoard() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const { userProfile } = useAuth();
   const { tourActive } = useTourActive();
 
@@ -82,30 +137,19 @@ export default function PrayerBoard() {
     }
   };
 
-  const toggleCard = (id: string) => {
-    setExpandedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
-  };
-
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Prayer & Praise</h1>
+        <h1 className="text-3xl font-bold text-text">Prayer &amp; Praise</h1>
+        <p className="mx-auto mt-2 max-w-2xl text-text-light">Share a request, celebrate an answer, and support your church family.</p>
       </div>
 
       {/* Filter Toggle Group and Add Button */}
-      <div className="flex justify-center items-center gap-4 mb-8" id="prayer-board-toolbar">
-        <div className="inline-flex rounded-lg p-1 bg-sage/10" id="prayer-board-filters">
+      <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row" id="prayer-board-toolbar">
+        <div className="inline-flex rounded-lg bg-sage/10 p-1" id="prayer-board-filters">
           <button
             onClick={() => setActiveFilter('all')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
               activeFilter === 'all'
                 ? 'text-white shadow-sm'
                 : 'text-text'
@@ -118,7 +162,7 @@ export default function PrayerBoard() {
           </button>
           <button
             onClick={() => setActiveFilter('prayer')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
               activeFilter === 'prayer'
                 ? 'text-white shadow-sm'
                 : 'text-text'
@@ -131,7 +175,7 @@ export default function PrayerBoard() {
           </button>
           <button
             onClick={() => setActiveFilter('praise')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors uppercase tracking-wide ${
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
               activeFilter === 'praise'
                 ? 'text-white shadow-sm'
                 : 'text-text'
@@ -144,11 +188,11 @@ export default function PrayerBoard() {
           </button>
         </div>
         
-        <div className="inline-flex rounded-lg p-1" id="prayer-board-add-wrap">
+        <div className="inline-flex" id="prayer-board-add-wrap">
           <button
             id="prayer-board-add"
             onClick={() => setIsFormOpen(true)}
-            className="px-4 py-2 flex items-center justify-center rounded-md text-white hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 transition-colors uppercase tracking-wide"
+            className="flex min-h-11 items-center justify-center gap-2 rounded-lg px-4 py-2 font-semibold text-white transition-colors hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2"
             style={{
               backgroundColor: '#E88B5F'
             }}
@@ -168,15 +212,14 @@ export default function PrayerBoard() {
                 d="M12 6v12m6-6H6"
               />
             </svg>
+            <span>Add request</span>
           </button>
         </div>
       </div>
 
       {/* Loading State */}
       {loading && (
-        <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
+        <LoadingCardList label="Loading prayer and praise posts…" count={3} />
       )}
 
       {/* Index Building State */}
@@ -185,7 +228,7 @@ export default function PrayerBoard() {
           <div className="animate-pulse mb-4">
             <div className="h-8 w-8 mx-auto rounded-full bg-info/20"></div>
           </div>
-          <h3 className="text-lg font-medium text-info mb-2 uppercase tracking-wide">
+          <h3 className="mb-2 text-lg font-medium text-info">
             Optimizing Database
           </h3>
           <p className="text-info/80">
@@ -197,7 +240,7 @@ export default function PrayerBoard() {
 
       {/* Error State */}
       {error && !isIndexBuilding && (
-        <div className="text-center p-4 text-error">
+        <div role="alert" className="rounded-xl border border-error/30 bg-error-bg p-6 text-center text-error">
           <p>{error}</p>
         </div>
       )}
@@ -209,12 +252,9 @@ export default function PrayerBoard() {
             <div
               key={request.id}
               id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-request' : undefined}
-              className="bg-card rounded-lg shadow border border-sage/20"
+              className="rounded-xl border border-border bg-card shadow-sm"
             >
-              <div 
-                className="p-6 cursor-pointer"
-                onClick={() => toggleCard(request.id)}
-              >
+              <div className="p-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -227,38 +267,24 @@ export default function PrayerBoard() {
                       }}>
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
-                      <span className="text-sm text-text/80">
+                      <span className="text-sm text-text/80 tabular-nums">
                         {request.dateCreated instanceof Date 
                           ? request.dateCreated.toLocaleDateString()
                           : new Date(request.dateCreated).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-text">
-                        {request.title}
-                      </h3>
-                      <span id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-caret' : undefined}>
-                        <svg
-                          className={`w-5 h-5 text-text/60 transition-transform ${
-                            expandedCards.has(request.id) ? 'transform rotate-180' : ''
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </span>
-                    </div>
+                    <h3 className="mt-2 text-lg font-medium text-text">
+                      {request.title}
+                    </h3>
+                    <ExpandableDescription
+                      requestId={request.id}
+                      description={request.description}
+                      forceControl={request.id === TOUR_DEMO_REQUEST_ID}
+                    />
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center text-sm mt-4">
+                <div className="mt-4 flex items-center justify-between border-t border-sage/20 pt-3 text-sm">
                   <span className="text-text font-medium">{request.isAnonymous ? 'Anonymous' : request.author.name}</span>
                   {request.id === TOUR_DEMO_REQUEST_ID ? (
                     <span
@@ -275,11 +301,9 @@ export default function PrayerBoard() {
                     </span>
                   ) : (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      incrementPrayerCount(request.id);
-                    }}
-                    className={`flex items-center space-x-2 hover:opacity-80 group`}
+                    type="button"
+                    onClick={() => incrementPrayerCount(request.id)}
+                    className="group flex min-h-11 items-center space-x-2 rounded-lg px-2 hover:bg-bg hover:opacity-80"
                     style={{
                       color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
                     }}
@@ -290,7 +314,7 @@ export default function PrayerBoard() {
                           }}>
                       {request.type === 'prayer' ? 'I prayed' : 'I gave thanks'}
                     </span>
-                    <span className={`text-white px-2 py-0.5 rounded-full text-sm transition-colors`}
+                    <span className="rounded-full px-2 py-0.5 text-sm text-white tabular-nums transition-colors"
                           style={{
                             backgroundColor: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
                           }}>
@@ -300,14 +324,6 @@ export default function PrayerBoard() {
                   )}
                 </div>
               </div>
-              
-              {expandedCards.has(request.id) && (
-                <div className="px-6 pb-6 pt-2 border-t border-sage/20">
-                  <p className="text-text/80 whitespace-pre-wrap">
-                    {request.description}
-                  </p>
-                </div>
-              )}
             </div>
           ))}
 
@@ -332,7 +348,7 @@ export default function PrayerBoard() {
         >
           {/* Modal Content - card style to match site */}
           <div
-            className="w-full max-w-lg relative rounded-lg border shadow-lg bg-white"
+            className="relative w-full max-w-lg rounded-2xl border bg-white shadow-lg"
             style={{
               borderColor: 'var(--border)',
               boxShadow: 'var(--shadow-lg)',
@@ -342,18 +358,18 @@ export default function PrayerBoard() {
           >
             {/* Modal Header - coral gradient like nav/sections */}
             <div
-              className="flex justify-between items-center px-6 py-4 rounded-t-lg"
+              className="flex items-center justify-between rounded-t-2xl px-6 py-4"
               style={{
                 background: 'linear-gradient(135deg, var(--coral-light) 0%, var(--coral) 100%)',
               }}
             >
-              <h3 className="text-lg font-semibold uppercase tracking-wide text-on-primary">
+              <h3 className="text-lg font-semibold text-on-primary">
                 New Prayer Request or Praise
               </h3>
               <button
                 type="button"
                 onClick={() => setIsFormOpen(false)}
-                className="text-on-primary/90 hover:text-charcoal focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal rounded p-1"
+                className="inline-flex min-h-11 min-w-11 items-center justify-center rounded-lg text-on-primary/90 hover:bg-white/20 hover:text-charcoal focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-charcoal"
                 aria-label="Close"
               >
                 <span className="text-2xl leading-none">✕</span>
@@ -361,7 +377,7 @@ export default function PrayerBoard() {
             </div>
 
             {/* Modal Body */}
-            <div className="p-6 bg-white border-t border-border rounded-b-lg" style={{ backgroundColor: '#FFFFFF' }}>
+            <div className="rounded-b-2xl border-t border-border bg-white p-6" style={{ backgroundColor: '#FFFFFF' }}>
               <PrayerRequestForm onSubmit={handleSubmit} />
             </div>
           </div>
@@ -369,4 +385,4 @@ export default function PrayerBoard() {
       )}
     </div>
   );
-} 
+}

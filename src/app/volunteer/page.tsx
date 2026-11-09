@@ -6,6 +6,7 @@ import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import VolunteerOpportunityForm from '@/components/VolunteerOpportunityForm';
+import { CheckCircle, ChevronDown, LoaderCircle, Plus } from 'lucide-react';
 
 export default function VolunteerPage() {
   useEffect(() => {
@@ -17,6 +18,7 @@ export default function VolunteerPage() {
     loading, 
     error, 
     isIndexBuilding,
+    retry,
     signUpForOpportunity,
     removeSignUp
   } = useVolunteerOpportunities();
@@ -25,6 +27,8 @@ export default function VolunteerPage() {
   
   const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
   const [signUpError, setSignUpError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [pendingOpportunityId, setPendingOpportunityId] = useState<string | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   const toggleExpand = (id: string) => {
@@ -42,34 +46,44 @@ export default function VolunteerPage() {
   const handleSignUp = async (opportunityId: string) => {
     try {
       setSignUpError(null);
+      setSuccessMessage(null);
       
       if (!user || !userProfile) {
         router.push('/auth/signin');
         return;
       }
 
+      setPendingOpportunityId(opportunityId);
       await signUpForOpportunity(
         opportunityId, 
         userProfile.uid,
         userProfile.displayName || user.email || 'Anonymous User'
       );
+      setSuccessMessage('You are signed up. The opportunity contact can now see your name.');
     } catch (error) {
       setSignUpError(error instanceof Error ? error.message : 'Failed to sign up');
+    } finally {
+      setPendingOpportunityId(null);
     }
   };
 
   const handleRemoveSignUp = async (opportunityId: string) => {
     try {
       setSignUpError(null);
+      setSuccessMessage(null);
       
       if (!user || !userProfile) {
         router.push('/auth/signin');
         return;
       }
 
+      setPendingOpportunityId(opportunityId);
       await removeSignUp(opportunityId, userProfile.uid);
+      setSuccessMessage('Your volunteer sign-up was removed.');
     } catch (error) {
       setSignUpError(error instanceof Error ? error.message : 'Failed to remove sign up');
+    } finally {
+      setPendingOpportunityId(null);
     }
   };
 
@@ -95,7 +109,7 @@ export default function VolunteerPage() {
   const formatDateTime = (date: Date) => {
     try {
       return `${date.toLocaleDateString()} at ${date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
-    } catch (error) {
+    } catch {
       return 'Date not available';
     }
   };
@@ -103,30 +117,36 @@ export default function VolunteerPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Volunteer Opportunities</h1>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-text">Volunteer Opportunities</h1>
+            <p className="mt-2 text-base text-text-light">
+              {user ? 'Find a place to help or submit a new opportunity for approval.' : 'Sign in to volunteer or submit an opportunity.'}
+            </p>
+          </div>
           
           {user && (
             <button
               onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center justify-center p-2 sm:px-4 sm:py-2 !bg-secondary !text-on-secondary font-semibold rounded-lg hover:!bg-secondary-hover focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary transition-colors"
-              aria-label="Create opportunity"
+              className="inline-flex min-h-11 items-center justify-center rounded-lg !bg-secondary px-4 py-2 font-semibold !text-on-secondary transition-colors hover:!bg-secondary-hover focus:outline-none focus:ring-2 focus:ring-secondary focus:ring-offset-2"
             >
-              <svg className="w-5 h-5 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-              </svg>
-              <span className="hidden sm:inline">Create Opportunity</span>
+              <Plus aria-hidden="true" className="mr-2 h-5 w-5" />
+              Submit an opportunity
             </button>
           )}
         </div>
-        <p className="text-text-light text-center">
-          {user ? 'Sign up for opportunities or create your own!' : 'Sign in to volunteer or create opportunities'}
-        </p>
       </div>
 
       {signUpError && (
-        <div className="mb-6 p-4 bg-error/10 border border-error/20 rounded-lg">
+        <div role="alert" className="mb-6 rounded-lg border border-error/20 bg-error/10 p-4">
           <p className="text-error">{signUpError}</p>
+        </div>
+      )}
+
+      {successMessage && (
+        <div role="status" className="mb-6 flex items-start gap-3 rounded-lg border border-success/20 bg-success/10 p-4 text-success">
+          <CheckCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0" />
+          <p>{successMessage}</p>
         </div>
       )}
 
@@ -134,20 +154,17 @@ export default function VolunteerPage() {
         <VolunteerOpportunityForm
           onClose={() => setShowCreateForm(false)}
           onSuccess={() => {
-            // Show success message
-            const successDiv = document.createElement('div');
-            successDiv.className = 'fixed top-4 right-4 bg-success-bg border border-success text-success px-6 py-3 rounded-lg shadow-lg z-50';
-            successDiv.textContent = 'Volunteer opportunity submitted for approval!';
-            document.body.appendChild(successDiv);
-            setTimeout(() => successDiv.remove(), 5000);
+            setSignUpError(null);
+            setSuccessMessage('Your opportunity was submitted. An administrator will review it before it appears here.');
           }}
         />
       )}
 
       {/* Loading State */}
       {loading && (
-        <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <div role="status" className="flex min-h-[200px] items-center justify-center gap-3 text-text-light">
+          <LoaderCircle aria-hidden="true" className="h-7 w-7 animate-spin text-primary" />
+          <span>Loading volunteer opportunities…</span>
         </div>
       )}
 
@@ -157,9 +174,9 @@ export default function VolunteerPage() {
           <div className="animate-pulse mb-4">
             <div className="h-8 w-8 mx-auto rounded-full bg-info/20"></div>
           </div>
-          <h3 className="text-lg font-medium text-info mb-2 uppercase tracking-wide">Optimizing Database</h3>
+          <h3 className="mb-2 text-lg font-medium text-info">Preparing volunteer opportunities</h3>
           <p className="text-info/80">
-            We're optimizing the database for faster queries. This may take a few minutes.
+            We&apos;re optimizing the database for faster queries. This may take a few minutes.
             Please refresh the page shortly.
           </p>
         </div>
@@ -167,8 +184,14 @@ export default function VolunteerPage() {
 
       {/* Error State */}
       {error && !isIndexBuilding && (
-        <div className="text-center p-4 text-error">
-          <p>{error}</p>
+        <div role="alert" className="flex flex-col gap-3 rounded-lg border border-error/20 bg-error/10 p-5 text-error sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="font-semibold">Volunteer opportunities could not be loaded.</p>
+            <p className="mt-1">{error}</p>
+          </div>
+          <button type="button" onClick={retry} className="min-h-10 shrink-0 rounded-lg border border-error/40 px-4 text-sm font-semibold hover:bg-error/10">
+            Try again
+          </button>
         </div>
       )}
 
@@ -178,11 +201,16 @@ export default function VolunteerPage() {
           {opportunities.map((opportunity) => {
             const percentage = Math.round((opportunity.currentVolunteers / opportunity.maxVolunteers) * 100);
             const spotsLeft = opportunity.maxVolunteers - opportunity.currentVolunteers;
+            const isSignedUp = opportunity.volunteers?.some((volunteer) => volunteer.id === userProfile?.uid);
+            const isUpdating = pendingOpportunityId === opportunity.id;
             
             return (
-              <div key={opportunity.id} className="bg-card rounded-lg shadow border border-sage/20">
-                <div 
-                  className="p-6 cursor-pointer hover:bg-sage/5 transition-colors duration-150"
+              <article key={opportunity.id} className="overflow-hidden rounded-xl border border-sage/20 bg-card shadow-sm">
+                <button
+                  type="button"
+                  aria-expanded={expandedItems.has(opportunity.id)}
+                  aria-controls={`opportunity-${opportunity.id}`}
+                  className="w-full p-5 text-left transition-colors hover:bg-sage/5 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary sm:p-6"
                   onClick={() => toggleExpand(opportunity.id)}
                 >
                   <div className="flex justify-between items-start">
@@ -210,49 +238,41 @@ export default function VolunteerPage() {
                             {opportunity.currentVolunteers} of {opportunity.maxVolunteers}
                           </span>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-2">
+                        <div
+                          className="h-2 w-full rounded-full bg-muted"
+                          role="progressbar"
+                          aria-label={`${opportunity.title} volunteer spaces filled`}
+                          aria-valuemin={0}
+                          aria-valuemax={opportunity.maxVolunteers}
+                          aria-valuenow={opportunity.currentVolunteers}
+                        >
                           <div
                             className={`${getProgressColor(percentage)} h-2 rounded-full transition-all duration-300`}
-                            style={{ width: `${percentage}%` }}
+                            style={{ width: `${Math.min(percentage, 100)}%` }}
                           ></div>
                         </div>
                       </div>
                     </div>
-                    <button
-                      className="ml-4 p-1 rounded-full hover:bg-sage/5 text-text/40"
-                      aria-label={expandedItems.has(opportunity.id) ? "Collapse" : "Expand"}
-                    >
-                      <svg
-                        className={`w-5 h-5 transform transition-transform ${
-                          expandedItems.has(opportunity.id) ? 'rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth="2"
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
+                    <ChevronDown
+                      aria-hidden="true"
+                      className={`ml-4 h-5 w-5 shrink-0 text-text/50 transition-transform ${expandedItems.has(opportunity.id) ? 'rotate-180' : ''}`}
+                    />
                   </div>
-                  
-                  {expandedItems.has(opportunity.id) && (
-                    <div className="mt-4 pt-4 border-t border-sage/20">
+                </button>
+
+                {expandedItems.has(opportunity.id) && (
+                    <div id={`opportunity-${opportunity.id}`} className="border-t border-sage/20 p-5 sm:p-6">
                       <div className="prose prose-sm max-w-none text-text/80">
                         <p>{opportunity.description}</p>
 
                         <div className="mt-4">
-                          <h4 className="font-medium text-text uppercase tracking-wide">Contact Information:</h4>
+                          <h4 className="font-semibold text-text">Contact information</h4>
                           <p className="mt-1 text-text/80">
-                            Email: {opportunity.contactEmail}
+                            Email: <a className="font-medium text-primary underline" href={`mailto:${opportunity.contactEmail}`}>{opportunity.contactEmail}</a>
                             {opportunity.contactPhone && (
                               <>
                                 <br />
-                                Phone: {opportunity.contactPhone}
+                                Phone: <a className="font-medium text-primary underline" href={`tel:${opportunity.contactPhone}`}>{opportunity.contactPhone}</a>
                               </>
                             )}
                           </p>
@@ -260,7 +280,7 @@ export default function VolunteerPage() {
 
                         {opportunity.volunteers?.length > 0 && (
                           <div className="mt-4">
-                            <h4 className="font-medium text-text uppercase tracking-wide">Current Volunteers:</h4>
+                            <h4 className="font-semibold text-text">Current volunteers</h4>
                             <ul className="mt-2">
                               {opportunity.volunteers.map((volunteer) => (
                                 <li key={volunteer.id} className="text-text/80">{volunteer.name}</li>
@@ -271,58 +291,52 @@ export default function VolunteerPage() {
                       </div>
 
                       {opportunity.status === 'open' && (
-                        <div className="mt-6 flex items-center gap-3">
+                        <div className="mt-6 flex flex-wrap items-center gap-3">
                           {user ? (
                             <>
                               <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (!opportunity.volunteers?.some((volunteer) => volunteer.id === userProfile?.uid)) {
-                                    handleSignUp(opportunity.id);
-                                  }
-                                }}
-                                disabled={opportunity.volunteers?.some((volunteer) => volunteer.id === userProfile?.uid)}
-                                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#E88B5F] hover:bg-[#D6714A] active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide transition-colors"
+                                onClick={() => handleSignUp(opportunity.id)}
+                                disabled={Boolean(isSignedUp) || isUpdating || spotsLeft <= 0}
+                                className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                               >
-                                Sign Up
+                                {isUpdating && !isSignedUp ? <LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                {spotsLeft <= 0 ? 'Opportunity is full' : isSignedUp ? 'You are signed up' : 'Sign up to help'}
                               </button>
-                              {opportunity.volunteers?.some((volunteer) => volunteer.id === userProfile?.uid) && (
+                              {isSignedUp && (
                                 <button
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleRemoveSignUp(opportunity.id);
-                                  }}
-                                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 disabled:opacity-50 disabled:cursor-not-allowed uppercase tracking-wide transition-colors"
+                                  onClick={() => handleRemoveSignUp(opportunity.id)}
+                                  disabled={isUpdating}
+                                  className="inline-flex min-h-11 items-center rounded-lg border border-gray-300 bg-white px-4 py-2 font-semibold text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                 >
-                                  Remove Sign Up
+                                  {isUpdating ? <LoaderCircle aria-hidden="true" className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                  Remove my sign-up
                                 </button>
                               )}
                             </>
                           ) : (
                             <Link 
                               href="/auth/signin" 
-                              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-[#E88B5F] hover:bg-[#D6714A] active:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E88B5F] uppercase tracking-wide transition-colors"
-                              onClick={(e) => e.stopPropagation()}
+                              className="inline-flex min-h-11 items-center rounded-lg bg-primary px-4 py-2 font-semibold text-on-primary transition-colors hover:bg-primary-hover focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
                             >
-                              Sign in to Volunteer
+                              Sign in to volunteer
                             </Link>
                           )}
                         </div>
                       )}
                     </div>
                   )}
-                </div>
-              </div>
+              </article>
             );
           })}
 
           {opportunities.length === 0 && (
-            <div className="text-center p-8 text-text/50">
-              No volunteer opportunities available at this time.
+            <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+              <h2 className="text-lg font-semibold text-text">No volunteer opportunities are open right now</h2>
+              <p className="mt-2 text-text-light">Please check again later.</p>
             </div>
           )}
         </div>
       )}
     </div>
   );
-} 
+}

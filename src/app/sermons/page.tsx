@@ -1,301 +1,260 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { useSermons } from '@/hooks/useSermons';
+import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
+import { AlertTriangle, ChevronDown, ExternalLink, PlayCircle, Search, X } from 'lucide-react';
+import { useSermons } from '@/hooks/useSermons';
+import type { YouTubeVideo } from '@/lib/youtube/api';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
-interface GroupedSermons {
-  [key: string]: {
-    monthLabel: string;
-    videos: any[];
-  };
+type GroupedSermons = Record<string, { monthLabel: string; videos: YouTubeVideo[] }>;
+
+function groupVideosByMonth(videos: YouTubeVideo[]): GroupedSermons {
+  return videos.reduce<GroupedSermons>((groups, video) => {
+    const date = new Date(video.publishedAt);
+    const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+    const group = groups[monthKey] ?? {
+      monthLabel: date.toLocaleString('en-US', { month: 'long', year: 'numeric' }),
+      videos: [],
+    };
+    group.videos.push(video);
+    groups[monthKey] = group;
+    return groups;
+  }, {});
+}
+
+function formatDate(dateString: string) {
+  return new Date(dateString).toLocaleDateString('en-US', {
+    month: 'long',
+    day: 'numeric',
+    year: 'numeric',
+  });
+}
+
+function formatViewCount(count: string) {
+  const number = Number.parseInt(count, 10);
+  if (number >= 1_000_000) return `${(number / 1_000_000).toFixed(1)}M views`;
+  if (number >= 1_000) return `${(number / 1_000).toFixed(1)}K views`;
+  return `${Number.isNaN(number) ? 0 : number} views`;
 }
 
 export default function SermonsPage() {
+  const { videos, loading, error, selectedVideo, selectVideo } = useSermons();
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedYear, setSelectedYear] = useState('all');
+  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(() => new Set());
+
   useEffect(() => {
     document.title = 'Sermons | Sioux Falls Church of Christ';
   }, []);
 
-  const { videos, loading, error, selectedVideo, selectVideo } = useSermons();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [expandedMonths, setExpandedMonths] = useState<Set<string>>(new Set());
-
-  // Simple search without affecting video list structure
-  const filteredVideos = searchTerm.trim() === '' ? videos : videos.filter(video =>
-    video.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    video.description.toLowerCase().includes(searchTerm.toLowerCase()
-  )
+  const availableYears = useMemo(
+    () => Array.from(new Set(videos.map((video) => new Date(video.publishedAt).getFullYear()))).sort((a, b) => b - a),
+    [videos],
   );
 
-  const groupVideosByMonth = useCallback((videos: any[]): GroupedSermons => {
-    return videos.reduce((groups: GroupedSermons, video) => {
-      const date = new Date(video.publishedAt);
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
-      const monthLabel = date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
-      
-      if (!groups[monthKey]) {
-        groups[monthKey] = {
-          monthLabel,
-          videos: []
-        };
-      }
-      
-      groups[monthKey].videos.push(video);
-      return groups;
-    }, {});
-  }, []);
-
-  const toggleMonth = useCallback((monthKey: string) => {
-    setExpandedMonths(prev => {
-      const newExpandedMonths = new Set(prev);
-      if (newExpandedMonths.has(monthKey)) {
-        newExpandedMonths.delete(monthKey);
-      } else {
-        newExpandedMonths.add(monthKey);
-      }
-      return newExpandedMonths;
+  const filteredVideos = useMemo(() => {
+    const query = searchTerm.trim().toLowerCase();
+    return videos.filter((video) => {
+      const matchesYear = selectedYear === 'all' || new Date(video.publishedAt).getFullYear().toString() === selectedYear;
+      const matchesSearch = !query || video.title.toLowerCase().includes(query) || video.description.toLowerCase().includes(query);
+      return matchesYear && matchesSearch;
     });
-  }, []);
+  }, [searchTerm, selectedYear, videos]);
 
-  const formatDate = useCallback((dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      month: 'long',
-      day: 'numeric',
-      year: 'numeric'
-    });
-  }, []);
+  const groupedVideos = useMemo(() => groupVideosByMonth(filteredVideos), [filteredVideos]);
+  const monthKeys = useMemo(() => Object.keys(groupedVideos).sort().reverse(), [groupedVideos]);
+  const newestMonth = monthKeys[0];
 
-  const formatViewCount = useCallback((count: string) => {
-    const num = parseInt(count);
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M views`;
-    } else if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}K views`;
-    }
-    return `${num} views`;
-  }, []);
-
-  const groupedVideos = groupVideosByMonth(filteredVideos);
-  const monthKeys = Object.keys(groupedVideos).sort().reverse();
-
-  // Initialize expanded state for the current month
   useEffect(() => {
-    if (monthKeys.length > 0) {
-      setExpandedMonths(new Set([monthKeys[0]]));
-    }
-  }, [monthKeys]);
+    if (!newestMonth) return;
+    setExpandedMonths((current) => monthKeys.some((monthKey) => current.has(monthKey)) ? current : new Set([newestMonth]));
+  }, [monthKeys, newestMonth]);
 
-  const handleSearch = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
-  }, []);
+  function toggleMonth(monthKey: string) {
+    setExpandedMonths((current) => {
+      const next = new Set(current);
+      if (next.has(monthKey)) next.delete(monthKey);
+      else next.add(monthKey);
+      return next;
+    });
+  }
 
-  const handleVideoSelect = useCallback((video: any) => {
-    selectVideo(video);
-  }, [selectVideo]);
-
-  const handleRetry = useCallback(() => {
-    window.location.reload();
-  }, []);
+  const hasFilters = Boolean(searchTerm.trim()) || selectedYear !== 'all';
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <div className="mb-8 text-center">
-        <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Sermons</h1>
-      </div>
+    <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-text">Sermons</h1>
+        <p className="mt-2 max-w-2xl text-base text-text-light">
+          Watch recent lessons or search by a word in the sermon title or description.
+        </p>
+      </header>
 
-      {/* Search Bar */}
-      <div className="mb-8">
-        <div className="max-w-md mx-auto">
-          <div className="relative">
-            <input
-              type="text"
-              value={searchTerm}
-              onChange={handleSearch}
-              placeholder="Search sermons..."
-              className="w-full px-4 py-2 rounded-lg bg-card border border-sage/20 text-text placeholder-text/50 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-            />
-            <svg
-              className="absolute right-3 top-2.5 h-5 w-5 text-text/50"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+      <section aria-label="Find a sermon" className="mb-8 rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5">
+        <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-end">
+          <div>
+            <label htmlFor="sermon-search" className="mb-2 block font-semibold text-text">Search sermons</label>
+            <div className="relative">
+              <Search aria-hidden="true" className="absolute left-3 top-3 h-5 w-5 text-text-muted" />
+              <input
+                id="sermon-search"
+                type="search"
+                value={searchTerm}
+                onChange={(event) => setSearchTerm(event.target.value)}
+                placeholder="Try a title or topic"
+                className="min-h-11 w-full rounded-lg border border-border bg-card py-2 pl-10 pr-4 text-base text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary"
               />
-            </svg>
-          </div>
-        </div>
-      </div>
-
-      {/* Loading State */}
-      {loading && (
-        <div className="flex justify-center items-center min-h-[200px]">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-        </div>
-      )}
-
-      {/* Error State */}
-      {error && (
-        <div className="text-center p-8 bg-card rounded-lg border border-sage/20">
-          <svg
-            className="mx-auto h-12 w-12 text-error"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
-            />
-          </svg>
-          <h3 className="mt-4 text-lg font-medium text-text uppercase tracking-wide">Error Loading Sermons</h3>
-          <p className="mt-2 text-sm text-text/60">{error}</p>
-          <div className="mt-6">
-            <button
-              onClick={handleRetry}
-              className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-on-primary bg-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary uppercase tracking-wide"
-            >
-              Try Again
-            </button>
-          </div>
-          {(!process.env.NEXT_PUBLIC_YOUTUBE_API_KEY || !process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID) && (
-            <div className="mt-4 p-4 bg-card rounded-md text-sm text-text/80 border border-sage/20">
-              <p className="font-medium">Missing Configuration:</p>
-              <ul className="mt-2 list-disc list-inside">
-                {!process.env.NEXT_PUBLIC_YOUTUBE_API_KEY && (
-                  <li>YouTube API Key is not configured</li>
-                )}
-                {!process.env.NEXT_PUBLIC_YOUTUBE_CHANNEL_ID && (
-                  <li>YouTube Channel ID is not configured</li>
-                )}
-              </ul>
-              <p className="mt-2">
-                Please check your environment variables in .env.local
-              </p>
             </div>
-          )}
+          </div>
+          <div>
+            <label htmlFor="sermon-year" className="mb-2 block font-semibold text-text">Year</label>
+            <select
+              id="sermon-year"
+              value={selectedYear}
+              onChange={(event) => setSelectedYear(event.target.value)}
+              className="min-h-11 w-full rounded-lg border border-border bg-card px-3 py-2 text-base text-text focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <option value="all">All years</option>
+              {availableYears.map((year) => <option key={year} value={year}>{year}</option>)}
+            </select>
+          </div>
+          {hasFilters ? (
+            <button
+              type="button"
+              onClick={() => { setSearchTerm(''); setSelectedYear('all'); }}
+              className="inline-flex min-h-11 items-center justify-center rounded-lg border border-border px-4 font-semibold text-charcoal hover:bg-bg-secondary focus:outline-none focus:ring-2 focus:ring-primary"
+            >
+              <X aria-hidden="true" className="mr-2 h-4 w-4" />
+              Clear filters
+            </button>
+          ) : <span aria-hidden="true" />}
         </div>
-      )}
+      </section>
 
-      {/* Content */}
-      {!loading && !error && (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Video Player */}
-          <div className="lg:col-span-2">
+      {loading ? (
+        <LoadingCardList label="Loading sermons…" count={4} className="mx-auto max-w-4xl" />
+      ) : null}
+
+      {error ? (
+        <div role="alert" className="rounded-xl border border-error/20 bg-error/10 p-6 text-center">
+          <AlertTriangle aria-hidden="true" className="mx-auto h-10 w-10 text-error" />
+          <h2 className="mt-3 text-xl font-semibold text-text">Sermons could not be loaded</h2>
+          <p className="mt-2 text-text-light">{error}</p>
+          <button
+            type="button"
+            onClick={() => window.location.reload()}
+            className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-primary px-4 font-semibold text-on-primary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2"
+          >
+            Try again
+          </button>
+        </div>
+      ) : null}
+
+      {!loading && !error && videos.length === 0 ? (
+        <div className="rounded-xl border border-dashed border-border bg-card p-8 text-center">
+          <PlayCircle aria-hidden="true" className="mx-auto h-10 w-10 text-text-muted" />
+          <h2 className="mt-3 text-xl font-semibold text-text">No sermons are available yet</h2>
+          <p className="mt-2 text-text-light">Please check again later.</p>
+        </div>
+      ) : null}
+
+      {!loading && !error && videos.length > 0 ? (
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+          <section aria-label="Selected sermon" className="lg:col-span-2">
             {selectedVideo ? (
               <div className="space-y-4">
-                <div className="relative w-full" style={{ paddingBottom: '56.25%' }}>
+                <div className="relative aspect-video w-full overflow-hidden rounded-xl bg-black">
                   <iframe
                     src={`https://www.youtube.com/embed/${selectedVideo.id}`}
                     title={selectedVideo.title}
                     allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                     allowFullScreen
-                    className="absolute top-0 left-0 w-full h-full rounded-lg"
-                  ></iframe>
+                    className="absolute inset-0 h-full w-full"
+                  />
                 </div>
-                <div className="bg-card rounded-lg p-4 border border-sage/20">
-                  <h2 className="text-xl font-semibold text-text mb-2">
-                    {selectedVideo.title}
-                  </h2>
-                  <div className="flex items-center text-sm text-text/60 mb-4">
-                    <span>{formatDate(selectedVideo.publishedAt)}</span>
-                    <span className="mx-2">•</span>
-                    <span>{formatViewCount(selectedVideo.viewCount)}</span>
-                  </div>
-                  <p className="text-text/80 whitespace-pre-wrap">
-                    {selectedVideo.description}
+                <div className="rounded-xl border border-border bg-card p-5">
+                  <h2 className="text-xl font-semibold text-text">{selectedVideo.title}</h2>
+                  <p className="mt-2 text-sm text-text-light tabular-nums">
+                    {formatDate(selectedVideo.publishedAt)} <span aria-hidden="true">•</span> {formatViewCount(selectedVideo.viewCount)}
                   </p>
+                  <p className="mt-4 whitespace-pre-wrap text-text/80">{selectedVideo.description}</p>
+                  <a
+                    href={`https://www.youtube.com/watch?v=${selectedVideo.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-5 inline-flex min-h-11 items-center font-semibold text-primary underline"
+                  >
+                    Open this sermon on YouTube
+                    <ExternalLink aria-hidden="true" className="ml-2 h-4 w-4" />
+                    <span className="sr-only"> (opens in a new window)</span>
+                  </a>
                 </div>
               </div>
-            ) : (
-              <div className="aspect-w-16 aspect-h-9 bg-card rounded-lg flex items-center justify-center border border-sage/20">
-                <p className="text-text/60">No video selected</p>
-              </div>
-            )}
-          </div>
+            ) : null}
+          </section>
 
-          {/* Video List */}
-          <div className="lg:col-span-1">
-            <div className="bg-card rounded-lg border border-sage/20">
-              <div className="p-4 border-b border-sage/20">
-                <h3 className="text-lg font-medium text-text">
-                  {searchTerm ? 'Search Results' : 'Sermons'}
-                  {searchTerm && filteredVideos.length === 0 && (
-                    <span className="block text-sm text-text/60 mt-1">No results found</span>
-                  )}
-                </h3>
+          <section aria-labelledby="sermon-list-heading" className="lg:col-span-1">
+            <div className="overflow-hidden rounded-xl border border-border bg-card">
+              <div className="border-b border-border p-4">
+                <h2 id="sermon-list-heading" className="text-lg font-semibold text-text">
+                  {hasFilters ? `${filteredVideos.length} matching sermon${filteredVideos.length === 1 ? '' : 's'}` : 'All sermons'}
+                </h2>
               </div>
-              <div className="divide-y divide-sage/20 max-h-[600px] overflow-y-auto">
-                {monthKeys.map((monthKey) => (
-                  <div key={monthKey} className="border-b border-sage/20 last:border-b-0">
-                    <button
-                      onClick={() => toggleMonth(monthKey)}
-                      className="w-full px-4 py-3 flex items-center justify-between text-text hover:bg-sage/5"
-                    >
-                      <span className="font-medium">{groupedVideos[monthKey].monthLabel}</span>
-                      <svg
-                        className={`w-5 h-5 transform transition-transform ${
-                          expandedMonths.has(monthKey) ? 'rotate-180' : ''
-                        }`}
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M19 9l-7 7-7-7"
-                        />
-                      </svg>
-                    </button>
-                    {expandedMonths.has(monthKey) && (
-                      <div className="divide-y divide-sage/20">
-                        {groupedVideos[monthKey].videos.map((video) => (
-                          <button
-                            key={video.id}
-                            onClick={() => handleVideoSelect(video)}
-                            className={`w-full text-left p-4 hover:bg-sage/5 transition-colors ${
-                              selectedVideo?.id === video.id ? 'bg-sage/5' : ''
-                            }`}
-                          >
-                            <div className="flex space-x-4">
-                              <div className="flex-shrink-0">
-                                <Image
-                                  src={video.thumbnailUrl}
-                                  alt={video.title}
-                                  width={128}
-                                  height={72}
-                                  className="object-cover rounded"
-                                  unoptimized
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <h4 className="text-sm font-medium text-text truncate">
-                                  {video.title}
-                                </h4>
-                                <p className="mt-1 text-sm text-text/60">
-                                  {formatDate(video.publishedAt)}
-                                </p>
-                              </div>
-                            </div>
-                          </button>
-                        ))}
+              {filteredVideos.length === 0 ? (
+                <div className="p-6 text-center">
+                  <p className="font-semibold text-text">No sermons match those filters.</p>
+                  <button type="button" onClick={() => { setSearchTerm(''); setSelectedYear('all'); }} className="mt-3 min-h-11 font-semibold text-primary underline">
+                    Clear filters
+                  </button>
+                </div>
+              ) : (
+                <div className="max-h-[680px] overflow-y-auto">
+                  {monthKeys.map((monthKey) => {
+                    const group = groupedVideos[monthKey];
+                    const isExpanded = expandedMonths.has(monthKey);
+                    return (
+                      <div key={monthKey} className="border-b border-border last:border-b-0">
+                        <button
+                          type="button"
+                          aria-expanded={isExpanded}
+                          aria-controls={`sermons-${monthKey}`}
+                          onClick={() => toggleMonth(monthKey)}
+                          className="flex min-h-11 w-full items-center justify-between px-4 py-3 text-left font-semibold text-text hover:bg-sage/5 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary"
+                        >
+                          <span>{group.monthLabel} <span className="font-normal text-text-muted">({group.videos.length})</span></span>
+                          <ChevronDown aria-hidden="true" className={`h-5 w-5 transition-transform ${isExpanded ? 'rotate-180' : ''}`} />
+                        </button>
+                        {isExpanded ? (
+                          <div id={`sermons-${monthKey}`} className="divide-y divide-border">
+                            {group.videos.map((video) => (
+                              <button
+                                key={video.id}
+                                type="button"
+                                aria-pressed={selectedVideo?.id === video.id}
+                                onClick={() => selectVideo(video)}
+                                className={`w-full p-4 text-left transition-colors hover:bg-sage/5 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-primary ${selectedVideo?.id === video.id ? 'bg-sage/10' : ''}`}
+                              >
+                                <span className="flex gap-3">
+                                  <Image src={video.thumbnailUrl} alt="" width={128} height={72} className="h-[72px] w-32 shrink-0 rounded object-cover" unoptimized />
+                                  <span className="min-w-0 flex-1">
+                                    <span className="line-clamp-2 block text-sm font-semibold text-text">{video.title}</span>
+                                    <span className="mt-1 block text-sm text-text-light tabular-nums">{formatDate(video.publishedAt)}</span>
+                                  </span>
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        ) : null}
                       </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-          </div>
+          </section>
         </div>
-      )}
-    </div>
+      ) : null}
+    </main>
   );
-} 
+}

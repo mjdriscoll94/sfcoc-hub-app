@@ -9,6 +9,7 @@ import RichTextEditor from '@/components/RichTextEditor';
 import { sendAnnouncementEmail, type EmailSubscriber } from '@/lib/email/emailService';
 import BackButton from '@/components/BackButton';
 import { ROLE_PERMISSIONS } from '@/types/roles';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 type AnnouncementType = 'Weekly' | 'KFC' | 'General' | 'Youth' | 'Young Adult';
 
@@ -179,6 +180,7 @@ export default function NewAnnouncementPage() {
       </div>
       <div className="bg-card rounded-lg p-6 border-2 border-border shadow-lg">
         <form onSubmit={handleSubmit} className="space-y-6">
+          <RequiredFieldsNote />
           {error && (
             <div className="bg-red-50 dark:bg-red-900/50 border border-red-200 dark:border-red-500/50 text-red-600 dark:text-red-200 p-3 rounded-md">
               {error}
@@ -193,7 +195,7 @@ export default function NewAnnouncementPage() {
 
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-charcoal">
-              Title
+              Title<RequiredFieldIndicator />
             </label>
             <input
               type="text"
@@ -310,4 +312,4 @@ export default function NewAnnouncementPage() {
       </div>
     </div>
   );
-} 
+}

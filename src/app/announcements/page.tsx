@@ -9,6 +9,7 @@ import { BellIcon, PlusIcon, ChevronDownIcon, ChevronUpIcon } from '@heroicons/r
 import RichTextContent from '@/components/RichTextContent';
 import { Timestamp } from 'firebase/firestore';
 import { UserProfile } from '@/types';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 interface Announcement {
   id: string;
@@ -22,21 +23,35 @@ interface Announcement {
   };
 }
 
-interface UserProfileUpdate {
-  notificationsEnabled: boolean;
-}
-
 const ANNOUNCEMENT_TYPES = ['All', 'Weekly', 'KFC', 'General', 'Youth', 'Young Adult'] as const;
 type FilterType = typeof ANNOUNCEMENT_TYPES[number];
 
 export default function AnnouncementsPage() {
+  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
+  const [announcementsLoading, setAnnouncementsLoading] = useState(true);
+  const [announcementsError, setAnnouncementsError] = useState<string | null>(null);
+  const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
+  const [isSubscribing, setIsSubscribing] = useState(false);
+
   useEffect(() => {
     document.title = 'Announcements | Sioux Falls Church of Christ';
   }, []);
 
-  const [announcements, setAnnouncements] = useState<Announcement[]>([]);
-  const [expandedAnnouncements, setExpandedAnnouncements] = useState<Set<string>>(new Set());
-  const [isSubscribing, setIsSubscribing] = useState(false);
+  useEffect(() => {
+    const announcementId = decodeURIComponent(window.location.hash.slice(1));
+    if (!announcementId || !announcements.some((announcement) => announcement.id === announcementId)) return;
+
+    setExpandedAnnouncements((current) => {
+      if (current.has(announcementId)) return current;
+      const next = new Set(current);
+      next.add(announcementId);
+      return next;
+    });
+    window.requestAnimationFrame(() => {
+      document.getElementById(announcementId)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  }, [announcements]);
+
   const [error, setError] = useState<string | null>(null);
   const [selectedType, setSelectedType] = useState<FilterType>('All');
   const { userProfile, updateUserProfile } = useAuth();
@@ -61,13 +76,23 @@ export default function AnnouncementsPage() {
       collection(db, 'announcements'),
       orderBy('createdAt', 'desc')
     );
-    const unsubscribe = onSnapshot(q, (snapshot) => {
-      const announcementData = snapshot.docs.map(doc => ({
-        id: doc.id,
-        ...doc.data()
-      })) as Announcement[];
-      setAnnouncements(announcementData);
-    });
+    const unsubscribe = onSnapshot(
+      q,
+      (snapshot) => {
+        const announcementData = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data()
+        })) as Announcement[];
+        setAnnouncements(announcementData);
+        setAnnouncementsError(null);
+        setAnnouncementsLoading(false);
+      },
+      (snapshotError) => {
+        console.error('Error loading announcements:', snapshotError);
+        setAnnouncementsError('Announcements could not be loaded. Please refresh the page or try again later.');
+        setAnnouncementsLoading(false);
+      },
+    );
 
     return () => unsubscribe();
   }, []);
@@ -159,9 +184,12 @@ export default function AnnouncementsPage() {
         )}
 
         {/* Announcements Header */}
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold text-text uppercase tracking-wide">Announcements</h2>
-          <div className="flex items-center space-x-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-text">Announcements</h1>
+            <p className="mt-2 text-base text-text-light">Updates and information for the church family.</p>
+          </div>
+          <div className="flex flex-col items-start gap-2 sm:items-end">
             {error && (
               <p className="text-sm text-error bg-error/10 px-3 py-1 rounded-md">
                 {error}
@@ -174,7 +202,7 @@ export default function AnnouncementsPage() {
                 disabled={isSubscribing}
                 type="button"
                 title={userProfile.notificationsEnabled ? "Unsubscribe from notifications" : "Subscribe to notifications"}
-                className={`inline-flex items-center gap-1 px-3 py-2 rounded-md transition-colors uppercase tracking-wide ${
+                className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-4 py-2 font-semibold transition-colors ${
                   userProfile.notificationsEnabled
                     ? 'bg-error hover:opacity-90 active:opacity-80'
                     : 'bg-primary hover:opacity-90 active:opacity-80'
@@ -204,18 +232,21 @@ export default function AnnouncementsPage() {
                 ) : (
                   <div className="flex items-center gap-1">
                     <BellIcon className="h-5 w-5" />
-                    {!userProfile.notificationsEnabled && (
-                      <PlusIcon className="h-4 w-4" />
-                    )}
+                    {!userProfile.notificationsEnabled ? <PlusIcon className="h-4 w-4" /> : null}
                   </div>
                 )}
-                <span className="sr-only">
+                <span>
                   {userProfile.notificationsEnabled
-                    ? "Unsubscribe from notifications"
-                    : "Subscribe to notifications"}
+                    ? 'Turn off announcement notifications'
+                    : 'Turn on announcement notifications'}
                 </span>
               </button>
             )}
+            {userProfile && notificationSupport.supported ? (
+              <p className="max-w-sm text-sm text-text-light sm:text-right">
+                Receive a device notification when a new church announcement is posted.
+              </p>
+            ) : null}
           </div>
         </div>
 
@@ -225,7 +256,7 @@ export default function AnnouncementsPage() {
             <button
               key={type}
               onClick={() => setSelectedType(type)}
-                    className={`px-3 py-1.5 rounded-full text-sm font-medium transition-colors uppercase tracking-wide ${
+              className={`min-h-11 rounded-full px-4 py-2 text-sm font-medium uppercase tracking-wide transition-colors ${
                 selectedType === type
                   ? type === 'All'
                     ? 'bg-primary text-on-primary'
@@ -240,13 +271,20 @@ export default function AnnouncementsPage() {
 
         {/* Announcements List */}
         <div className="space-y-6">
-          {filteredAnnouncements.map((announcement) => {
+          {announcementsLoading ? (
+            <LoadingCardList label="Loading announcements…" count={3} />
+          ) : announcementsError ? (
+            <div role="alert" className="rounded-xl border border-error/30 bg-error-bg p-6 text-charcoal">
+              <h2 className="text-lg font-bold">We could not load announcements.</h2>
+              <p className="mt-1 text-text-light">Please refresh the page or try again later.</p>
+            </div>
+          ) : filteredAnnouncements.map((announcement) => {
             const isExpanded = expandedAnnouncements.has(announcement.id);
             return (
               <div
                 key={announcement.id}
                 id={announcement.id}
-                className="bg-card rounded-lg shadow-sm overflow-hidden border border-sage/20"
+                className="overflow-hidden rounded-xl border border-border bg-card shadow-sm"
               >
                 <button
                   onClick={() => toggleExpand(announcement.id)}
@@ -271,7 +309,7 @@ export default function AnnouncementsPage() {
                       )}
                     </div>
                   </div>
-                  <div className="mt-1 text-sm text-text/60">
+                  <div className="mt-1 text-sm text-text/60 tabular-nums">
                     Posted by {announcement.createdBy.displayName} •{' '}
                     {announcement.createdAt?.toDate().toLocaleDateString()}
                   </div>
@@ -286,7 +324,7 @@ export default function AnnouncementsPage() {
               </div>
             );
           })}
-          {filteredAnnouncements.length === 0 && (
+          {!announcementsLoading && !announcementsError && filteredAnnouncements.length === 0 && (
             <p className="text-text/50 text-center py-8">
               {selectedType === 'All' 
                 ? 'No announcements yet.'
@@ -297,4 +335,4 @@ export default function AnnouncementsPage() {
       </div>
     </div>
   );
-} 
+}

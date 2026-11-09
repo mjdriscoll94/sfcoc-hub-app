@@ -12,6 +12,16 @@ import {
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
+import { LoadingCardList } from '@/components/LoadingSkeleton';
+
+const SUBSCRIPTION_LABELS = {
+  announcements: 'Announcement emails',
+  events: 'Event emails',
+  newsletter: 'Newsletter emails',
+  prayerRequests: 'Prayer request notifications',
+  praiseReports: 'Praise report notifications',
+};
 
 function userHasEmailPassword(): boolean {
   const u = auth.currentUser;
@@ -124,13 +134,18 @@ export default function SettingsPage() {
         updatedAt: new Date()
       });
 
-      setSuccessMessage('Settings updated successfully');
-      console.log('Settings: Subscription updated successfully:', { type, value });
+      setSuccessMessage(`${SUBSCRIPTION_LABELS[type]} turned ${value ? 'on' : 'off'}.`);
     } catch (err) {
       console.error('Settings: Error updating subscription:', err);
       setError('Failed to update settings. Please try again.');
       // Revert local state on error
-      setLocalSubscriptions(userProfile?.emailSubscriptions || localSubscriptions);
+      setLocalSubscriptions((current) => ({
+        announcements: userProfile?.emailSubscriptions?.announcements ?? current.announcements,
+        events: userProfile?.emailSubscriptions?.events ?? current.events,
+        newsletter: userProfile?.emailSubscriptions?.newsletter ?? current.newsletter,
+        prayerRequests: userProfile?.emailSubscriptions?.prayerRequests ?? current.prayerRequests,
+        praiseReports: userProfile?.emailSubscriptions?.praiseReports ?? current.praiseReports,
+      }));
     } finally {
       setIsSaving(false);
     }
@@ -172,36 +187,26 @@ export default function SettingsPage() {
   if (!userProfile) {
     return (
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <p className="text-charcoal">Loading...</p>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-text">Settings</h1>
+          <p className="mt-2 text-base text-text/70">Manage your account, password, tour, and notification preferences.</p>
+        </div>
+        <LoadingCardList count={3} label="Loading settings…" />
       </div>
     );
   }
-
-  console.log('Current local subscriptions:', localSubscriptions);
-  console.log('Current profile subscriptions:', userProfile.emailSubscriptions);
 
   return (
     <div className="min-h-screen bg-bg text-text">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-text uppercase tracking-wide">Settings</h1>
-        </div>
-
-        {/* Settings Navigation */}
-        <div className="mb-8">
-          <nav className="flex space-x-8">
-            <Link
-              href="/settings"
-              className="text-primary border-b-2 border-primary pb-2 font-medium uppercase tracking-wide"
-            >
-              Notifications
-            </Link>
-          </nav>
+          <h1 className="text-3xl font-bold text-text">Settings</h1>
+          <p className="mt-2 text-base text-text/70">Manage your account, password, tour, and notification preferences.</p>
         </div>
 
         {/* Role Information */}
         <div className="bg-card border border-sage/20 rounded-lg p-6 mb-8">
-          <h2 className="text-lg font-medium text-text mb-4 uppercase tracking-wide">Account Role</h2>
+          <h2 className="mb-4 text-lg font-bold text-text">Account access</h2>
           <div className="flex items-center space-x-4">
             <div className={`px-3 py-1 rounded-full text-sm font-medium ${
               userProfile.role === 'admin' ? 'bg-primary text-on-primary' :
@@ -209,7 +214,9 @@ export default function SettingsPage() {
               userProfile.role === 'lifeGroupOrganizer' ? 'bg-[#7A9B82] text-white' :
               'bg-muted text-text/60'
             }`}>
-              {userProfile.role ? ROLE_DISPLAY_NAMES[userProfile.role] ?? userProfile.role : 'User'}
+              {userProfile.role === 'user' || !userProfile.role
+                ? 'Member'
+                : ROLE_DISPLAY_NAMES[userProfile.role] ?? userProfile.role}
             </div>
             <p className="text-sm text-text/70">
               {userProfile.role === 'admin' ? 'Full access to all features and administrative controls' :
@@ -224,7 +231,7 @@ export default function SettingsPage() {
 
         {userHasEmailPassword() && (
           <div className="bg-card border border-sage/20 rounded-lg p-6 mb-8">
-            <h2 className="text-lg font-medium text-text mb-2 uppercase tracking-wide">Password</h2>
+            <h2 className="mb-2 text-lg font-bold text-text">Password</h2>
             <p className="text-sm text-text/70 mb-4">
               Change the password you use to sign in with this email address. If you don&apos;t remember your current
               password, use{' '}
@@ -234,9 +241,10 @@ export default function SettingsPage() {
               instead.
             </p>
             <form onSubmit={handlePasswordChange} className="space-y-4 max-w-md">
+              <RequiredFieldsNote />
               <div>
                 <label htmlFor="current-password" className="block text-sm font-medium text-text mb-1">
-                  Current password
+                  Current password<RequiredFieldIndicator />
                 </label>
                 <input
                   id="current-password"
@@ -244,13 +252,13 @@ export default function SettingsPage() {
                   autoComplete="current-password"
                   value={currentPassword}
                   onChange={(e) => setCurrentPassword(e.target.value)}
-                  className="block w-full rounded-md border border-sage/20 bg-bg px-3 py-2 text-text focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-sage/20 bg-bg px-3 py-2 text-base text-text focus:ring-primary focus:border-primary"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="new-password-settings" className="block text-sm font-medium text-text mb-1">
-                  New password
+                  New password<RequiredFieldIndicator />
                 </label>
                 <input
                   id="new-password-settings"
@@ -259,13 +267,13 @@ export default function SettingsPage() {
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
                   minLength={6}
-                  className="block w-full rounded-md border border-sage/20 bg-bg px-3 py-2 text-text focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-sage/20 bg-bg px-3 py-2 text-base text-text focus:ring-primary focus:border-primary"
                   required
                 />
               </div>
               <div>
                 <label htmlFor="confirm-new-password" className="block text-sm font-medium text-text mb-1">
-                  Confirm new password
+                  Confirm new password<RequiredFieldIndicator />
                 </label>
                 <input
                   id="confirm-new-password"
@@ -274,7 +282,7 @@ export default function SettingsPage() {
                   value={confirmNewPassword}
                   onChange={(e) => setConfirmNewPassword(e.target.value)}
                   minLength={6}
-                  className="block w-full rounded-md border border-sage/20 bg-bg px-3 py-2 text-text focus:ring-primary focus:border-primary sm:text-sm"
+                  className="block min-h-11 w-full rounded-md border border-sage/20 bg-bg px-3 py-2 text-base text-text focus:ring-primary focus:border-primary"
                   required
                 />
               </div>
@@ -289,7 +297,7 @@ export default function SettingsPage() {
               <button
                 type="submit"
                 disabled={pwSaving}
-                className="px-4 py-2 rounded-md text-on-primary bg-primary text-sm font-semibold uppercase tracking-wide hover:opacity-90 disabled:opacity-50"
+                className="min-h-11 rounded-md bg-primary px-4 py-2 font-semibold text-white hover:opacity-90 disabled:opacity-50"
               >
                 {pwSaving ? 'Updating…' : 'Update password'}
               </button>
@@ -297,11 +305,25 @@ export default function SettingsPage() {
           </div>
         )}
 
+        <div className="mb-8 rounded-lg border border-sage/20 bg-card p-6">
+          <h2 className="text-lg font-bold text-text">Site tour</h2>
+          <p className="mt-2 text-base text-text/70">
+            Review where to find announcements, the calendar, church resources, and the Prayer Board.
+          </p>
+          <Link
+            href="/?tour=1"
+            className="mt-4 inline-flex min-h-11 items-center rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light"
+          >
+            Restart the site tour
+          </Link>
+        </div>
+
         <div className="bg-card border border-sage/20 rounded-lg p-6">
           <div className="space-y-6">
             {/* Email Subscriptions */}
             <div>
-              <h2 className="text-lg font-medium text-text mb-4 uppercase tracking-wide">Email Notifications</h2>
+              <h2 className="mb-2 text-lg font-bold text-text">Notifications</h2>
+              <p className="mb-5 text-sm text-text/70">Changes save automatically. The current setting is written next to each switch.</p>
             <div className="space-y-4">
               <div className="flex items-center justify-between py-2">
                 <div className="flex-1">
@@ -312,7 +334,8 @@ export default function SettingsPage() {
                     Receive emails about new church announcements
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                <span className="ml-4 text-sm font-semibold text-text/70">{localSubscriptions.announcements ? 'On' : 'Off'}</span>
+                <label className="relative ml-2 inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
                     id="announcements"
@@ -340,7 +363,8 @@ export default function SettingsPage() {
                     Receive notifications for new prayer requests
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                <span className="ml-4 text-sm font-semibold text-text/70">{localSubscriptions.prayerRequests ? 'On' : 'Off'}</span>
+                <label className="relative ml-2 inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
                     id="prayerRequests"
@@ -368,7 +392,8 @@ export default function SettingsPage() {
                     Receive notifications for new praise reports
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                <span className="ml-4 text-sm font-semibold text-text/70">{localSubscriptions.praiseReports ? 'On' : 'Off'}</span>
+                <label className="relative ml-2 inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
                     id="praiseReports"
@@ -396,7 +421,8 @@ export default function SettingsPage() {
                     Receive emails about upcoming church events
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                <span className="ml-4 text-sm font-semibold text-text/70">{localSubscriptions.events ? 'On' : 'Off'}</span>
+                <label className="relative ml-2 inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
                     id="events"
@@ -424,7 +450,8 @@ export default function SettingsPage() {
                     Receive our weekly church newsletter
                   </p>
                 </div>
-                <label className="relative inline-flex items-center cursor-pointer ml-4">
+                <span className="ml-4 text-sm font-semibold text-text/70">{localSubscriptions.newsletter ? 'On' : 'Off'}</span>
+                <label className="relative ml-2 inline-flex cursor-pointer items-center">
                   <input
                     type="checkbox"
                     id="newsletter"
@@ -447,13 +474,13 @@ export default function SettingsPage() {
 
             {/* Status Messages */}
             {successMessage && (
-              <div className="p-4 bg-success/10 border border-success/20 rounded-md">
+              <div role="status" className="p-4 bg-success/10 border border-success/20 rounded-md">
                 <p className="text-success">{successMessage}</p>
               </div>
             )}
 
             {error && (
-              <div className="p-4 bg-error/10 border border-error/20 rounded-md">
+              <div role="alert" className="p-4 bg-error/10 border border-error/20 rounded-md">
                 <p className="text-error">{error}</p>
               </div>
             )}
@@ -462,4 +489,4 @@ export default function SettingsPage() {
       </div>
     </div>
   );
-} 
+}

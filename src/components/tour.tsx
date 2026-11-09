@@ -209,13 +209,13 @@ function makePrayerBoardStepsMobile(
     },
     {
       id: "mobile-prayer-toggle",
-      title: "Expand or collapse",
+      title: "Read the full request",
       text: [
-        "Tap or click the caret to expand a request and read the full description, or collapse it to save space.",
+        "Long descriptions show a short preview. Tap \"See more\" to read the full request, then \"See less\" to shorten it again.",
       ],
       scrollTo: false,
       arrow: false,
-      beforeShowPromise: () => waitForElement("#tour-demo-caret", 3000),
+      beforeShowPromise: () => waitForElement("#tour-demo-see-more", 3000),
       buttons: [
         {
           classes: "shepherd-custom-button-secondary",
@@ -443,13 +443,13 @@ function makePrayerBoardSteps(
     },
     {
       id: "sixth-toggle",
-      title: "Expand or collapse",
+      title: "Read the full request",
       text: [
-        "Tap or click the caret to expand a request and read the full description, or collapse it to save space.",
+        "Long descriptions show a short preview. Select \"See more\" to read the full request, then \"See less\" to shorten it again.",
       ],
-      attachTo: { element: "#tour-demo-caret", on: "left" },
+      attachTo: { element: "#tour-demo-see-more", on: "left" },
       scrollTo: true,
-      beforeShowPromise: () => waitForElement("#tour-demo-caret", 3000),
+      beforeShowPromise: () => waitForElement("#tour-demo-see-more", 3000),
       buttons: [
         {
           classes: "shepherd-custom-button-secondary",

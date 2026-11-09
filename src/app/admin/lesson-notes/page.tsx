@@ -8,6 +8,7 @@ import { collection, addDoc, Timestamp, getDocs, deleteDoc, doc, query, orderBy,
 import { Upload, FileText, Trash2, ExternalLink, User } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { uploadLessonNotes } from '@/lib/cloudinary/upload';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface LessonNote {
   id: string;
@@ -38,14 +39,14 @@ export default function LessonNotesManagement() {
   const { userProfile } = useAuth();
   const router = useRouter();
 
-  // Redirect if not admin
-  if (!userProfile?.isAdmin) {
-    router.push('/');
-    return null;
-  }
+  useEffect(() => {
+    if (userProfile && !userProfile.isAdmin) router.push('/');
+  }, [router, userProfile]);
 
   // Fetch existing notes
   useEffect(() => {
+    if (!userProfile?.isAdmin) return;
+
     const fetchNotes = async () => {
       try {
         const q = query(collection(db, 'lesson-notes'), orderBy('uploadedAt', 'desc'));
@@ -76,7 +77,7 @@ export default function LessonNotesManagement() {
     };
 
     fetchNotes();
-  }, []);
+  }, [userProfile?.isAdmin]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -219,6 +220,8 @@ export default function LessonNotesManagement() {
     }
   };
 
+  if (!userProfile?.isAdmin) return null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
@@ -228,23 +231,25 @@ export default function LessonNotesManagement() {
 
       <div className="bg-card rounded-lg shadow-sm p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
+          <RequiredFieldsNote />
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              Lesson Title
+              Lesson Title<RequiredFieldIndicator />
             </label>
             <input
               type="text"
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
               className="mt-1 block w-full rounded-md border-gray-300 dark:border-white/10 shadow-sm focus:border-[#D6805F] focus:ring-[#D6805F] dark:bg-white/5 dark:text-white sm:text-sm px-4 py-2"
               placeholder="Enter the title for this lesson's notes"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 dark:text-gray-200">
-              PDF File
+            <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700 dark:text-gray-200">
+              PDF File<RequiredFieldIndicator />
             </label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 dark:border-white/10 border-dashed rounded-md">
               <div className="space-y-1 text-center">
@@ -257,6 +262,7 @@ export default function LessonNotesManagement() {
                       name="file-upload"
                       type="file"
                       accept=".pdf"
+                      required
                       className="sr-only"
                       onChange={handleFileChange}
                     />
@@ -364,4 +370,4 @@ export default function LessonNotesManagement() {
       </div>
     </div>
   );
-} 
+}

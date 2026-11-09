@@ -15,7 +15,7 @@ export default function FirebaseTest() {
     try {
       const app = getApp();
       setProjectInfo(`Current Project ID: ${app.options.projectId}`);
-    } catch (error) {
+    } catch {
       setProjectInfo('Could not get project info');
     }
   }, []);
@@ -90,11 +90,11 @@ export default function FirebaseTest() {
 
         <button
           onClick={runTest}
-          className="bg-coral text-white px-4 py-2 rounded hover:bg-opacity-90 transition-colors"
+          className="bg-primary text-on-primary px-4 py-2 rounded hover:bg-primary-hover transition-colors"
         >
           Run Test
         </button>
       </div>
     </div>
   );
-} 
+}

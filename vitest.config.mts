@@ -5,8 +5,11 @@ export default defineConfig({
     include: [
       'src/lib/mcp/**/*.test.ts',
       'src/lib/lifeGroups/**/*.test.ts',
+      'src/lib/auth/**/*.test.ts',
       'src/lib/utils/householdMembers.test.ts',
       'src/lib/utils/emailListImport.test.ts',
+      'src/lib/utils/__tests__/contrast.test.ts',
+      'src/types/**/*.test.ts',
     ],
   },
 });

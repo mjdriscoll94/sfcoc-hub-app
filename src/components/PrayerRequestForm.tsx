@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface PrayerRequestFormProps {
   onSubmit: (data: {
@@ -58,7 +59,7 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
 
       // Call success callback if provided
       onSuccess?.();
-    } catch (error) {
+    } catch {
       setSubmitMessage({ 
         type: 'error', 
         text: 'Failed to submit prayer request. Please try again.' 
@@ -92,9 +93,12 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
         </div>
       )}
 
+      <RequiredFieldsNote />
+
       <div>
-        <label className="block text-sm font-medium text-text">Type</label>
+        <label htmlFor="prayer-request-type" className="block text-sm font-medium text-text">Type</label>
         <select
+          id="prayer-request-type"
           value={formData.type}
           onChange={(e) => setFormData({ ...formData, type: e.target.value as 'prayer' | 'praise' })}
           className="mt-1 block w-full rounded-md border bg-card text-text placeholder:text-text-muted px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
@@ -106,8 +110,9 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text">Title</label>
+        <label htmlFor="prayer-request-title" className="block text-sm font-medium text-text">Title<RequiredFieldIndicator /></label>
         <input
+          id="prayer-request-title"
           type="text"
           required
           value={formData.title}
@@ -121,8 +126,9 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-text">Description</label>
+        <label htmlFor="prayer-request-description" className="block text-sm font-medium text-text">Description<RequiredFieldIndicator /></label>
         <textarea
+          id="prayer-request-description"
           required
           value={formData.description}
           onChange={(e) => setFormData({ ...formData, description: e.target.value })}
@@ -172,4 +178,4 @@ export default function PrayerRequestForm({ onSubmit, onSuccess }: PrayerRequest
       </button>
     </form>
   );
-} 
+}

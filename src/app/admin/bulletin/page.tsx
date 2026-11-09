@@ -8,6 +8,7 @@ import { collection, addDoc, Timestamp, getDocs, deleteDoc, doc, query, orderBy,
 import { Upload, FileText, Trash2, ExternalLink, User } from 'lucide-react';
 import BackButton from '@/components/BackButton';
 import { uploadBulletin } from '@/lib/cloudinary/upload';
+import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 interface Bulletin {
   id: string;
@@ -38,12 +39,13 @@ export default function BulletinManagement() {
   const { userProfile } = useAuth();
   const router = useRouter();
 
-  if (!userProfile?.isAdmin) {
-    router.push('/');
-    return null;
-  }
+  useEffect(() => {
+    if (userProfile && !userProfile.isAdmin) router.push('/');
+  }, [router, userProfile]);
 
   useEffect(() => {
+    if (!userProfile?.isAdmin) return;
+
     const fetchBulletins = async () => {
       try {
         const q = query(collection(db, 'bulletins'), orderBy('uploadedAt', 'desc'));
@@ -72,7 +74,7 @@ export default function BulletinManagement() {
     };
 
     fetchBulletins();
-  }, []);
+  }, [userProfile?.isAdmin]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -189,6 +191,8 @@ export default function BulletinManagement() {
     }
   };
 
+  if (!userProfile?.isAdmin) return null;
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-8 flex items-center">
@@ -198,22 +202,24 @@ export default function BulletinManagement() {
 
       <div className="bg-white rounded-lg shadow-sm p-6 border border-border">
         <form onSubmit={handleSubmit} className="space-y-6">
+          <RequiredFieldsNote />
           <div>
             <label htmlFor="title" className="block text-sm font-medium text-gray-700">
-              Bulletin Title
+              Bulletin Title<RequiredFieldIndicator />
             </label>
             <input
               type="text"
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
+              required
               className="mt-1 block w-full rounded-md border border-border shadow-sm focus:border-[#D6805F] focus:ring-[#D6805F] bg-white text-charcoal sm:text-sm px-4 py-2"
               placeholder="e.g., Bulletin - January 5, 2025"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700">PDF File</label>
+            <label htmlFor="file-upload" className="block text-sm font-medium text-gray-700">PDF File<RequiredFieldIndicator /></label>
             <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-border border-dashed rounded-md">
               <div className="space-y-1 text-center">
                 <FileText className="mx-auto h-12 w-12 text-gray-400" />
@@ -225,6 +231,7 @@ export default function BulletinManagement() {
                       name="file-upload"
                       type="file"
                       accept=".pdf"
+                      required
                       className="sr-only"
                       onChange={handleFileChange}
                     />

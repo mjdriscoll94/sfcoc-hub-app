@@ -3,7 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/lib/auth/AuthContext';
-import { ROLE_PERMISSIONS } from '@/types/roles';
+import { getRoleCapabilities } from '@/types/roles';
 
 const protectedPaths = [
   '/prayer-board',
@@ -11,6 +11,7 @@ const protectedPaths = [
   '/volunteer',
   '/admin',
   '/calendar',
+  '/life-groups',
   '/settings',
   '/directory'
 ];
@@ -22,13 +23,8 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
   const router = useRouter();
   const pathname = usePathname();
 
-  // Admin, Service Organizer, or Life Group Organizer can access admin routes (per-page enforcement for specific features)
-  const canAccessAdmin = userProfile?.isAdmin || (
-    userProfile?.role && (
-      ROLE_PERMISSIONS[userProfile.role]?.canManageAnnouncements ||
-      ROLE_PERMISSIONS[userProfile.role]?.canManageLifeGroups
-    )
-  );
+  // Per-page enforcement still controls which Manage Church tools each authorized role can use.
+  const canAccessAdmin = getRoleCapabilities(userProfile).canAccessManageChurch;
 
   useEffect(() => {
     if (!loading) {
@@ -64,4 +60,4 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
   }
 
   return <>{children}</>;
-} 
+}
