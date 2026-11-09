@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useRef } from 'react';
 import { usePrayerPraise, type PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import PrayerRequestForm from '@/components/PrayerRequestForm';
 import { addPrayerPraise } from '@/lib/firebase/utils';
@@ -26,6 +26,61 @@ const TOUR_DEMO_REQUEST: PrayerPraiseItem = {
   approvalStatus: 'approved',
 };
 
+function ExpandableDescription({
+  requestId,
+  description,
+  forceControl = false,
+}: {
+  requestId: string;
+  description: string;
+  forceControl?: boolean;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const [hasOverflow, setHasOverflow] = useState(false);
+  const descriptionRef = useRef<HTMLParagraphElement>(null);
+  const descriptionId = `prayer-description-${requestId}`;
+
+  useEffect(() => {
+    if (expanded) return;
+    const element = descriptionRef.current;
+    if (!element) return;
+
+    const measureOverflow = () => {
+      setHasOverflow(element.scrollHeight > element.clientHeight + 1);
+    };
+    measureOverflow();
+
+    if (typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver(measureOverflow);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [description, expanded]);
+
+  return (
+    <div className="mt-3">
+      <p
+        ref={descriptionRef}
+        id={descriptionId}
+        className={`whitespace-pre-wrap text-text/80 ${expanded ? '' : 'line-clamp-2'}`}
+      >
+        {description}
+      </p>
+      {hasOverflow || forceControl ? (
+        <button
+          id={forceControl ? 'tour-demo-see-more' : undefined}
+          type="button"
+          aria-controls={descriptionId}
+          aria-expanded={expanded}
+          onClick={() => setExpanded((current) => !current)}
+          className="mt-2 min-h-10 rounded-lg px-2 text-sm font-semibold text-coral-dark hover:bg-coral/10"
+        >
+          {expanded ? 'See less' : 'See more'}
+        </button>
+      ) : null}
+    </div>
+  );
+}
+
 export default function PrayerBoard() {
   useEffect(() => {
     document.title = 'Prayer Board | Sioux Falls Church of Christ';
@@ -33,7 +88,6 @@ export default function PrayerBoard() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set());
   const { userProfile } = useAuth();
   const { tourActive } = useTourActive();
 
@@ -81,18 +135,6 @@ export default function PrayerBoard() {
       console.error('Error adding prayer/praise:', error);
       throw error;
     }
-  };
-
-  const toggleCard = (id: string) => {
-    setExpandedCards(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) {
-        newSet.delete(id);
-      } else {
-        newSet.add(id);
-      }
-      return newSet;
-    });
   };
 
   return (
@@ -212,10 +254,7 @@ export default function PrayerBoard() {
               id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-request' : undefined}
               className="rounded-xl border border-border bg-card shadow-sm"
             >
-              <div 
-                className="p-6 cursor-pointer"
-                onClick={() => toggleCard(request.id)}
-              >
+              <div className="p-6">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
@@ -234,32 +273,18 @@ export default function PrayerBoard() {
                           : new Date(request.dateCreated).toLocaleDateString()}
                       </span>
                     </div>
-                    <div className="mt-2 flex items-center justify-between">
-                      <h3 className="text-lg font-medium text-text">
-                        {request.title}
-                      </h3>
-                      <span id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-caret' : undefined}>
-                        <svg
-                          className={`w-5 h-5 text-text/60 transition-transform ${
-                            expandedCards.has(request.id) ? 'transform rotate-180' : ''
-                          }`}
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth="2"
-                            d="M19 9l-7 7-7-7"
-                          />
-                        </svg>
-                      </span>
-                    </div>
+                    <h3 className="mt-2 text-lg font-medium text-text">
+                      {request.title}
+                    </h3>
+                    <ExpandableDescription
+                      requestId={request.id}
+                      description={request.description}
+                      forceControl={request.id === TOUR_DEMO_REQUEST_ID}
+                    />
                   </div>
                 </div>
                 
-                <div className="flex justify-between items-center text-sm mt-4">
+                <div className="mt-4 flex items-center justify-between border-t border-sage/20 pt-3 text-sm">
                   <span className="text-text font-medium">{request.isAnonymous ? 'Anonymous' : request.author.name}</span>
                   {request.id === TOUR_DEMO_REQUEST_ID ? (
                     <span
@@ -276,10 +301,8 @@ export default function PrayerBoard() {
                     </span>
                   ) : (
                   <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      incrementPrayerCount(request.id);
-                    }}
+                    type="button"
+                    onClick={() => incrementPrayerCount(request.id)}
                     className="group flex min-h-11 items-center space-x-2 rounded-lg px-2 hover:bg-bg hover:opacity-80"
                     style={{
                       color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
@@ -301,14 +324,6 @@ export default function PrayerBoard() {
                   )}
                 </div>
               </div>
-              
-              {expandedCards.has(request.id) && (
-                <div className="px-6 pb-6 pt-2 border-t border-sage/20">
-                  <p className="text-text/80 whitespace-pre-wrap">
-                    {request.description}
-                  </p>
-                </div>
-              )}
             </div>
           ))}
 
