@@ -6,7 +6,11 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeftIcon, PlusIcon, PencilIcon, TrashIcon } from '@heroicons/react/24/outline';
 import { ROLE_PERMISSIONS, type UserRole } from '@/types/roles';
-import { listNameFromFilename, parseEmailsFromRawText } from '@/lib/utils/emailListImport';
+import {
+  analyzeEmailsFromRawText,
+  listNameFromFilename,
+  parseEmailsFromRawText,
+} from '@/lib/utils/emailListImport';
 
 type EmailListSummary = { id: string; name: string; emailCount: number };
 
@@ -21,6 +25,8 @@ export default function AdminEmailListsPage() {
   const [formName, setFormName] = useState('');
   const [formEmailsText, setFormEmailsText] = useState('');
   const [importSummary, setImportSummary] = useState<string | null>(null);
+  const [importDuplicatesRemoved, setImportDuplicatesRemoved] = useState(0);
+  const [saveSummary, setSaveSummary] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
@@ -60,6 +66,8 @@ export default function AdminEmailListsPage() {
     setFormName('');
     setFormEmailsText('');
     setImportSummary(null);
+    setImportDuplicatesRemoved(0);
+    setSaveSummary(null);
     setShowForm(true);
   };
 
@@ -68,6 +76,8 @@ export default function AdminEmailListsPage() {
     setFormName('');
     setFormEmailsText('');
     setImportSummary(null);
+    setImportDuplicatesRemoved(0);
+    setSaveSummary(null);
     try {
       const res = await fetch(`/api/admin/email-lists/${id}`);
       if (!res.ok) throw new Error('Failed to load list');
@@ -86,13 +96,15 @@ export default function AdminEmailListsPage() {
     setFormName('');
     setFormEmailsText('');
     setImportSummary(null);
+    setImportDuplicatesRemoved(0);
   };
 
   const handleCsvSelected = async (file: File | null) => {
     if (!file) return;
     try {
       const raw = await file.text();
-      const imported = parseEmailsFromRawText(raw);
+      const analysis = analyzeEmailsFromRawText(raw);
+      const imported = analysis.emails;
       if (imported.length === 0) {
         setImportSummary(`No email addresses found in ${file.name}. Check the file format.`);
         return;
@@ -107,13 +119,17 @@ export default function AdminEmailListsPage() {
             added++;
           }
         }
-        setFormEmailsText([...existing].sort().join('\n'));
+        setImportDuplicatesRemoved((current) =>
+          current + analysis.duplicatesRemoved + (imported.length - added)
+        );
+        setFormEmailsText(Array.from(existing).sort().join('\n'));
         setImportSummary(
           added > 0
             ? `Merged ${added} new address${added !== 1 ? 'es' : ''} from ${file.name} (${imported.length} in file).`
             : `No new addresses to add from ${file.name} (all were already on this list).`
         );
       } else {
+        setImportDuplicatesRemoved(analysis.duplicatesRemoved);
         setFormEmailsText(imported.join('\n'));
         if (!formName.trim()) {
           setFormName(listNameFromFilename(file.name));
@@ -127,8 +143,6 @@ export default function AdminEmailListsPage() {
     }
   };
 
-  const getEmailsToSave = (): string[] => parseEmailsFromRawText(formEmailsText);
-
   const handleSave = async () => {
     if (!formName.trim()) {
       setError('List name is required.');
@@ -137,29 +151,36 @@ export default function AdminEmailListsPage() {
     setError(null);
     setSaving(true);
     try {
-      const emails = getEmailsToSave();
-      if (emails.length === 0) {
+      const analysis = analyzeEmailsFromRawText(formEmailsText);
+      if (analysis.emails.length === 0) {
         setError('Add at least one email address, or import a CSV file.');
         setSaving(false);
         return;
       }
+      let responseData: { duplicatesRemoved?: number };
       if (editingId) {
         const res = await fetch(`/api/admin/email-lists/${editingId}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: formName.trim(), emails }),
+          body: JSON.stringify({ name: formName.trim(), emails: analysis.entries }),
         });
         if (!res.ok) throw new Error((await res.json()).error || 'Failed to update');
+        responseData = await res.json();
       } else {
         const res = await fetch('/api/admin/email-lists', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ name: formName.trim(), emails }),
+          body: JSON.stringify({ name: formName.trim(), emails: analysis.entries }),
         });
         if (!res.ok) throw new Error((await res.json()).error || 'Failed to create');
+        responseData = await res.json();
       }
+      const duplicatesRemoved = importDuplicatesRemoved + (responseData.duplicatesRemoved ?? 0);
       await fetchLists();
       closeForm();
+      setSaveSummary(
+        `List saved. Removed ${duplicatesRemoved} duplicate email ${duplicatesRemoved === 1 ? 'address' : 'addresses'}.`
+      );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
     } finally {
@@ -208,8 +229,14 @@ export default function AdminEmailListsPage() {
       </div>
 
       {error && (
-        <div className="rounded-md bg-error-bg border border-error/30 p-3 text-error text-sm mb-6">
+        <div className="rounded-md bg-error-bg border border-error/30 p-3 text-error text-sm mb-6" role="alert">
           {error}
+        </div>
+      )}
+
+      {saveSummary && (
+        <div className="rounded-md bg-success-bg border border-success/30 p-3 text-success text-sm mb-6" role="status" aria-live="polite">
+          {saveSummary}
         </div>
       )}
 

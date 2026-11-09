@@ -1,15 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import admin from 'firebase-admin';
-
-function normalizeEmails(emails: string[]): string[] {
-  const set = new Set<string>();
-  for (const e of emails) {
-    const t = e.trim().toLowerCase();
-    if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(t)) set.add(t);
-  }
-  return [...set];
-}
+import { normalizeEmailListEntries } from '@/lib/utils/emailListImport';
 
 export async function GET() {
   try {
@@ -34,7 +26,9 @@ export async function POST(request: Request) {
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
-    const emails = normalizeEmails(Array.isArray(rawEmails) ? rawEmails : []);
+    const { emails, duplicatesRemoved } = normalizeEmailListEntries(
+      Array.isArray(rawEmails) ? rawEmails : []
+    );
     const adminDb = getAdminDb();
     const ref = await adminDb.collection('emailLists').add({
       name: name.trim(),
@@ -42,7 +36,12 @@ export async function POST(request: Request) {
       createdAt: admin.firestore.Timestamp.now(),
       updatedAt: admin.firestore.Timestamp.now(),
     });
-    return NextResponse.json({ id: ref.id, name: name.trim(), emailCount: emails.length });
+    return NextResponse.json({
+      id: ref.id,
+      name: name.trim(),
+      emailCount: emails.length,
+      duplicatesRemoved,
+    });
   } catch (error) {
     console.error('POST email-lists error:', error);
     return NextResponse.json({ error: 'Failed to create list' }, { status: 500 });
