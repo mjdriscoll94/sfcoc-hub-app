@@ -8,8 +8,10 @@ export class RequestAuthorizationError extends Error {
   }
 }
 
-type AuthorizedProfile = {
+export type AuthorizedProfile = {
   uid: string;
+  email: string | null;
+  displayName: string | null;
   role?: UserRole;
   isAdmin: boolean;
   approvalStatus?: string;
@@ -34,10 +36,16 @@ async function authorizedProfile(request: Request): Promise<AuthorizedProfile> {
 
   return {
     uid: decodedToken.uid,
+    email: typeof data.email === 'string' ? data.email : decodedToken.email ?? null,
+    displayName: typeof data.displayName === 'string' ? data.displayName : decodedToken.name ?? null,
     role: data.role,
     isAdmin: data.isAdmin === true,
     approvalStatus: data.approvalStatus,
   };
+}
+
+export async function requireApprovedMember(request: Request): Promise<AuthorizedProfile> {
+  return authorizedProfile(request);
 }
 
 export async function requireLeadershipMember(request: Request): Promise<AuthorizedProfile> {

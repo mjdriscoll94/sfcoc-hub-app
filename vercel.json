@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/prayer-archive",
+      "schedule": "0 14 * * *"
+    }
+  ]
+}

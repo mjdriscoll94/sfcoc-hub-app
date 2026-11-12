@@ -7,6 +7,9 @@ import BackButton from '@/components/BackButton';
 import ConfirmationModal from '@/components/ConfirmationModal';
 import { usePrayerPraise, PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import { PencilIcon, TrashIcon, ArchiveBoxIcon } from '@heroicons/react/24/outline';
+import { Download, RotateCcw } from 'lucide-react';
+import { authenticatedFetch } from '@/lib/api/authenticatedFetch';
+import PrayerFollowers from '@/components/admin/PrayerFollowers';
 
 export default function PrayerRequestsManagement() {
   useEffect(() => {
@@ -36,6 +39,9 @@ export default function PrayerRequestsManagement() {
   const [itemToDelete, setItemToDelete] = useState<PrayerPraiseItem | null>(null);
   const [itemToArchive, setItemToArchive] = useState<PrayerPraiseItem | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [includeConfidential, setIncludeConfidential] = useState(false);
+  const [includePendingRejected, setIncludePendingRejected] = useState(false);
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (userProfile && !userProfile.isAdmin) {
@@ -105,8 +111,43 @@ export default function PrayerRequestsManagement() {
     }
   };
 
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const handleRestore = async (item: PrayerPraiseItem) => {
+    setSaveError(null);
+    try {
+      await updatePrayerRequest(item.id, { action: 'restore' });
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to restore');
+    }
+  };
+
+  const exportRequests = async () => {
+    setExporting(true);
+    setSaveError(null);
+    try {
+      const params = new URLSearchParams({
+        includeConfidential: String(includeConfidential),
+        includePendingRejected: String(includePendingRejected),
+      });
+      const response = await authenticatedFetch(`/api/admin/prayer-requests/export?${params}`);
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        throw new Error(data?.error || 'The export could not be created.');
+      }
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `prayer-request-archive-${new Date().toISOString().slice(0, 10)}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'The export could not be created.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
   const recentItems = items.filter((item) => item.dateCreated >= thirtyDaysAgo);
   const olderItems = items.filter((item) => item.dateCreated < thirtyDaysAgo);
 
@@ -136,8 +177,30 @@ export default function PrayerRequestsManagement() {
       )}
 
       <p className="text-text-light mb-6">
-        View, edit, or delete prayer requests and praise reports. Changes take effect immediately.
+        View current and archived prayer requests and praise reports. Changes take effect immediately.
       </p>
+
+      <section className="mb-8 rounded-xl border border-border bg-white p-5 shadow-sm" aria-labelledby="prayer-export-heading">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h2 id="prayer-export-heading" className="text-xl font-bold text-charcoal">Export prayer requests</h2>
+            <p className="mt-1 text-sm text-text-light">Download a compact PDF of approved current and archived prayer requests.</p>
+          </div>
+          <button type="button" disabled={exporting} onClick={exportRequests} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light disabled:opacity-50">
+            <Download aria-hidden="true" className="h-4 w-4" /> {exporting ? 'Creating PDF…' : 'Download PDF'}
+          </button>
+        </div>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          <label className="flex items-start gap-2 rounded-lg border border-border p-3 text-sm text-charcoal">
+            <input type="checkbox" checked={includePendingRejected} onChange={(event) => setIncludePendingRejected(event.target.checked)} className="mt-1 h-4 w-4 rounded border-border text-coral-dark" />
+            <span><strong className="block">Include pending and rejected</strong><span className="text-text-light">Adds submissions that were not approved.</span></span>
+          </label>
+          <label className="flex items-start gap-2 rounded-lg border border-error/30 bg-error-bg/40 p-3 text-sm text-charcoal">
+            <input type="checkbox" checked={includeConfidential} onChange={(event) => setIncludeConfidential(event.target.checked)} className="mt-1 h-4 w-4 rounded border-border text-coral-dark" />
+            <span><strong className="block">Include confidential requests</strong><span className="text-text-light">The downloaded file will contain admin-only information.</span></span>
+          </label>
+        </div>
+      </section>
 
       {items.length === 0 ? (
         <div className="bg-white rounded-lg border border-border p-8 text-center">
@@ -275,6 +338,9 @@ export default function PrayerRequestsManagement() {
                               >
                                 {item.approvalStatus}
                               </span>
+                              <span className={`inline-flex items-center rounded px-2 py-0.5 text-xs font-medium ${item.status === 'archived' ? 'bg-gray-100 text-text-light' : 'bg-blue-50 text-blue-800'}`}>
+                                {item.status}
+                              </span>
                               {item.type === 'prayer' && item.priority && (
                                 <span className="inline-flex items-center rounded px-2 py-0.5 text-xs font-medium bg-charcoal/10 text-charcoal">
                                   {item.priority}
@@ -284,10 +350,11 @@ export default function PrayerRequestsManagement() {
                             <h3 className="text-lg font-semibold text-charcoal mt-2">{item.title}</h3>
                             <p className="text-sm text-text-light mt-1">
                               {item.isAnonymous ? 'Anonymous' : item.author.name} ·{' '}
-                              {item.dateCreated.toLocaleDateString()}
+                              {new Date(item.dateCreated).toLocaleDateString()}
                               {item.isAdminOnly && ' · Admin only'}
                             </p>
                             <p className="text-charcoal text-sm mt-2 whitespace-pre-wrap">{item.description}</p>
+                            {item.type === 'prayer' ? <PrayerFollowers requestId={item.id} count={item.followerCount} /> : null}
                           </div>
                           <div className="flex gap-2 flex-shrink-0">
                             <button
@@ -298,14 +365,15 @@ export default function PrayerRequestsManagement() {
                             >
                               <PencilIcon className="h-5 w-5" />
                             </button>
-                            <button
-                              type="button"
-                              onClick={() => handleArchiveClick(item)}
-                              className="p-2 text-amber-600 hover:bg-amber-50 rounded-md transition-colors"
-                              title="Archive"
-                            >
-                              <ArchiveBoxIcon className="h-5 w-5" />
-                            </button>
+                            {item.status === 'archived' ? (
+                              <button type="button" onClick={() => handleRestore(item)} className="p-2 text-coral-dark hover:bg-coral/10 rounded-md transition-colors" title="Restore" aria-label={`Restore ${item.title}`}>
+                                <RotateCcw className="h-5 w-5" />
+                              </button>
+                            ) : (
+                              <button type="button" onClick={() => handleArchiveClick(item)} className="p-2 text-amber-600 hover:bg-amber-50 rounded-md transition-colors" title="Archive" aria-label={`Archive ${item.title}`}>
+                                <ArchiveBoxIcon className="h-5 w-5" />
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => handleDeleteClick(item)}

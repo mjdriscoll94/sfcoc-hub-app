@@ -46,7 +46,7 @@ export default function PrayerRequestApprovalQueue() {
       await updateApprovalStatus(id, 'approved');
 
       // If it's an urgent prayer request, send email notification
-      if (item.type === 'prayer' && priority === 'Urgent') {
+      if (item.type === 'prayer' && priority === 'Urgent' && !item.isAdminOnly) {
         try {
           const subscribers = await getEmailSubscribers();
           await sendUrgentPrayerRequestEmail(subscribers, {
@@ -161,7 +161,7 @@ export default function PrayerRequestApprovalQueue() {
                     <p className="text-sm text-gray-600">
                       {item.type === 'prayer' ? 'Prayer Request' : 'Praise Report'} by{' '}
                       {item.isAnonymous ? 'Anonymous' : item.author.name} •{' '}
-                      {item.dateCreated.toLocaleDateString()}
+                      {new Date(item.dateCreated).toLocaleDateString()}
                     </p>
                     <p className="text-gray-700 text-sm mt-2">
                       {item.description}

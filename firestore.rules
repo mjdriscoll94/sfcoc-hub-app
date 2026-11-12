@@ -8,9 +8,16 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
+    // Prayer Board records are served only through authenticated server APIs so
+    // confidential requests, authorship, follows, updates, and exports can be enforced.
+    match /prayerPraise/{document=**} {
+      allow read, write: if false;
+    }
+
     // Temporary rule retained for existing collections until their rules are migrated.
     match /{topLevelCollection}/{document=**} {
-      allow read, write: if topLevelCollection != 'leadershipLessons';
+      allow read, write: if topLevelCollection != 'leadershipLessons'
+        && topLevelCollection != 'prayerPraise';
     }
 
     // These rules will be uncommented after initialization
