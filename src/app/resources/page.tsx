@@ -1,13 +1,16 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Download, FileText, Search } from 'lucide-react';
+import { Download, ExternalLink, FileText, Headphones, Search } from 'lucide-react';
 import { useBulletins, type Bulletin } from '@/hooks/useBulletins';
 import { useLessonNotes, type LessonNote } from '@/hooks/useLessonNotes';
 import { LoadingCardList } from '@/components/LoadingSkeleton';
 
 type ResourceTab = 'bulletins' | 'lesson-notes';
 type ResourceDocument = Pick<Bulletin | LessonNote, 'id' | 'title' | 'date' | 'fileUrl'>;
+
+const SPOTIFY_PODCAST_URL = 'https://open.spotify.com/show/6BUbTQmZOpUZ9KvpOLPtwy';
+const APPLE_PODCASTS_URL = 'https://podcasts.apple.com/us/podcast/beyond-sunday/id1838805862';
 
 function ResourceList({ documents, label }: { documents: ResourceDocument[]; label: string }) {
   if (documents.length === 0) {
@@ -56,7 +59,7 @@ export default function ResourcesPage() {
   const [year, setYear] = useState('all');
 
   useEffect(() => {
-    document.title = 'Bulletin & Lesson Notes | Sioux Falls Church of Christ';
+    document.title = 'Resources | Sioux Falls Church of Christ';
   }, []);
 
   const years = useMemo(
@@ -82,9 +85,42 @@ export default function ResourcesPage() {
       <div className="mx-auto max-w-5xl px-4 py-8 sm:px-6 lg:px-8 lg:py-12">
         <header>
           <p className="font-semibold text-coral-dark">Church resources</p>
-          <h1 className="mt-1 text-3xl font-bold text-charcoal sm:text-4xl">Bulletin & Lesson Notes</h1>
-          <p className="mt-3 max-w-2xl text-lg text-text-light">Find the latest weekly bulletin and downloadable notes from recent lessons.</p>
+          <h1 className="mt-1 text-3xl font-bold text-charcoal sm:text-4xl">Resources</h1>
+          <p className="mt-3 max-w-2xl text-lg text-text-light">Find the weekly bulletin, lesson notes, and the Beyond Sunday podcast.</p>
         </header>
+
+        <section className="mt-8 rounded-2xl border border-border bg-white p-5 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-6" aria-labelledby="podcast-heading">
+          <div className="flex items-start gap-4">
+            <span className="rounded-xl bg-coral/15 p-3 text-coral-dark">
+              <Headphones aria-hidden="true" className="h-6 w-6" />
+            </span>
+            <div>
+              <p className="text-sm font-bold uppercase tracking-wide text-coral-dark">Podcast</p>
+              <h2 id="podcast-heading" className="mt-1 text-2xl font-bold text-charcoal">Beyond Sunday</h2>
+              <p className="mt-2 max-w-xl text-text-light">Listen to conversations and lessons that help carry faith into the rest of the week.</p>
+            </div>
+          </div>
+          <div className="mt-5 grid gap-3 sm:mt-0 sm:min-w-52">
+            <a
+              href={SPOTIFY_PODCAST_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center justify-between gap-3 rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Listen on Spotify
+              <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
+            </a>
+            <a
+              href={APPLE_PODCASTS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex min-h-11 items-center justify-between gap-3 rounded-lg border-2 border-charcoal px-4 font-semibold text-charcoal hover:bg-gray-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary"
+            >
+              Apple Podcasts
+              <ExternalLink aria-hidden="true" className="h-4 w-4 shrink-0" />
+            </a>
+          </div>
+        </section>
 
         <div className="mt-8 border-b border-border" role="tablist" aria-label="Resource type">
           <button

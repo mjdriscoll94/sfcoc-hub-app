@@ -323,7 +323,18 @@ export default function Navigation() {
               <div className="space-y-3 py-2">
                 {menuSection('Member Information', memberInformation)}
                 {menuSection('Participate', participate)}
-                {menuSection('Church Resources', churchResources)}
+                <section aria-labelledby="menu-church-resources" className="space-y-1">
+                  <h2 id="menu-church-resources" className="px-3 pt-3 text-sm font-bold text-text-light">Church Resources</h2>
+                  {churchResources.map((item) => <MemberLink key={item.href} item={item} onClick={closeMore} compact />)}
+                  <button
+                    type="button"
+                    onClick={() => { setMoreOpen(false); setPodcastOpen(true); }}
+                    className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left text-base font-medium text-charcoal hover:bg-gray-100 focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary"
+                  >
+                    <Headphones aria-hidden="true" className="h-5 w-5 shrink-0" />
+                    Podcast
+                  </button>
+                </section>
                 <section aria-labelledby="menu-account" className="space-y-1">
                   <h2 id="menu-account" className="px-3 pt-3 text-sm font-bold text-text-light">Account</h2>
                   <MemberLink item={{ href: '/settings', label: 'Settings', icon: Settings }} onClick={closeMore} compact />
