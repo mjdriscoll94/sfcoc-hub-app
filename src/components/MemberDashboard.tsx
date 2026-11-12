@@ -12,6 +12,7 @@ import {
   FileText,
   Gift,
   HandHeart,
+  Headphones,
   Heart,
   Megaphone,
   PlayCircle,
@@ -19,6 +20,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useMemberDashboard } from '@/hooks/useMemberDashboard';
+import { useDashboardMedia } from '@/hooks/useDashboardMedia';
 import { isOnboardingTourActive, useOnboardingTour, useTourActive } from '@/components/tour';
 import { LoadingSkeleton } from '@/components/LoadingSkeleton';
 
@@ -84,6 +86,7 @@ function DashboardRowsSkeleton({ label, rows = 3 }: { label: string; rows?: numb
 export function MemberDashboard() {
   const { userProfile, markOnboardingTourSeen } = useAuth();
   const dashboard = useMemberDashboard();
+  const dashboardMedia = useDashboardMedia();
   const startTour = useOnboardingTour();
   const { setTourActive } = useTourActive();
   const router = useRouter();
@@ -223,18 +226,23 @@ export function MemberDashboard() {
               <span className="rounded-lg bg-coral/15 p-2 text-coral-dark"><FileText aria-hidden="true" className="h-6 w-6" /></span>
               <div>
                 <h2 id="weekly-resources-heading" className="text-2xl font-bold text-charcoal">This week’s resources</h2>
-                <p className="mt-1 text-sm text-text-light">Open the newest bulletin and lesson notes directly.</p>
+                <p className="mt-1 text-sm text-text-light">Open the newest bulletin, lesson notes, sermon, and podcast episode.</p>
               </div>
             </div>
             <Link href="/resources" className="inline-flex min-h-11 items-center gap-1 rounded-lg px-2 text-sm font-semibold text-coral-dark hover:bg-coral/10">
               Browse all resources<ArrowRight aria-hidden="true" className="h-4 w-4" />
             </Link>
           </div>
-          <div className="mt-5">
+          <div className="mt-5 grid gap-3 sm:grid-cols-2">
             {dashboard.loading ? (
-              <DashboardRowsSkeleton label="Loading the latest resources…" rows={2} />
+              Array.from({ length: 2 }, (_, index) => (
+                <div key={`document-resource-${index}`} role="status" aria-label="Loading document resource" className="min-h-20 rounded-xl bg-bg p-4">
+                  <LoadingSkeleton className="h-5 w-32 rounded-md" />
+                  <LoadingSkeleton className="mt-2 h-4 w-3/4 rounded-md" />
+                </div>
+              ))
             ) : (
-              <div className="grid gap-3 sm:grid-cols-2">
+              <>
                 {dashboard.bulletin ? (
                   <a href={dashboard.bulletin.fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
                     <span><strong className="block text-charcoal">Latest bulletin</strong><span className="mt-1 block text-sm text-text-light">{dashboard.bulletin.title} • {formatShortDate(dashboard.bulletin.date)}</span></span>
@@ -247,7 +255,44 @@ export function MemberDashboard() {
                     <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
                   </a>
                 ) : <p className="rounded-xl bg-bg p-4 text-text-light">No lesson notes are currently available.</p>}
-              </div>
+              </>
+            )}
+
+            {dashboardMedia.loading ? (
+              Array.from({ length: 2 }, (_, index) => (
+                <div key={`media-resource-${index}`} role="status" aria-label="Loading media resource" className="min-h-20 rounded-xl bg-bg p-4">
+                  <LoadingSkeleton className="h-5 w-32 rounded-md" />
+                  <LoadingSkeleton className="mt-2 h-4 w-3/4 rounded-md" />
+                </div>
+              ))
+            ) : (
+              <>
+                {dashboardMedia.sermon ? (
+                  <a href={dashboardMedia.sermon.url} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
+                    <span className="flex min-w-0 items-start gap-3">
+                      <PlayCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-coral-dark" />
+                      <span className="min-w-0"><strong className="block text-charcoal">Latest sermon</strong><span className="mt-1 block text-sm text-text-light">{dashboardMedia.sermon.title} • {formatShortDate(new Date(dashboardMedia.sermon.publishedAt))}</span></span>
+                    </span>
+                    <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
+                  </a>
+                ) : (
+                  <Link href="/sermons" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
+                    <span className="flex min-w-0 items-start gap-3">
+                      <PlayCircle aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-coral-dark" />
+                      <span><strong className="block text-charcoal">Latest sermon</strong><span className="mt-1 block text-sm text-text-light">Browse recent sermons.</span></span>
+                    </span>
+                    <ArrowRight aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
+                  </Link>
+                )}
+
+                <a href={dashboardMedia.podcast?.url ?? dashboardMedia.podcastShowUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
+                  <span className="flex min-w-0 items-start gap-3">
+                    <Headphones aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-coral-dark" />
+                    <span className="min-w-0"><strong className="block text-charcoal">Latest podcast episode</strong><span className="mt-1 block text-sm text-text-light">{dashboardMedia.podcast ? `${dashboardMedia.podcast.title} • ${formatShortDate(new Date(dashboardMedia.podcast.publishedAt))}` : 'Open Beyond Sunday on Spotify.'}</span></span>
+                  </span>
+                  <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
+                </a>
+              </>
             )}
           </div>
         </section>
