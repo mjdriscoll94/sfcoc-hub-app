@@ -4,8 +4,20 @@ const LOGO_URL =
 const BASE_URL =
   process.env.NEXT_PUBLIC_BASE_URL || 'https://app.siouxfallschurchofchrist.org';
 
-/** Same wrapper as admin broadcast emails: logo, body, footer with preferences link. */
-function wrapMemberEmailContent(content: string): string {
+interface MemberEmailOptions {
+  unsubscribeUrl?: string;
+}
+
+/** Same wrapper as admin broadcast emails: logo, body, and member email controls. */
+function wrapMemberEmailContent(content: string, options: MemberEmailOptions = {}): string {
+  const unsubscribeCopy = options.unsubscribeUrl
+    ? `
+        <br />
+        Don’t want optional church emails?
+        <a href="${options.unsubscribeUrl}" style="color: #B9471F; text-decoration: underline;">Unsubscribe from church emails</a>.
+        Essential account and security messages may still be sent.
+      `
+    : '';
   return `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
       <div style="text-align: center; margin-bottom: 20px;">
@@ -17,26 +29,30 @@ function wrapMemberEmailContent(content: string): string {
       <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
       <p style="color: #999; font-size: 12px;">
         You received this email from Sioux Falls Church of Christ.
-        <a href="${BASE_URL}/settings" style="color: #E88B5F;">Manage your email preferences</a>
+        <a href="${BASE_URL}/settings" style="color: #B9471F; text-decoration: underline;">Manage your email preferences</a>.
+        ${unsubscribeCopy}
       </p>
     </div>
   `;
 }
 
 /** Wrap plain-text content safely for member emails. */
-export function wrapMemberEmailHtml(content: string): string {
+export function wrapMemberEmailHtml(content: string, options: MemberEmailOptions = {}): string {
   const escaped = content
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/\n/g, '<br />');
-  return wrapMemberEmailContent(escaped);
+  return wrapMemberEmailContent(escaped, options);
 }
 
 /**
  * Wrap pre-sanitized HTML content for member emails.
  * Callers must escape all dynamic values before building the markup.
  */
-export function wrapMemberEmailFormattedHtml(content: string): string {
-  return wrapMemberEmailContent(content);
+export function wrapMemberEmailFormattedHtml(
+  content: string,
+  options: MemberEmailOptions = {}
+): string {
+  return wrapMemberEmailContent(content, options);
 }

@@ -16,6 +16,7 @@ export async function buildMimeMessage(options: {
   text?: string;
   replyTo?: string[];
   attachments: EmailAttachment[];
+  headers?: Record<string, string>;
 }): Promise<Buffer> {
   const composer = new MailComposer({
     from: options.from,
@@ -24,6 +25,7 @@ export async function buildMimeMessage(options: {
     html: options.html,
     text: options.text,
     ...(options.replyTo?.length ? { replyTo: options.replyTo.join(', ') } : {}),
+    ...(options.headers ? { headers: options.headers } : {}),
     attachments: options.attachments.map((att) => ({
       filename: att.filename,
       content: att.content,
@@ -45,6 +47,7 @@ export async function sendRawMailViaSES(
     text?: string;
     replyTo?: string[];
     attachments: EmailAttachment[];
+    headers?: Record<string, string>;
   }
 ): Promise<{ messageId: string }> {
   const toAddresses = Array.from(new Set(Array.isArray(options.to) ? options.to : [options.to]));
@@ -64,6 +67,7 @@ export async function sendRawMailViaSES(
       text: options.text,
       replyTo: options.replyTo,
       attachments: options.attachments,
+      headers: options.headers,
     });
 
     const command = new SendRawEmailCommand({

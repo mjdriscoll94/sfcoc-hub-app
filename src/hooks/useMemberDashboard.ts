@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
+import { localDateFromDateOnlyKey } from '@/lib/calendar/dateOnly';
 
 export type DashboardAnnouncement = {
   id: string;
@@ -16,6 +17,7 @@ export type DashboardEvent = {
   title: string;
   startDate: Date;
   allDay: boolean;
+  dateKey?: string;
   location?: string;
 };
 
@@ -95,7 +97,10 @@ export function useMemberDashboard(): DashboardState & { retry: () => void } {
             })),
             events: (data.events || []).map((event) => ({
               ...event,
-              startDate: new Date(event.startDate),
+              startDate:
+                (event.allDay && event.dateKey
+                  ? localDateFromDateOnlyKey(event.dateKey)
+                  : null) ?? new Date(event.startDate),
             })),
             bulletin: data.bulletin ? { ...data.bulletin, date: new Date(data.bulletin.date) } : null,
             lessonNote: data.lessonNote ? { ...data.lessonNote, date: new Date(data.lessonNote.date) } : null,

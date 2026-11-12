@@ -28,7 +28,7 @@ export default function AdminSendEmailPage() {
   const [attachments, setAttachments] = useState<File[]>([]);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<{ count: number } | null>(null);
+  const [success, setSuccess] = useState<{ count: number; suppressedCount: number } | null>(null);
 
   const [testEmail, setTestEmail] = useState('');
   const [testSending, setTestSending] = useState(false);
@@ -131,7 +131,10 @@ export default function AdminSendEmailPage() {
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to send');
-      setSuccess({ count: data.recipientCount ?? 0 });
+      setSuccess({
+        count: data.recipientCount ?? 0,
+        suppressedCount: data.suppressedCount ?? 0,
+      });
       setSubject('');
       setBody('');
       setAttachments([]);
@@ -360,6 +363,9 @@ export default function AdminSendEmailPage() {
         {success && (
           <div className="rounded-md bg-success-bg border border-success/30 p-3 text-success text-sm">
             Email sent successfully to {success.count} recipient{success.count !== 1 ? 's' : ''}.
+            {success.suppressedCount > 0 && (
+              <> Skipped {success.suppressedCount} unsubscribed address{success.suppressedCount !== 1 ? 'es' : ''}.</>
+            )}
           </div>
         )}
 

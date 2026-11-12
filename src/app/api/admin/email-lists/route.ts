@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getAdminDb } from '@/lib/firebase/admin';
 import admin from 'firebase-admin';
 import { normalizeEmailListEntries } from '@/lib/utils/emailListImport';
+import { filterSuppressedEmailAddresses } from '@/lib/email/unsubscribeStore';
 
 export async function GET() {
   try {
@@ -26,10 +27,14 @@ export async function POST(request: Request) {
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Name is required' }, { status: 400 });
     }
-    const { emails, duplicatesRemoved } = normalizeEmailListEntries(
+    const { emails: normalizedEmails, duplicatesRemoved } = normalizeEmailListEntries(
       Array.isArray(rawEmails) ? rawEmails : []
     );
     const adminDb = getAdminDb();
+    const { emails, suppressedCount } = await filterSuppressedEmailAddresses(
+      adminDb,
+      normalizedEmails
+    );
     const ref = await adminDb.collection('emailLists').add({
       name: name.trim(),
       emails,
@@ -41,6 +46,7 @@ export async function POST(request: Request) {
       name: name.trim(),
       emailCount: emails.length,
       duplicatesRemoved,
+      suppressedRemoved: suppressedCount,
     });
   } catch (error) {
     console.error('POST email-lists error:', error);

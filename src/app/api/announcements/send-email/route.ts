@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/firebase/config';
 import { collection, getDocs, query, where } from 'firebase/firestore';
-import { sendAnnouncementEmail } from '@/lib/email/emailService';
+import { sendAnnouncementEmail, type EmailSubscriber } from '@/lib/email/emailService';
 
 export async function POST(request: Request) {
   try {
@@ -19,11 +19,22 @@ export async function POST(request: Request) {
     const q = query(usersRef, where('emailSubscriptions.announcements', '==', true));
     const querySnapshot = await getDocs(q);
 
-    const subscribedEmails = querySnapshot.docs
-      .map(doc => doc.data().email)
-      .filter(Boolean); // Remove any undefined or null emails
+    const subscribers = querySnapshot.docs
+      .map((document): EmailSubscriber => {
+        const data = document.data();
+        return {
+          email: String(data.email || ''),
+          name: data.displayName ? String(data.displayName) : undefined,
+          emailSubscriptions: data.emailSubscriptions || {
+            announcements: true,
+            events: false,
+            newsletter: false,
+          },
+        };
+      })
+      .filter((subscriber) => subscriber.email);
 
-    if (subscribedEmails.length === 0) {
+    if (subscribers.length === 0) {
       return NextResponse.json(
         { message: 'No subscribed users found' },
         { status: 200 }
@@ -31,9 +42,11 @@ export async function POST(request: Request) {
     }
 
     // Send the announcement email
-    const result = await sendAnnouncementEmail(subscribedEmails, announcement);
+    const subject = String(announcement.title || 'Church announcement');
+    const content = String(announcement.content || '');
+    const result = await sendAnnouncementEmail(subscribers, subject, content);
 
-    if (!result.success) {
+    if (result && !result.success) {
       return NextResponse.json(
         { error: 'Failed to send announcement email' },
         { status: 500 }
@@ -42,7 +55,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ 
       success: true,
-      recipientCount: subscribedEmails.length
+      recipientCount: subscribers.length
     });
   } catch (error) {
     console.error('Error sending announcement email:', error);
@@ -51,4 +64,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}

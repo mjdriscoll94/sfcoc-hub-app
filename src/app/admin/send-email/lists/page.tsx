@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useAuth } from '@/lib/auth/AuthContext';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
@@ -14,11 +14,18 @@ import {
 import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 
 type EmailListSummary = { id: string; name: string; emailCount: number };
+type UnsubscribedAddress = {
+  id: string;
+  email: string;
+  unsubscribedAt: string | null;
+  removedFromLists: Array<{ id: string; name: string }>;
+};
 
 export default function AdminEmailListsPage() {
-  const { userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const router = useRouter();
   const [lists, setLists] = useState<EmailListSummary[]>([]);
+  const [unsubscribed, setUnsubscribed] = useState<UnsubscribedAddress[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
@@ -41,26 +48,39 @@ export default function AdminEmailListsPage() {
     document.title = 'Email Lists | Admin | Sioux Falls Church of Christ';
   }, []);
 
-  const fetchLists = async () => {
+  const fetchLists = useCallback(async () => {
     try {
-      const res = await fetch('/api/admin/email-lists');
-      if (!res.ok) throw new Error('Failed to load lists');
-      const data = await res.json();
-      setLists(data);
+      if (!user) return;
+      const token = await user.getIdToken();
+      const [listsResponse, unsubscribedResponse] = await Promise.all([
+        fetch('/api/admin/email-lists'),
+        fetch('/api/admin/email-unsubscribes', {
+          headers: { Authorization: `Bearer ${token}` },
+        }),
+      ]);
+      if (!listsResponse.ok) throw new Error('Failed to load lists');
+      if (!unsubscribedResponse.ok) throw new Error('Failed to load unsubscribed addresses');
+      const [listsData, unsubscribedData] = await Promise.all([
+        listsResponse.json(),
+        unsubscribedResponse.json(),
+      ]);
+      setLists(listsData);
+      setUnsubscribed(unsubscribedData.unsubscribed ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to load lists');
     } finally {
       setLoading(false);
     }
-  };
+  }, [user]);
 
   useEffect(() => {
+    if (authLoading) return;
     if (!canAccessAdmin) {
       router.push('/');
       return;
     }
-    fetchLists();
-  }, [canAccessAdmin, router]);
+    void fetchLists();
+  }, [authLoading, canAccessAdmin, fetchLists, router]);
 
   const openCreate = () => {
     setEditingId(null);
@@ -158,7 +178,7 @@ export default function AdminEmailListsPage() {
         setSaving(false);
         return;
       }
-      let responseData: { duplicatesRemoved?: number };
+      let responseData: { duplicatesRemoved?: number; suppressedRemoved?: number };
       if (editingId) {
         const res = await fetch(`/api/admin/email-lists/${editingId}`, {
           method: 'PATCH',
@@ -177,10 +197,15 @@ export default function AdminEmailListsPage() {
         responseData = await res.json();
       }
       const duplicatesRemoved = importDuplicatesRemoved + (responseData.duplicatesRemoved ?? 0);
+      const suppressedRemoved = responseData.suppressedRemoved ?? 0;
       await fetchLists();
       closeForm();
       setSaveSummary(
-        `List saved. Removed ${duplicatesRemoved} duplicate email ${duplicatesRemoved === 1 ? 'address' : 'addresses'}.`
+        `List saved. Removed ${duplicatesRemoved} duplicate email ${duplicatesRemoved === 1 ? 'address' : 'addresses'}${
+          suppressedRemoved > 0
+            ? ` and excluded ${suppressedRemoved} unsubscribed ${suppressedRemoved === 1 ? 'address' : 'addresses'}`
+            : ''
+        }.`
       );
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -200,7 +225,7 @@ export default function AdminEmailListsPage() {
     }
   };
 
-  if (!canAccessAdmin) return null;
+  if (authLoading || !canAccessAdmin) return null;
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -321,65 +346,114 @@ export default function AdminEmailListsPage() {
         </div>
       )}
 
-      {loading ? (
-        <div className="text-text-light">Loading lists…</div>
-      ) : lists.length === 0 ? (
-        <div className="bg-white rounded-lg border border-border p-8 text-center text-text-light">
-          No email lists yet. Create one to send to a custom group of addresses.
-        </div>
-      ) : (
-        <ul className="space-y-3">
-          {lists.map((list) => (
-            <li
-              key={list.id}
-              className="bg-white rounded-lg border border-border p-4 flex flex-wrap items-center justify-between gap-3"
-            >
-              <div>
-                <p className="font-medium text-charcoal">{list.name}</p>
-                <p className="text-sm text-text-light">{list.emailCount} address{list.emailCount !== 1 ? 'es' : ''}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => openEdit(list.id)}
-                  className="p-2 text-charcoal hover:bg-gray-100 rounded-lg"
-                  aria-label={`Edit ${list.name}`}
-                >
-                  <PencilIcon className="h-5 w-5" />
-                </button>
-                {deleteConfirm === list.id ? (
-                  <>
-                    <span className="text-sm text-error">Delete?</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(list.id)}
-                      className="px-2 py-1 text-sm bg-error text-white rounded"
-                    >
-                      Yes
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setDeleteConfirm(null)}
-                      className="px-2 py-1 text-sm border border-border rounded"
-                    >
-                      No
-                    </button>
-                  </>
-                ) : (
+      <section aria-labelledby="saved-email-lists-heading">
+        <h2 id="saved-email-lists-heading" className="text-xl font-semibold text-charcoal mb-4">
+          Saved lists
+        </h2>
+        {loading ? (
+          <div className="text-text-light">Loading lists…</div>
+        ) : lists.length === 0 ? (
+          <div className="bg-white rounded-lg border border-border p-8 text-center text-text-light">
+            No email lists yet. Create one to send to a custom group of addresses.
+          </div>
+        ) : (
+          <ul className="space-y-3">
+            {lists.map((list) => (
+              <li
+                key={list.id}
+                className="bg-white rounded-lg border border-border p-4 flex flex-wrap items-center justify-between gap-3"
+              >
+                <div>
+                  <p className="font-medium text-charcoal">{list.name}</p>
+                  <p className="text-sm text-text-light">{list.emailCount} address{list.emailCount !== 1 ? 'es' : ''}</p>
+                </div>
+                <div className="flex items-center gap-2">
                   <button
                     type="button"
-                    onClick={() => setDeleteConfirm(list.id)}
-                    className="p-2 text-error hover:bg-error-bg rounded-lg"
-                    aria-label={`Delete ${list.name}`}
+                    onClick={() => openEdit(list.id)}
+                    className="p-2 text-charcoal hover:bg-gray-100 rounded-lg"
+                    aria-label={`Edit ${list.name}`}
                   >
-                    <TrashIcon className="h-5 w-5" />
+                    <PencilIcon className="h-5 w-5" />
                   </button>
+                  {deleteConfirm === list.id ? (
+                    <>
+                      <span className="text-sm text-error">Delete?</span>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(list.id)}
+                        className="px-2 py-1 text-sm bg-error text-white rounded"
+                      >
+                        Yes
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setDeleteConfirm(null)}
+                        className="px-2 py-1 text-sm border border-border rounded"
+                      >
+                        No
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => setDeleteConfirm(list.id)}
+                      className="p-2 text-error hover:bg-error-bg rounded-lg"
+                      aria-label={`Delete ${list.name}`}
+                    >
+                      <TrashIcon className="h-5 w-5" />
+                    </button>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="mt-10" aria-labelledby="unsubscribed-addresses-heading">
+        <div className="mb-4">
+          <h2 id="unsubscribed-addresses-heading" className="text-xl font-semibold text-charcoal">
+            Unsubscribed addresses
+          </h2>
+          <p className="mt-1 text-sm text-text-light">
+            These addresses are excluded from every optional email, even if they appear in an imported file.
+          </p>
+        </div>
+        {!loading && unsubscribed.length === 0 ? (
+          <div className="rounded-lg border border-border bg-white p-6 text-sm text-text-light">
+            No one has unsubscribed from all church emails.
+          </div>
+        ) : !loading ? (
+          <ul className="space-y-3">
+            {unsubscribed.map((entry) => (
+              <li key={entry.id} className="rounded-lg border border-border bg-white p-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="min-w-0">
+                    <p className="break-all font-medium text-charcoal">{entry.email}</p>
+                    <p className="mt-1 text-sm text-text-light">
+                      {entry.unsubscribedAt
+                        ? `Unsubscribed ${new Intl.DateTimeFormat('en-US', {
+                            dateStyle: 'medium',
+                            timeStyle: 'short',
+                          }).format(new Date(entry.unsubscribedAt))}`
+                        : 'Unsubscribed date unavailable'}
+                    </p>
+                  </div>
+                  <span className="w-fit rounded-full bg-muted px-3 py-1 text-xs font-medium text-charcoal">
+                    Globally excluded
+                  </span>
+                </div>
+                {entry.removedFromLists.length > 0 && (
+                  <p className="mt-3 text-sm text-text-light">
+                    Removed from: {entry.removedFromLists.map((list) => list.name).join(', ')}
+                  </p>
                 )}
-              </div>
-            </li>
-          ))}
-        </ul>
-      )}
+              </li>
+            ))}
+          </ul>
+        ) : null}
+      </section>
     </div>
   );
 }
