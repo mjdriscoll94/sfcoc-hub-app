@@ -65,7 +65,7 @@ export default function LeadershipLessonPage() {
           <p className="mt-3 max-w-3xl text-lg leading-8 text-text-light">{lesson.description}</p>
         </header>
 
-        <div className="mt-8 grid items-start gap-6 lg:grid-cols-[minmax(320px,440px)_minmax(0,1fr)] lg:gap-10">
+        <div className={`mt-8 grid items-start gap-6 lg:gap-10 ${lesson.pdfUrl ? 'lg:grid-cols-[minmax(320px,440px)_minmax(0,1fr)]' : 'justify-center'}`}>
           <div className="mx-auto aspect-[9/16] w-full max-w-[420px] overflow-hidden rounded-2xl bg-black shadow-lg">
             <iframe
               src={youtubeEmbedUrl(lesson.youtubeVideoId)}
@@ -77,7 +77,7 @@ export default function LeadershipLessonPage() {
             />
           </div>
 
-          <aside className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6" aria-labelledby="lesson-resource-heading">
+          {lesson.pdfUrl ? <aside className="rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6" aria-labelledby="lesson-resource-heading">
             <span className="inline-flex rounded-xl bg-coral/15 p-3 text-coral-dark"><FileText aria-hidden="true" className="h-6 w-6" /></span>
             <h2 id="lesson-resource-heading" className="mt-4 text-2xl font-bold text-charcoal">Lesson resource</h2>
             <p className="mt-2 text-text-light">Open the PDF while you watch, or download a copy to keep for later.</p>
@@ -90,7 +90,7 @@ export default function LeadershipLessonPage() {
                 Download <Download aria-hidden="true" className="h-4 w-4" />
               </a>
             </div>
-          </aside>
+          </aside> : null}
         </div>
 
         <nav aria-label="Course lesson navigation" className="mt-10 grid gap-3 sm:grid-cols-2">

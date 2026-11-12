@@ -9,5 +9,5 @@ An ordered, member-only collection of leadership lessons intended for approved c
 _Avoid_: Leadership library, video library
 
 **Leadership Lesson**:
-A numbered unit within the Leadership Development Course consisting of one instructional video and its paired PDF resource.
+A numbered unit within the Leadership Development Course consisting of one instructional video and, when useful, an optional PDF resource.
 _Avoid_: Module, resource item
