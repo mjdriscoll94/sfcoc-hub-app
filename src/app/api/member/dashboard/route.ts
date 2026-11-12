@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { Timestamp, type Firestore } from 'firebase-admin/firestore';
 import { getAuth } from 'firebase-admin/auth';
 import { calendarEventFromFirestore, expandAllEvents } from '@/lib/calendar/recurrence';
+import { dateOnlyKeyFromUtc } from '@/lib/calendar/dateOnly';
 import { getAdminApp, getAdminDb } from '@/lib/firebase/admin';
 
 export const dynamic = 'force-dynamic';
@@ -66,6 +67,7 @@ async function loadUpcomingEvents(db: Firestore) {
       title: event.title,
       startDate: event.startDate.getTime(),
       allDay: event.allDay === true,
+      dateKey: event.allDay === true ? dateOnlyKeyFromUtc(event.startDate) : undefined,
       location: event.location,
     }));
 }
