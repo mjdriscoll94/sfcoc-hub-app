@@ -245,13 +245,19 @@ export function MemberDashboard() {
               <>
                 {dashboard.bulletin ? (
                   <a href={dashboard.bulletin.fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
-                    <span><strong className="block text-charcoal">Latest bulletin</strong><span className="mt-1 block text-sm text-text-light">{dashboard.bulletin.title} • {formatShortDate(dashboard.bulletin.date)}</span></span>
+                    <span className="flex min-w-0 items-start gap-3">
+                      <FileText aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-coral-dark" />
+                      <span className="min-w-0"><strong className="block text-charcoal">Latest bulletin</strong><span className="mt-1 block text-sm text-text-light">{dashboard.bulletin.title} • {formatShortDate(dashboard.bulletin.date)}</span></span>
+                    </span>
                     <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
                   </a>
                 ) : <p className="rounded-xl bg-bg p-4 text-text-light">No bulletin is currently available.</p>}
                 {dashboard.lessonNote ? (
                   <a href={dashboard.lessonNote.fileUrl} target="_blank" rel="noopener noreferrer" className="flex min-h-20 items-center justify-between gap-4 rounded-xl bg-bg p-4 hover:bg-bg-secondary">
-                    <span><strong className="block text-charcoal">Latest lesson notes</strong><span className="mt-1 block text-sm text-text-light">{dashboard.lessonNote.title} • {formatShortDate(dashboard.lessonNote.date)}</span></span>
+                    <span className="flex min-w-0 items-start gap-3">
+                      <BookOpen aria-hidden="true" className="mt-0.5 h-5 w-5 shrink-0 text-coral-dark" />
+                      <span className="min-w-0"><strong className="block text-charcoal">Latest lesson notes</strong><span className="mt-1 block text-sm text-text-light">{dashboard.lessonNote.title} • {formatShortDate(dashboard.lessonNote.date)}</span></span>
+                    </span>
                     <ExternalLink aria-hidden="true" className="h-5 w-5 shrink-0 text-coral-dark" />
                   </a>
                 ) : <p className="rounded-xl bg-bg p-4 text-text-light">No lesson notes are currently available.</p>}
