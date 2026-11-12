@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Dialog } from '@headlessui/react';
 import {
@@ -54,6 +54,7 @@ export default function LeadershipDevelopmentAdminPage() {
   const [message, setMessage] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [previewLesson, setPreviewLesson] = useState<LeadershipLesson | null>(null);
+  const pdfInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     document.title = 'Leadership Development Management | Sioux Falls Church of Christ';
@@ -80,6 +81,7 @@ export default function LeadershipDevelopmentAdminPage() {
     setEditingId(null);
     setPdfFile(null);
     setFormError(null);
+    if (pdfInputRef.current) pdfInputRef.current.value = '';
   }
 
   function editLesson(lesson: LeadershipLesson) {
@@ -93,6 +95,7 @@ export default function LeadershipDevelopmentAdminPage() {
       pdfFileName: lesson.pdfFileName,
     });
     setPdfFile(null);
+    if (pdfInputRef.current) pdfInputRef.current.value = '';
     setFormError(null);
     setMessage(null);
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -102,23 +105,30 @@ export default function LeadershipDevelopmentAdminPage() {
     if (!file) return;
     if (file.type !== 'application/pdf') {
       setFormError('Choose a PDF file.');
+      setPdfFile(null);
+      if (pdfInputRef.current) pdfInputRef.current.value = '';
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
       setFormError('The PDF must be smaller than 10 MB.');
+      setPdfFile(null);
+      if (pdfInputRef.current) pdfInputRef.current.value = '';
       return;
     }
     setPdfFile(file);
     setFormError(null);
   }
 
+  function removePdf() {
+    setPdfFile(null);
+    setForm((current) => ({ ...current, pdfUrl: '', pdfFileName: '' }));
+    if (pdfInputRef.current) pdfInputRef.current.value = '';
+    setFormError(null);
+  }
+
   async function saveLesson(status: LeadershipLessonStatus) {
     if (!form.title.trim() || !form.description.trim() || !form.youtubeVideoId.trim()) {
       setFormError('Enter a title, description, and YouTube link.');
-      return;
-    }
-    if (!editingId && !pdfFile) {
-      setFormError('Choose the PDF that belongs with this lesson.');
       return;
     }
     if (status === 'published' && !form.captionsReviewed) {
@@ -225,14 +235,14 @@ export default function LeadershipDevelopmentAdminPage() {
       <header>
         <p className="font-semibold text-coral-dark">Content management</p>
         <h1 className="mt-1 text-3xl font-bold text-charcoal">Leadership Development</h1>
-        <p className="mt-2 max-w-3xl text-text-light">Build the member course one video-and-PDF lesson at a time. New lessons remain drafts until you publish them.</p>
+        <p className="mt-2 max-w-3xl text-text-light">Build the member course one video lesson at a time, with an optional PDF resource. New lessons remain drafts until you publish them.</p>
       </header>
 
       <section className="mt-7 rounded-2xl border border-border bg-white p-5 shadow-sm sm:p-6" aria-labelledby="lesson-form-heading">
         <div className="flex items-start justify-between gap-4">
           <div>
             <h2 id="lesson-form-heading" className="text-2xl font-bold text-charcoal">{editingId ? 'Edit lesson' : 'Add a lesson'}</h2>
-            <p className="mt-1 text-sm text-text-light">Paste the YouTube link and upload the matching PDF.</p>
+            <p className="mt-1 text-sm text-text-light">Paste the YouTube link and optionally attach a PDF.</p>
           </div>
           {editingId ? <button type="button" onClick={resetForm} className="min-h-11 rounded-lg px-3 font-semibold text-coral-dark hover:bg-coral/10">Cancel edit</button> : null}
         </div>
@@ -251,11 +261,12 @@ export default function LeadershipDevelopmentAdminPage() {
             <span className="font-semibold text-charcoal">Unlisted YouTube link<RequiredFieldIndicator /></span>
             <input value={form.youtubeVideoId} onChange={(event) => setForm((current) => ({ ...current, youtubeVideoId: event.target.value }))} className="mt-2 min-h-12 w-full rounded-lg border border-border bg-bg px-3 text-charcoal" placeholder="https://youtu.be/…" />
           </label>
-          <label className="block rounded-xl border border-dashed border-border bg-bg p-4">
-            <span className="flex items-center gap-2 font-semibold text-charcoal"><Upload aria-hidden="true" className="h-5 w-5 text-coral-dark" /> {editingId ? 'Replace PDF' : 'Lesson PDF'}{!editingId ? <RequiredFieldIndicator /> : null}</span>
-            <input type="file" accept="application/pdf,.pdf" onChange={(event) => selectPdf(event.target.files?.[0])} className="mt-3 block w-full text-sm text-text-light file:mr-3 file:min-h-11 file:rounded-lg file:border-0 file:bg-charcoal file:px-4 file:font-semibold file:text-white" />
-            <span className="mt-2 block text-sm text-text-light">PDF only, up to 10 MB. {editingId && !pdfFile ? `Current: ${form.pdfFileName}` : pdfFile ? `Selected: ${pdfFile.name}` : ''}</span>
-          </label>
+          <div className="block rounded-xl border border-dashed border-border bg-bg p-4">
+            <label htmlFor="leadership-lesson-pdf" className="flex items-center gap-2 font-semibold text-charcoal"><Upload aria-hidden="true" className="h-5 w-5 text-coral-dark" /> {editingId ? 'Replace PDF' : 'Lesson PDF'} <span className="text-sm font-normal text-text-light">(optional)</span></label>
+            <input id="leadership-lesson-pdf" ref={pdfInputRef} type="file" accept="application/pdf,.pdf" aria-describedby="leadership-lesson-pdf-help" onChange={(event) => selectPdf(event.target.files?.[0])} className="mt-3 block w-full text-sm text-text-light file:mr-3 file:min-h-11 file:rounded-lg file:border-0 file:bg-charcoal file:px-4 file:font-semibold file:text-white" />
+            <span id="leadership-lesson-pdf-help" className="mt-2 block text-sm text-text-light">PDF only, up to 10 MB. {editingId && !pdfFile && form.pdfFileName ? `Current: ${form.pdfFileName}` : pdfFile ? `Selected: ${pdfFile.name}` : 'No PDF attached.'}</span>
+            {pdfFile || form.pdfUrl ? <button type="button" onClick={removePdf} className="mt-2 min-h-11 rounded-lg px-3 text-sm font-semibold text-error hover:bg-error-bg">Remove PDF attachment</button> : null}
+          </div>
           <label className="flex min-h-12 items-start gap-3 rounded-xl border border-border p-4">
             <input type="checkbox" checked={form.captionsReviewed} onChange={(event) => setForm((current) => ({ ...current, captionsReviewed: event.target.checked }))} className="mt-1 h-5 w-5 rounded border-border text-coral-dark" />
             <span><strong className="block text-charcoal">I reviewed YouTube’s automatic captions</strong><span className="mt-1 block text-sm text-text-light">This is required before the lesson can be published.</span></span>
@@ -290,7 +301,7 @@ export default function LeadershipDevelopmentAdminPage() {
                   <div className="mt-3 min-w-0 flex-1 sm:mt-0">
                     <div className="flex flex-wrap items-center gap-2"><h3 className="font-bold text-charcoal">{lesson.title}</h3><span className={`rounded-full px-2 py-1 text-xs font-bold ${lesson.status === 'published' ? 'bg-success-bg text-charcoal' : 'bg-gray-100 text-text-light'}`}>{lesson.status === 'published' ? 'Published' : 'Draft'}</span></div>
                     <p className="mt-1 line-clamp-2 text-sm text-text-light">{lesson.description}</p>
-                    <p className="mt-1 flex items-center gap-1 text-xs text-text-light"><FileText aria-hidden="true" className="h-3 w-3" />{lesson.pdfFileName} · Captions {lesson.captionsReviewed ? 'reviewed' : 'not reviewed'}</p>
+                    <p className="mt-1 flex items-center gap-1 text-xs text-text-light"><FileText aria-hidden="true" className="h-3 w-3" />{lesson.pdfFileName || 'No PDF attached'} · Captions {lesson.captionsReviewed ? 'reviewed' : 'not reviewed'}</p>
                   </div>
                   <div className="mt-4 flex flex-wrap items-center gap-1 sm:mt-0 sm:justify-end">
                     <button type="button" disabled={index === 0 || workingId === lesson.id} onClick={() => moveLesson(index, -1)} className="min-h-11 min-w-11 rounded-lg text-charcoal hover:bg-gray-100 disabled:opacity-30" aria-label={`Move ${lesson.title} earlier`}><ArrowUp aria-hidden="true" className="mx-auto h-5 w-5" /></button>
@@ -314,9 +325,9 @@ export default function LeadershipDevelopmentAdminPage() {
             {previewLesson ? (
               <>
                 <div className="flex items-start justify-between gap-4"><div><p className="font-semibold text-coral-dark">Lesson preview</p><Dialog.Title className="text-2xl font-bold text-charcoal">{previewLesson.title}</Dialog.Title><Dialog.Description className="mt-2 text-text-light">{previewLesson.description}</Dialog.Description></div><button type="button" onClick={() => setPreviewLesson(null)} className="min-h-11 min-w-11 rounded-lg hover:bg-gray-100" aria-label="Close preview"><X aria-hidden="true" className="mx-auto h-6 w-6" /></button></div>
-                <div className="mt-6 grid items-start gap-6 md:grid-cols-[300px_1fr]">
+                <div className={`mt-6 grid items-start gap-6 ${previewLesson.pdfUrl ? 'md:grid-cols-[300px_1fr]' : 'justify-center'}`}>
                   <div className="aspect-[9/16] overflow-hidden rounded-xl bg-black"><iframe src={youtubeEmbedUrl(previewLesson.youtubeVideoId)} title={`${previewLesson.title} preview`} className="h-full w-full border-0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div>
-                  <div className="rounded-xl bg-bg p-5"><FileText aria-hidden="true" className="h-7 w-7 text-coral-dark" /><h3 className="mt-3 text-xl font-bold text-charcoal">PDF resource</h3><p className="mt-2 break-words text-text-light">{previewLesson.pdfFileName}</p><a href={previewLesson.pdfUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light">Open PDF</a></div>
+                  {previewLesson.pdfUrl ? <div className="rounded-xl bg-bg p-5"><FileText aria-hidden="true" className="h-7 w-7 text-coral-dark" /><h3 className="mt-3 text-xl font-bold text-charcoal">PDF resource</h3><p className="mt-2 break-words text-text-light">{previewLesson.pdfFileName}</p><a href={previewLesson.pdfUrl} target="_blank" rel="noopener noreferrer" className="mt-5 inline-flex min-h-11 items-center rounded-lg bg-charcoal px-4 font-semibold text-white hover:bg-charcoal-light">Open PDF</a></div> : null}
                 </div>
               </>
             ) : null}

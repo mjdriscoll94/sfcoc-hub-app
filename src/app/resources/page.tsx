@@ -103,7 +103,7 @@ export default function ResourcesPage() {
             <span className="min-w-0 flex-1">
               <span className="text-sm font-bold uppercase tracking-wide text-coral">Member course</span>
               <strong className="mt-1 block text-2xl">Leadership Development</strong>
-              <span className="mt-2 block text-white/80">Watch each lesson and open its matching PDF resource.</span>
+              <span className="mt-2 block text-white/80">Watch each lesson and open any supporting PDF resources.</span>
             </span>
             <ArrowRight aria-hidden="true" className="h-6 w-6 shrink-0 text-coral transition group-hover:translate-x-1" />
           </Link>

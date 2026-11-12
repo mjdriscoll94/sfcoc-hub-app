@@ -35,7 +35,7 @@ export default function LeadershipDevelopmentCoursePage() {
           <p className="mt-5 font-bold uppercase tracking-wide text-coral-dark">Member course</p>
           <h1 className="mt-1 text-3xl font-bold text-charcoal sm:text-4xl">Leadership Development</h1>
           <p className="mt-3 max-w-2xl text-lg text-text-light">
-            Work through these lessons in order. Each lesson includes a short video and a PDF resource to keep for reference.
+            Work through these lessons in order. Each lesson includes a short video and may also include a PDF resource.
           </p>
         </header>
 
@@ -73,7 +73,7 @@ export default function LeadershipDevelopmentCoursePage() {
                     >
                       <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-coral/15 text-lg font-bold tabular-nums text-coral-dark">{index + 1}</span>
                       <span className="min-w-0 flex-1">
-                        <span className="flex items-center gap-2 text-sm font-semibold text-text-light"><PlayCircle aria-hidden="true" className="h-4 w-4" /> Video and PDF</span>
+                        <span className="flex items-center gap-2 text-sm font-semibold text-text-light"><PlayCircle aria-hidden="true" className="h-4 w-4" /> {lesson.pdfUrl ? 'Video and PDF' : 'Video lesson'}</span>
                         <strong className="mt-1 block text-lg text-charcoal sm:text-xl">{lesson.title}</strong>
                         <span className="mt-1 block text-sm leading-6 text-text-light">{lesson.description}</span>
                       </span>
