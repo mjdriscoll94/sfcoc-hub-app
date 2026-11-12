@@ -1,29 +1,35 @@
 'use client';
 
 import { useState, useEffect, useMemo, useRef } from 'react';
+import { Archive, Bell, BellOff } from 'lucide-react';
 import { usePrayerPraise, type PrayerPraiseItem } from '@/hooks/usePrayerPraise';
 import PrayerRequestForm from '@/components/PrayerRequestForm';
-import { addPrayerPraise } from '@/lib/firebase/utils';
-import { useAuth } from '@/lib/auth/AuthContext';
+import PrayerRequestUpdates from '@/components/PrayerRequestUpdates';
 import { useTourActive } from '@/components/tour';
 import { LoadingCardList } from '@/components/LoadingSkeleton';
 
-type FilterType = 'all' | 'prayer' | 'praise';
+type FilterType = 'all' | 'prayer' | 'praise' | 'following';
 
 /** Fake prayer request shown only during the onboarding tour so steps can reference it. */
-export const TOUR_DEMO_REQUEST_ID = 'tour-demo-request';
+const TOUR_DEMO_REQUEST_ID = 'tour-demo-request';
 const TOUR_DEMO_REQUEST: PrayerPraiseItem = {
   id: TOUR_DEMO_REQUEST_ID,
   type: 'prayer',
   title: 'Example prayer request',
   description: 'This is an example. You can tap "I prayed" to support a request, or use the filters above to switch between All, Prayers, and Praises.',
   author: { id: 'tour-demo', name: 'Tour' },
-  dateCreated: new Date(),
+  dateCreated: Date.now(),
+  lastActivityAt: Date.now(),
   prayerCount: 0,
+  updateCount: 0,
   isAnonymous: false,
   isAdminOnly: false,
   status: 'active',
   approvalStatus: 'approved',
+  isFollowing: false,
+  followerCount: 0,
+  canManage: false,
+  canFollow: false,
 };
 
 function ExpandableDescription({
@@ -88,12 +94,23 @@ export default function PrayerBoard() {
 
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
-  const { userProfile } = useAuth();
+  const [actionError, setActionError] = useState<string | null>(null);
   const { tourActive } = useTourActive();
 
-  // Use the Firestore hook with the active filter
-  const { items: requests, loading, error, isIndexBuilding, incrementPrayerCount } = usePrayerPraise(
-    activeFilter === 'all' ? undefined : activeFilter
+  const {
+    items: requests,
+    loading,
+    error,
+    isIndexBuilding,
+    retry,
+    createPrayerRequest,
+    incrementPrayerCount,
+    setFollowing,
+    updatePrayerRequest,
+  } = usePrayerPraise(
+    activeFilter === 'prayer' || activeFilter === 'praise' ? activeFilter : undefined,
+    false,
+    activeFilter === 'following' ? 'following' : 'active',
   );
 
   // When tour is active, prepend a fake request so the tour can reference it; it never touches Firestore
@@ -110,6 +127,14 @@ export default function PrayerBoard() {
     }
   }, [error]);
 
+  useEffect(() => {
+    if (loading || typeof window === 'undefined') return;
+    const requestId = new URLSearchParams(window.location.search).get('request');
+    if (!requestId) return;
+    const card = document.getElementById(`prayer-request-${requestId}`);
+    card?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }, [displayRequests, loading]);
+
   const handleSubmit = async (data: {
     type: 'prayer' | 'praise';
     title: string;
@@ -118,22 +143,40 @@ export default function PrayerBoard() {
     isAdminOnly: boolean;
   }) => {
     try {
-      await addPrayerPraise({
-        type: data.type,
-        title: data.title,
-        description: data.description,
-        author: {
-          id: userProfile?.uid || 'anonymous',
-          name: userProfile?.displayName || 'Anonymous',
-        },
-        isAnonymous: data.isAnonymous,
-        isAdminOnly: data.isAdminOnly,
-        status: 'active'
-      }, userProfile?.isAdmin || false);
+      await createPrayerRequest(data);
       setIsFormOpen(false);
     } catch (error) {
       console.error('Error adding prayer/praise:', error);
       throw error;
+    }
+  };
+
+  const handleFollow = async (request: PrayerPraiseItem) => {
+    setActionError(null);
+    try {
+      await setFollowing(request.id, !request.isFollowing);
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : 'The follow could not be updated.');
+    }
+  };
+
+  const handleArchive = async (request: PrayerPraiseItem) => {
+    if (!window.confirm('Archive this prayer request? Followers will be notified.')) return;
+    setActionError(null);
+    try {
+      await updatePrayerRequest(request.id, { action: 'archive' });
+      retry();
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : 'The prayer request could not be archived.');
+    }
+  };
+
+  const handlePrayed = async (request: PrayerPraiseItem) => {
+    setActionError(null);
+    try {
+      await incrementPrayerCount(request.id);
+    } catch (caught) {
+      setActionError(caught instanceof Error ? caught.message : 'Your prayer response could not be saved.');
     }
   };
 
@@ -146,7 +189,7 @@ export default function PrayerBoard() {
 
       {/* Filter Toggle Group and Add Button */}
       <div className="mb-8 flex flex-col items-center justify-center gap-3 sm:flex-row" id="prayer-board-toolbar">
-        <div className="inline-flex rounded-lg bg-sage/10 p-1" id="prayer-board-filters">
+        <div className="grid grid-cols-2 rounded-lg bg-sage/10 p-1 sm:inline-flex" id="prayer-board-filters">
           <button
             onClick={() => setActiveFilter('all')}
             className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
@@ -185,6 +228,15 @@ export default function PrayerBoard() {
             }}
           >
             Praises
+          </button>
+          <button
+            onClick={() => setActiveFilter('following')}
+            className={`min-h-11 rounded-md px-4 py-2 text-sm font-semibold transition-colors ${
+              activeFilter === 'following' ? 'text-white shadow-sm' : 'text-text'
+            }`}
+            style={{ backgroundColor: activeFilter === 'following' ? '#34434A' : 'transparent' }}
+          >
+            Following
           </button>
         </div>
         
@@ -245,13 +297,15 @@ export default function PrayerBoard() {
         </div>
       )}
 
+      {actionError ? <div role="alert" className="mb-6 rounded-xl border border-error/30 bg-error-bg p-4 text-center text-error">{actionError}</div> : null}
+
       {/* Prayer Requests List */}
       {!loading && !error && !isIndexBuilding && (
         <div className="space-y-6">
           {displayRequests.map((request) => (
             <div
               key={request.id}
-              id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-request' : undefined}
+              id={request.id === TOUR_DEMO_REQUEST_ID ? 'tour-demo-request' : `prayer-request-${request.id}`}
               className="rounded-xl border border-border bg-card shadow-sm"
             >
               <div className="p-6">
@@ -267,11 +321,7 @@ export default function PrayerBoard() {
                       }}>
                         {request.type === 'prayer' ? 'Prayer Request' : 'Praise'}
                       </span>
-                      <span className="text-sm text-text/80 tabular-nums">
-                        {request.dateCreated instanceof Date 
-                          ? request.dateCreated.toLocaleDateString()
-                          : new Date(request.dateCreated).toLocaleDateString()}
-                      </span>
+                      <span className="text-sm text-text/80 tabular-nums">{new Date(request.dateCreated).toLocaleDateString()}</span>
                     </div>
                     <h3 className="mt-2 text-lg font-medium text-text">
                       {request.title}
@@ -284,8 +334,25 @@ export default function PrayerBoard() {
                   </div>
                 </div>
                 
-                <div className="mt-4 flex items-center justify-between border-t border-sage/20 pt-3 text-sm">
+                <div className="mt-4 flex flex-col gap-2 border-t border-sage/20 pt-3 text-sm sm:flex-row sm:items-center sm:justify-between">
                   <span className="text-text font-medium">{request.isAnonymous ? 'Anonymous' : request.author.name}</span>
+                  <div className="flex flex-wrap items-center justify-end gap-1">
+                  {request.canFollow ? (
+                    <button
+                      type="button"
+                      onClick={() => handleFollow(request)}
+                      className={`inline-flex min-h-11 items-center gap-2 rounded-lg px-3 font-semibold ${request.isFollowing ? 'bg-coral/10 text-coral-dark' : 'text-charcoal hover:bg-bg'}`}
+                      aria-pressed={request.isFollowing}
+                    >
+                      {request.isFollowing ? <BellOff aria-hidden="true" className="h-4 w-4" /> : <Bell aria-hidden="true" className="h-4 w-4" />}
+                      {request.isFollowing ? 'Unfollow' : 'Follow updates'}
+                    </button>
+                  ) : null}
+                  {request.type === 'prayer' && request.canManage && request.id !== TOUR_DEMO_REQUEST_ID ? (
+                    <button type="button" onClick={() => handleArchive(request)} className="inline-flex min-h-11 items-center gap-2 rounded-lg px-3 font-semibold text-text-light hover:bg-bg hover:text-charcoal">
+                      <Archive aria-hidden="true" className="h-4 w-4" /> Archive
+                    </button>
+                  ) : null}
                   {request.id === TOUR_DEMO_REQUEST_ID ? (
                     <span
                       id="tour-demo-i-prayed"
@@ -302,7 +369,7 @@ export default function PrayerBoard() {
                   ) : (
                   <button
                     type="button"
-                    onClick={() => incrementPrayerCount(request.id)}
+                    onClick={() => handlePrayed(request)}
                     className="group flex min-h-11 items-center space-x-2 rounded-lg px-2 hover:bg-bg hover:opacity-80"
                     style={{
                       color: request.type === 'prayer' ? '#E88B5F' : '#70A8A0'
@@ -322,14 +389,16 @@ export default function PrayerBoard() {
                     </span>
                   </button>
                   )}
+                  </div>
                 </div>
+                {request.type === 'prayer' && request.id !== TOUR_DEMO_REQUEST_ID ? <PrayerRequestUpdates request={request} onChanged={retry} /> : null}
               </div>
             </div>
           ))}
 
           {displayRequests.length === 0 && (
             <div className="text-center p-8 text-text/50">
-              No prayer requests or praises yet.
+              {activeFilter === 'following' ? 'You are not following any active prayer requests.' : 'No prayer requests or praises yet.'}
             </div>
           )}
         </div>

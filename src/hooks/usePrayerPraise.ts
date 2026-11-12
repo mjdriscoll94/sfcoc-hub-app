@@ -1,201 +1,106 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { db } from '@/lib/firebase/config';
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot,
-  updateDoc,
-  deleteDoc,
-  doc,
-  getDoc,
-  Timestamp,
-  FirestoreError,
-  Query,
-} from 'firebase/firestore';
-import { FIRESTORE_LOAD_TIMEOUT_MS, FIRESTORE_TIMEOUT_MESSAGE } from '@/lib/firebase/loading';
+import { useCallback, useEffect, useState } from 'react';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { authenticatedJson } from '@/lib/api/authenticatedFetch';
+import type { PrayerPraiseItem } from '@/types/prayer';
 
-export interface PrayerPraiseItem {
-  id: string;
-  type: 'prayer' | 'praise';
-  title: string;
-  description: string;
-  author: {
-    id: string;
-    name: string;
-  };
-  dateCreated: Date;
-  prayerCount: number;
-  isAnonymous: boolean;
-  isAdminOnly: boolean;
-  status: 'active' | 'archived';
-  approvalStatus: 'pending' | 'approved' | 'rejected';
-  priority?: 'Urgent' | 'Batched';
-}
+export type { PrayerPraiseItem } from '@/types/prayer';
 
-interface UpdatePrayerRequestData {
-  title?: string;
-  description?: string;
-  priority?: 'Urgent' | 'Batched';
-  isSent?: boolean;
-  status?: 'active' | 'archived';
-  approvalStatus?: 'pending' | 'approved' | 'rejected';
-}
+type PrayerView = 'active' | 'following' | 'mine' | 'archived' | 'admin';
 
-export function usePrayerPraise(type?: 'prayer' | 'praise', includeUnapproved: boolean = false) {
+export function usePrayerPraise(
+  type?: 'prayer' | 'praise',
+  includeUnapproved = false,
+  requestedView: PrayerView = 'active',
+  includeArchived = false,
+) {
+  const { user } = useAuth();
   const [items, setItems] = useState<PrayerPraiseItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [isIndexBuilding, setIsIndexBuilding] = useState(false);
   const [reloadKey, setReloadKey] = useState(0);
 
-  const retry = useCallback(() => {
-    setReloadKey((current) => current + 1);
-  }, []);
+  const retry = useCallback(() => setReloadKey((current) => current + 1), []);
 
   useEffect(() => {
+    if (!user) return;
+    const controller = new AbortController();
     setLoading(true);
     setError(null);
-    setIsIndexBuilding(false);
+    const params = new URLSearchParams();
+    params.set('view', includeUnapproved ? 'admin' : requestedView);
+    if (type) params.set('type', type);
+    if (includeArchived) params.set('includeArchived', 'true');
 
-    // Create query based on type and approval status
-    let q: Query;
-    try {
-      const baseQuery = includeUnapproved
-        ? query(collection(db, 'prayerPraise'))
-        : query(
-            collection(db, 'prayerPraise'),
-            where('approvalStatus', '==', 'approved')
-          );
+    authenticatedJson<{ requests: PrayerPraiseItem[] }>(`/api/prayer-requests?${params}`, { signal: controller.signal })
+      .then((data) => setItems(data.requests))
+      .catch((caught) => {
+        if (caught instanceof DOMException && caught.name === 'AbortError') return;
+        console.error('Prayer request load error:', caught);
+        setError(caught instanceof Error ? caught.message : 'We couldn’t load prayer requests.');
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
 
-      q = type
-        ? query(
-            baseQuery,
-            where('type', '==', type),
-            where('status', '==', 'active'),
-            orderBy('dateCreated', 'desc')
-          )
-        : query(
-            baseQuery,
-            where('status', '==', 'active'),
-            orderBy('dateCreated', 'desc')
-          );
-    } catch (error) {
-      console.error('Error creating query:', error);
-      setError('Failed to create query');
-      setLoading(false);
-      return () => {};
-    }
+    return () => controller.abort();
+  }, [includeArchived, includeUnapproved, reloadKey, requestedView, type, user]);
 
-    const loadingTimeout = window.setTimeout(() => {
-      setError(FIRESTORE_TIMEOUT_MESSAGE);
-      setLoading(false);
-    }, FIRESTORE_LOAD_TIMEOUT_MS);
+  const createPrayerRequest = async (data: {
+    type: 'prayer' | 'praise';
+    title: string;
+    description: string;
+    isAnonymous: boolean;
+    isAdminOnly: boolean;
+  }) => {
+    await authenticatedJson('/api/prayer-requests', { method: 'POST', body: JSON.stringify(data) });
+    retry();
+  };
 
-    // Set up real-time listener
-    const unsubscribe = onSnapshot(
-      q,
-      (querySnapshot) => {
-        window.clearTimeout(loadingTimeout);
-        const prayerPraiseItems = querySnapshot.docs.map(doc => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            dateCreated: (data.dateCreated as Timestamp)?.toDate() || new Date(),
-          } as PrayerPraiseItem;
-        });
-        setItems(prayerPraiseItems);
-        setError(null);
-        setLoading(false);
-        setIsIndexBuilding(false);
-      },
-      (error) => {
-        window.clearTimeout(loadingTimeout);
-        console.error('Error fetching prayer/praise items:', error);
-        
-        // Check if the error is due to missing index
-        if (error instanceof FirestoreError && 
-            error.code === 'failed-precondition' && 
-            error.message.includes('requires an index')) {
-          setIsIndexBuilding(true);
-          setError('The database is being optimized for faster queries. This may take a few minutes. Please refresh the page shortly.');
-        } else {
-          setError('We couldn’t load prayer and praise items. Please try again.');
-        }
-        setLoading(false);
-      }
-    );
-
-    // Cleanup subscription
-    return () => {
-      window.clearTimeout(loadingTimeout);
-      unsubscribe();
-    };
-  }, [type, includeUnapproved, reloadKey]);
-
-  // Function to increment prayer count
   const incrementPrayerCount = async (id: string) => {
-    try {
-      const docRef = doc(db, 'prayerPraise', id);
-      const docSnap = await getDoc(docRef);
-      const currentCount = docSnap.data()?.prayerCount || 0;
-      
-      await updateDoc(docRef, {
-        prayerCount: currentCount + 1
-      });
-    } catch (error) {
-      console.error('Error incrementing prayer count:', error);
-      throw new Error('Failed to update prayer count');
-    }
+    const result = await authenticatedJson<{ prayerCount: number }>(`/api/prayer-requests/${id}/prayed`, { method: 'POST' });
+    setItems((current) => current.map((item) => item.id === id ? { ...item, prayerCount: result.prayerCount } : item));
   };
 
-  // Function to update approval status
-  const updateApprovalStatus = async (id: string, status: 'approved' | 'rejected') => {
-    try {
-      const docRef = doc(db, 'prayerPraise', id);
-      await updateDoc(docRef, {
-        approvalStatus: status
-      });
-    } catch (error) {
-      console.error('Error updating approval status:', error);
-      throw new Error('Failed to update approval status');
-    }
+  const updatePrayerRequest = async (id: string, data: Record<string, unknown>) => {
+    const result = await authenticatedJson<{ request: PrayerPraiseItem }>(`/api/prayer-requests/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(data),
+    });
+    setItems((current) => current.map((item) => item.id === id ? result.request : item));
+    return result.request;
   };
 
-  // Function to update prayer request details
-  const updatePrayerRequest = async (id: string, data: UpdatePrayerRequestData) => {
-    try {
-      const docRef = doc(db, 'prayerPraise', id);
-      await updateDoc(docRef, data as { [x: string]: unknown });
-    } catch (error) {
-      console.error('Error updating prayer request:', error);
-      throw new Error('Failed to update prayer request');
-    }
+  const updateApprovalStatus = async (id: string, approvalStatus: 'approved' | 'rejected') => {
+    await updatePrayerRequest(id, { approvalStatus });
   };
 
   const deletePrayerRequest = async (id: string) => {
-    try {
-      const docRef = doc(db, 'prayerPraise', id);
-      await deleteDoc(docRef);
-    } catch (error) {
-      console.error('Error deleting prayer request:', error);
-      throw new Error('Failed to delete prayer request');
-    }
+    await authenticatedJson(`/api/prayer-requests/${id}`, { method: 'DELETE' });
+    setItems((current) => current.filter((item) => item.id !== id));
+  };
+
+  const setFollowing = async (id: string, following: boolean) => {
+    await authenticatedJson(`/api/prayer-requests/${id}/follow`, { method: following ? 'POST' : 'DELETE' });
+    setItems((current) => current.map((item) => item.id === id ? {
+      ...item,
+      isFollowing: following,
+      followerCount: Math.max(0, item.followerCount + (following ? 1 : -1)),
+    } : item));
   };
 
   return {
     items,
     loading,
     error,
-    isIndexBuilding,
+    isIndexBuilding: false,
     retry,
+    createPrayerRequest,
     incrementPrayerCount,
     updateApprovalStatus,
     updatePrayerRequest,
     deletePrayerRequest,
+    setFollowing,
   };
 }

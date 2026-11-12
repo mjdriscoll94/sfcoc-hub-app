@@ -13,6 +13,7 @@ import Link from 'next/link';
 import { ROLE_DISPLAY_NAMES } from '@/types/roles';
 import { RequiredFieldIndicator, RequiredFieldsNote } from '@/components/forms/FieldRequirement';
 import { LoadingCardList } from '@/components/LoadingSkeleton';
+import PrayerRequestSettings from '@/components/PrayerRequestSettings';
 
 const SUBSCRIPTION_LABELS = {
   announcements: 'Announcement emails',
@@ -323,6 +324,8 @@ export default function SettingsPage() {
             Restart the site tour
           </Link>
         </div>
+
+        <PrayerRequestSettings />
 
         <div className="bg-card border border-sage/20 rounded-lg p-6">
           <div className="space-y-6">

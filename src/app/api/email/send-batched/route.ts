@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { sendBatchedPrayerPraiseEmail } from '@/lib/email/emailService';
+import { sendBatchedPrayerPraiseEmailServer } from '@/lib/prayer/batchedEmail';
 
 export async function POST(request: Request) {
   try {
     // Verify authorization
     const authHeader = request.headers.get('authorization');
-    if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!process.env.CRON_SECRET || !authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    await sendBatchedPrayerPraiseEmail();
+    await sendBatchedPrayerPraiseEmailServer();
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error('Error in batched email API route:', error);
@@ -18,4 +18,4 @@ export async function POST(request: Request) {
       { status: 500 }
     );
   }
-} 
+}
