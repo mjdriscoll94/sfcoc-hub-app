@@ -1,10 +1,13 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Download, ExternalLink, FileText, Headphones, Search } from 'lucide-react';
+import Link from 'next/link';
+import { ArrowRight, Download, ExternalLink, FileText, GraduationCap, Headphones, Search } from 'lucide-react';
 import { useBulletins, type Bulletin } from '@/hooks/useBulletins';
 import { useLessonNotes, type LessonNote } from '@/hooks/useLessonNotes';
 import { LoadingCardList } from '@/components/LoadingSkeleton';
+import { useAuth } from '@/lib/auth/AuthContext';
+import { getRoleCapabilities } from '@/types/roles';
 
 type ResourceTab = 'bulletins' | 'lesson-notes';
 type ResourceDocument = Pick<Bulletin | LessonNote, 'id' | 'title' | 'date' | 'fileUrl'>;
@@ -52,6 +55,8 @@ function ResourceList({ documents, label }: { documents: ResourceDocument[]; lab
 }
 
 export default function ResourcesPage() {
+  const { userProfile } = useAuth();
+  const canAccessLeadership = getRoleCapabilities(userProfile).canAccessLeadershipDevelopment;
   const { bulletins, loading: bulletinsLoading, error: bulletinsError } = useBulletins();
   const { notes, loading: notesLoading, error: notesError } = useLessonNotes();
   const [activeTab, setActiveTab] = useState<ResourceTab>('bulletins');
@@ -86,10 +91,25 @@ export default function ResourcesPage() {
         <header>
           <p className="font-semibold text-coral-dark">Church resources</p>
           <h1 className="mt-1 text-3xl font-bold text-charcoal sm:text-4xl">Resources</h1>
-          <p className="mt-3 max-w-2xl text-lg text-text-light">Find the weekly bulletin, lesson notes, and the Beyond Sunday podcast.</p>
+          <p className="mt-3 max-w-2xl text-lg text-text-light">Find the weekly bulletin, lesson notes, podcast, and member development resources.</p>
         </header>
 
-        <section className="mt-8 rounded-2xl border border-border bg-white p-5 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-6" aria-labelledby="podcast-heading">
+        {canAccessLeadership ? (
+          <Link
+            href="/resources/leadership-development"
+            className="group mt-8 flex items-center gap-4 rounded-2xl border border-border bg-charcoal p-5 text-white shadow-sm transition hover:bg-charcoal-light focus-visible:outline focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-primary sm:gap-6 sm:p-6"
+          >
+            <span className="rounded-xl bg-white/10 p-3 text-coral"><GraduationCap aria-hidden="true" className="h-7 w-7" /></span>
+            <span className="min-w-0 flex-1">
+              <span className="text-sm font-bold uppercase tracking-wide text-coral">Member course</span>
+              <strong className="mt-1 block text-2xl">Leadership Development</strong>
+              <span className="mt-2 block text-white/80">Watch each lesson and open its matching PDF resource.</span>
+            </span>
+            <ArrowRight aria-hidden="true" className="h-6 w-6 shrink-0 text-coral transition group-hover:translate-x-1" />
+          </Link>
+        ) : null}
+
+        <section className="mt-6 rounded-2xl border border-border bg-white p-5 shadow-sm sm:flex sm:items-center sm:justify-between sm:gap-6 sm:p-6" aria-labelledby="podcast-heading">
           <div className="flex items-start gap-4">
             <span className="rounded-xl bg-coral/15 p-3 text-coral-dark">
               <Headphones aria-hidden="true" className="h-6 w-6" />
