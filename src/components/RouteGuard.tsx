@@ -17,6 +17,7 @@ const protectedPaths = [
 ];
 
 const adminPaths = ['/admin'];
+const leadershipPaths = ['/resources/leadership-development'];
 
 export default function RouteGuard({ children }: { children: React.ReactNode }) {
   const { user, userProfile, loading } = useAuth();
@@ -25,10 +26,12 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
 
   // Per-page enforcement still controls which Manage Church tools each authorized role can use.
   const canAccessAdmin = getRoleCapabilities(userProfile).canAccessManageChurch;
+  const canAccessLeadership = getRoleCapabilities(userProfile).canAccessLeadershipDevelopment;
 
   useEffect(() => {
     if (!loading) {
-      const requiresAuth = protectedPaths.some(path => pathname?.startsWith(path));
+      const requiresLeadership = leadershipPaths.some(path => pathname?.startsWith(path));
+      const requiresAuth = protectedPaths.some(path => pathname?.startsWith(path)) || requiresLeadership;
       const requiresAdmin = adminPaths.some(path => pathname?.startsWith(path));
 
       if (requiresAuth && !user) {
@@ -37,9 +40,11 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
       } else if (requiresAdmin && !canAccessAdmin) {
         console.log('RouteGuard: No admin/organizer access, redirecting to home');
         router.push('/');
+      } else if (requiresLeadership && !canAccessLeadership) {
+        router.push('/resources');
       }
     }
-  }, [loading, user, userProfile, pathname, router, canAccessAdmin]);
+  }, [loading, user, userProfile, pathname, router, canAccessAdmin, canAccessLeadership]);
 
   if (loading) {
     return (
@@ -49,7 +54,8 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
     );
   }
 
-  const requiresAuth = protectedPaths.some(path => pathname?.startsWith(path));
+  const requiresLeadership = leadershipPaths.some(path => pathname?.startsWith(path));
+  const requiresAuth = protectedPaths.some(path => pathname?.startsWith(path)) || requiresLeadership;
   if (requiresAuth && !user) {
     return null;
   }
@@ -58,6 +64,8 @@ export default function RouteGuard({ children }: { children: React.ReactNode }) 
   if (requiresAdmin && !canAccessAdmin) {
     return null;
   }
+
+  if (requiresLeadership && !canAccessLeadership) return null;
 
   return <>{children}</>;
 }

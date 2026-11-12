@@ -174,4 +174,24 @@ export const uploadLifeGroupResource = async (file: File): Promise<string> => {
     }
     throw new Error('Failed to upload file: Unknown error');
   }
-}; 
+};
+
+export const uploadLeadershipResource = async (file: File): Promise<string> => {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || '');
+  formData.append('folder', 'leadership-development');
+  formData.append('resource_type', 'raw');
+
+  const response = await fetch(
+    `https://api.cloudinary.com/v1_1/${process.env.NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME}/raw/upload`,
+    { method: 'POST', body: formData }
+  );
+  if (!response.ok) {
+    const detail = await response.json().catch(() => null);
+    throw new Error(detail?.error?.message || 'The PDF upload failed.');
+  }
+  const data = await response.json() as { secure_url?: string };
+  if (!data.secure_url) throw new Error('The PDF upload did not return a file URL.');
+  return data.secure_url;
+};

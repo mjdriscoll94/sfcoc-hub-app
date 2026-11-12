@@ -13,6 +13,7 @@ import {
   ExternalLink,
   Files,
   Gift,
+  GraduationCap,
   HandHeart,
   Headphones,
   Heart,
@@ -114,7 +115,7 @@ export default function Navigation() {
   const [podcastOpen, setPodcastOpen] = useState(false);
   const [signingOut, setSigningOut] = useState(false);
   const resourcesRef = useRef<HTMLDivElement>(null);
-  const { canAccessManageChurch, canManageAttendance } = getRoleCapabilities(userProfile);
+  const { canAccessLeadershipDevelopment, canAccessManageChurch, canManageAttendance } = getRoleCapabilities(userProfile);
 
   useEffect(() => {
     setMoreOpen(false);
@@ -158,6 +159,7 @@ export default function Navigation() {
   ];
   const churchResources: NavLink[] = [
     { href: '/sermons', label: 'Sermons', icon: PlayCircle },
+    ...(canAccessLeadershipDevelopment ? [{ href: '/resources/leadership-development', label: 'Leadership Development', icon: GraduationCap }] : []),
     { href: '/give', label: 'Giving', icon: Gift },
   ];
 

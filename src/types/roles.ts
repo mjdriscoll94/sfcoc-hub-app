@@ -19,6 +19,7 @@ export type RoleProfile = {
 export interface RoleCapabilities extends UserRolePermissions {
   isAdmin: boolean;
   canAccessManageChurch: boolean;
+  canAccessLeadershipDevelopment: boolean;
   canSendEmail: boolean;
 }
 
@@ -117,6 +118,8 @@ export function getRoleCapabilities(profile: RoleProfile | null | undefined): Ro
   const canAccessDirectory = isAdmin || permissions.canAccessDirectory;
   const canManageLifeGroups = isAdmin || permissions.canManageLifeGroups;
   const canManageAttendance = isAdmin || permissions.canManageAttendance;
+  const canAccessLeadershipDevelopment =
+    isAdmin || Boolean(profile?.role && profile.role !== 'user');
 
   return {
     isAdmin,
@@ -128,6 +131,7 @@ export function getRoleCapabilities(profile: RoleProfile | null | undefined): Ro
     canAccessDirectory,
     canManageLifeGroups,
     canManageAttendance,
+    canAccessLeadershipDevelopment,
     canAccessManageChurch:
       isAdmin ||
       canAssignServiceRoles ||

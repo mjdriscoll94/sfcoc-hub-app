@@ -2,9 +2,15 @@ rules_version = '2';
 
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Temporary rule to allow initialization
-    match /{document=**} {
-      allow read, write: if true;
+    // Leadership course records are served only through authenticated server APIs.
+    // Firebase Admin bypasses client rules after verifying membership or administrator access.
+    match /leadershipLessons/{document=**} {
+      allow read, write: if false;
+    }
+
+    // Temporary rule retained for existing collections until their rules are migrated.
+    match /{topLevelCollection}/{document=**} {
+      allow read, write: if topLevelCollection != 'leadershipLessons';
     }
 
     // These rules will be uncommented after initialization
@@ -25,4 +31,4 @@ service cloud.firestore {
     //   allow update: if request.auth != null;
     // }
   }
-} 
+}

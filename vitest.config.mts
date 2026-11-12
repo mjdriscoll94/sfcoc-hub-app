@@ -5,6 +5,7 @@ export default defineConfig({
     include: [
       'src/lib/mcp/**/*.test.ts',
       'src/lib/lifeGroups/**/*.test.ts',
+      'src/lib/leadership/**/*.test.ts',
       'src/lib/calendar/**/*.test.ts',
       'src/lib/auth/**/*.test.ts',
       'src/lib/email/**/*.test.ts',

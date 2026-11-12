@@ -8,6 +8,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   FileText,
+  GraduationCap,
   Home,
   Mail,
   Megaphone,
@@ -60,6 +61,7 @@ const BREADCRUMB_LABELS: Record<string, string> = {
   '/admin/attendance/contact': 'Attendance follow-up',
   '/admin/bulletin': 'Bulletins',
   '/admin/lesson-notes': 'Lesson Notes',
+  '/admin/leadership-development': 'Leadership Development',
   '/admin/settings': 'Settings',
 };
 
@@ -168,6 +170,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       links: isAdmin ? [
         { href: '/admin/bulletin', label: 'Bulletins', icon: FileText },
         { href: '/admin/lesson-notes', label: 'Lesson Notes', icon: Upload },
+        { href: '/admin/leadership-development', label: 'Leadership Development', icon: GraduationCap },
       ] : [],
     },
     {

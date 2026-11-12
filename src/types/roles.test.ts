@@ -6,10 +6,18 @@ function capabilities(profile: RoleProfile | null) {
 }
 
 describe('role navigation capabilities', () => {
+  it('limits Leadership Development to membership-level roles', () => {
+    expect(capabilities({ role: 'user' }).canAccessLeadershipDevelopment).toBe(false);
+    for (const role of ['member', 'lifeGroupLeader', 'lifeGroupOrganizer', 'organizer', 'admin'] as const) {
+      expect(capabilities({ role }).canAccessLeadershipDevelopment).toBe(true);
+    }
+  });
+
   it('keeps signed-out visitors out of member management tools', () => {
     expect(capabilities(null)).toMatchObject({
       isAdmin: false,
       canAccessDirectory: false,
+      canAccessLeadershipDevelopment: false,
       canAccessManageChurch: false,
       canManageAttendance: false,
       canSendEmail: false,
@@ -20,6 +28,7 @@ describe('role navigation capabilities', () => {
     expect(capabilities({ role: 'member' })).toMatchObject({
       isAdmin: false,
       canAccessDirectory: true,
+      canAccessLeadershipDevelopment: true,
       canAccessManageChurch: false,
       canManageAttendance: false,
       canSendEmail: false,
@@ -30,6 +39,7 @@ describe('role navigation capabilities', () => {
     expect(capabilities({ role: 'organizer' })).toMatchObject({
       isAdmin: false,
       canAccessManageChurch: true,
+      canAccessLeadershipDevelopment: true,
       canAssignServiceRoles: true,
       canManageAnnouncements: true,
       canManageVolunteerOpportunities: true,
@@ -45,6 +55,7 @@ describe('role navigation capabilities', () => {
     expect(capabilities({ role: 'lifeGroupOrganizer' })).toMatchObject({
       isAdmin: false,
       canAccessManageChurch: true,
+      canAccessLeadershipDevelopment: true,
       canManageLifeGroups: true,
       canSendEmail: true,
       canManageAnnouncements: false,
@@ -57,6 +68,7 @@ describe('role navigation capabilities', () => {
     expect(capabilities({ role: 'lifeGroupLeader' })).toMatchObject({
       isAdmin: false,
       canAccessDirectory: true,
+      canAccessLeadershipDevelopment: true,
       canAccessManageChurch: false,
       canManageLifeGroups: false,
       canSendEmail: false,
@@ -75,6 +87,7 @@ describe('role navigation capabilities', () => {
       canManageLifeGroups: true,
       canManageAttendance: true,
       canAccessManageChurch: true,
+      canAccessLeadershipDevelopment: true,
       canSendEmail: true,
     });
   });
