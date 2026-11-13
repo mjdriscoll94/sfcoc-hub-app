@@ -46,6 +46,35 @@ describe('randomizeLifeGroupHouseholds', () => {
     expect(Math.max(...neverCounts) - Math.min(...neverCounts)).toBeLessThanOrEqual(1);
   });
 
+  it('excludes never-active households when requested', () => {
+    const included: RandomizerHousehold = {
+      id: 'included',
+      name: 'Included',
+      memberCount: 2,
+      ageGroup: '45-64',
+      hasKids: false,
+      participation: 'sometimes',
+    };
+    const neverActive: RandomizerHousehold = {
+      id: 'never-active',
+      name: 'Never Active',
+      memberCount: 3,
+      ageGroup: '30-44',
+      hasKids: true,
+      participation: 'never',
+    };
+
+    const groups = randomizeLifeGroupHouseholds([included, neverActive], ['a', 'b'], {
+      includeNever: false,
+      initialHouseholdsByGroupId: { a: [neverActive] },
+      random: deterministicRandom,
+    });
+    const assignedIds = groups.flatMap((group) => group.households.map((household) => household.id));
+
+    expect(assignedIds).toEqual(['included']);
+    expect(assignedIds).not.toContain('never-active');
+  });
+
   it('keeps every household intact in one group', () => {
     const household = { id: 'family', name: 'Family', memberCount: 7, ageGroup: 'multigenerational' as const, hasKids: true, participation: 'always' as const };
     const groups = randomizeLifeGroupHouseholds([household], ['a', 'b']);

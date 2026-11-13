@@ -57,20 +57,25 @@ export const randomizeLifeGroupHouseholds = (
   options: {
     random?: () => number;
     initialHouseholdsByGroupId?: Record<string, RandomizerHousehold[]>;
+    includeNever?: boolean;
   } = {},
 ): RandomizedLifeGroup[] => {
   if (groupIds.length === 0) return [];
 
   const random = options.random || Math.random;
+  const shouldIncludeHousehold = (household: RandomizerHousehold) => (
+    household.participation !== 'exempted'
+    && (options.includeNever !== false || household.participation !== 'never')
+  );
   const initialHouseholdsByGroupId = Object.fromEntries(groupIds.map((groupId) => [
     groupId,
-    (options.initialHouseholdsByGroupId?.[groupId] || []).filter((household) => household.participation !== 'exempted'),
+    (options.initialHouseholdsByGroupId?.[groupId] || []).filter(shouldIncludeHousehold),
   ]));
   const initiallyAssignedIds = new Set(
     groupIds.flatMap((groupId) => initialHouseholdsByGroupId[groupId].map((household) => household.id)),
   );
   const householdsToAssign = households.filter(
-    (household) => household.participation !== 'exempted' && !initiallyAssignedIds.has(household.id),
+    (household) => shouldIncludeHousehold(household) && !initiallyAssignedIds.has(household.id),
   );
   const ageGroupFrequency = householdsToAssign.reduce((counts, household) => {
     counts.set(household.ageGroup, (counts.get(household.ageGroup) || 0) + 1);

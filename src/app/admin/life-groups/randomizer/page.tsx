@@ -88,6 +88,7 @@ export default function LifeGroupRandomizerPage() {
   const [applied, setApplied] = useState(false);
   const [loadingHouseholds, setLoadingHouseholds] = useState(true);
   const [loadingGroups, setLoadingGroups] = useState(true);
+  const [excludeNeverActive, setExcludeNeverActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const canManageLifeGroups = userProfile?.isAdmin || (
@@ -294,6 +295,10 @@ export default function LifeGroupRandomizerPage() {
         setError(`${leaderHousehold.name} is marked Exempted but is also the leader household for ${group.name}. Change the leader or activity status before randomizing.`);
         return;
       }
+      if (excludeNeverActive && leaderHousehold.participation === 'never') {
+        setError(`${leaderHousehold.name} is marked Never active but is also the leader household for ${group.name}. Choose another leader or turn off “Exclude Never Active Households” before randomizing.`);
+        return;
+      }
       if (claimedLeaderHouseholds.has(leaderHousehold.id)) {
         setError(`${leaderHousehold.name} is the leader household for more than one selected group.`);
         return;
@@ -305,7 +310,10 @@ export default function LifeGroupRandomizerPage() {
     setError(null);
     setApplied(false);
     setUnassignedHouseholds([]);
-    setProposal(randomizeLifeGroupHouseholds(households, selectedGroupIds, { initialHouseholdsByGroupId }));
+    setProposal(randomizeLifeGroupHouseholds(households, selectedGroupIds, {
+      initialHouseholdsByGroupId,
+      includeNever: !excludeNeverActive,
+    }));
   };
 
   const moveHousehold = (householdId: string, targetGroupId: string | null) => {
@@ -370,7 +378,10 @@ export default function LifeGroupRandomizerPage() {
       batch.set(runRef, {
         createdAt: Timestamp.now(),
         createdBy: userProfile.uid,
-        includeNever: true,
+        includeNever: !excludeNeverActive,
+        excludedNeverActiveHouseholdIds: excludeNeverActive
+          ? households.filter((household) => household.participation === 'never').map((household) => household.id)
+          : [],
         manuallyUnassignedHouseholdIds: unassignedHouseholds.map((household) => household.id),
         pinnedLeaderHouseholds: selectedGroups.map((group) => ({
           groupId: group.id,
@@ -548,8 +559,12 @@ export default function LifeGroupRandomizerPage() {
                     <option value="">Select a leader…</option>
                     {leaderHouseholdOptions.map((household) => {
                       const assignedGroupId = leaderHouseholdGroupIds.get(household.id);
-                      const unavailable = household.participation === 'exempted' || (!!assignedGroupId && assignedGroupId !== group.id);
-                      return <option key={household.id} value={household.id} disabled={unavailable}>{household.name}{household.participation === 'exempted' ? ' (Exempted)' : ''}</option>;
+                      const excludedNeverActive = excludeNeverActive && household.participation === 'never';
+                      const unavailable = household.participation === 'exempted' || excludedNeverActive || (!!assignedGroupId && assignedGroupId !== group.id);
+                      const statusSuffix = household.participation === 'exempted'
+                        ? ' (Exempted)'
+                        : excludedNeverActive ? ' (Never active — excluded)' : '';
+                      return <option key={household.id} value={household.id} disabled={unavailable}>{household.name}{statusSuffix}</option>;
                     })}
                   </select>
                 </label>
@@ -558,10 +573,31 @@ export default function LifeGroupRandomizerPage() {
           })}
         </div>
         {leaderHouseholdOptions.length === 0 ? <p className="mt-3 rounded-md bg-amber-50 p-3 text-sm text-amber-800">No households are marked as Life Group leaders. Use “Manage leader households” to mark them first.</p> : null}
-        <p className="mt-4 text-sm text-text-light">Always, sometimes, and never-active households are assigned and balanced. {households.filter((household) => household.participation === 'exempted').length} exempted households will remain unassigned.</p>
-        <button type="button" onClick={generateProposal} className="mt-5 inline-flex items-center rounded-lg bg-primary px-4 py-2 font-medium text-on-primary hover:bg-primary-hover">
-          <SparklesIcon className="mr-2 h-5 w-5" /> Generate balanced proposal
-        </button>
+        <p className="mt-4 text-sm text-text-light">
+          {excludeNeverActive
+            ? `${households.filter((household) => household.participation === 'never').length} never-active households and ${households.filter((household) => household.participation === 'exempted').length} exempted households will remain unassigned.`
+            : `Always, sometimes, and never-active households are assigned and balanced. ${households.filter((household) => household.participation === 'exempted').length} exempted households will remain unassigned.`}
+        </p>
+        <div className="mt-5 flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+          <button type="button" onClick={generateProposal} className="inline-flex items-center rounded-lg bg-primary px-4 py-2 font-medium text-on-primary hover:bg-primary-hover">
+            <SparklesIcon className="mr-2 h-5 w-5" /> Generate balanced proposal
+          </button>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-medium text-charcoal">
+            <input
+              type="checkbox"
+              checked={excludeNeverActive}
+              onChange={(event) => {
+                setExcludeNeverActive(event.target.checked);
+                setProposal([]);
+                setUnassignedHouseholds([]);
+                setApplied(false);
+                setError(null);
+              }}
+              className="h-4 w-4 rounded border-border text-coral focus:ring-coral"
+            />
+            Exclude Never Active Households
+          </label>
+        </div>
       </section>
 
       {proposal.length ? (
